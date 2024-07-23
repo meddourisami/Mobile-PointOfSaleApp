@@ -7,8 +7,8 @@ const AddClientScreen = ({navigation}) => {
   const db = useSQLiteContext();
 
   const [client, setClient] = useState({
-    Id:0,
     name:'',
+    customer_name:'',
     customer_type:'',
     customer_group:'',
     territory:'',
@@ -26,7 +26,6 @@ const AddClientScreen = ({navigation}) => {
   const getClients = async () => {
     try{
         const allClients = await db.getAllAsync(`SELECT * FROM Customers;`);
-        console.log('Fetched clients:', allClients);
         setClients(allClients);
     }catch(e){
         console.log(e);
@@ -47,17 +46,14 @@ const AddClientScreen = ({navigation}) => {
       return;
     }
     try {
-      await db.runAsync('INSERT INTO Customers (name, customer_type, customer_group, territory, custom_code, custom_address, custom_phone) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [newClient.name, newClient.customer_type, newClient.customer_group, newClient.territory, newClient.custom_code, newClient.custom_address, newClient.custom_phone]
+      await db.runAsync('INSERT INTO Customers (name, customer_name, customer_type, customer_group, territory, custom_code, custom_address, custom_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [newClient.name, newClient.customer_name, newClient.customer_type, newClient.customer_group, newClient.territory, newClient.custom_code, newClient.custom_address, newClient.custom_phone]
       );
-
-      console.log('Inserted client:', newClient);
 
       await db.runAsync(
-        `INSERT INTO CustomerLocalChanges (customer_id, action, data) VALUES (?, ?, ?)`,
-        [newClient.Id, 'INSERT', JSON.stringify(newClient)]
+        `INSERT INTO CustomerLocalLogs (customer_name, action, data) VALUES (?, ?, ?)`,
+        [newClient.name, 'INSERT', JSON.stringify(newClient)]
       );
-
       await getClients();
       Alert.alert('Client added successfully');
       navigation.goBack();
@@ -75,7 +71,7 @@ const AddClientScreen = ({navigation}) => {
       <TextInput
         placeholder="Name"
         value={client.name}
-        onChangeText={(text) => setClient({ ...client, name: text })}
+        onChangeText={(text) => setClient({ ...client, name: text , customer_name: text})}
         style={styles.input}
       />
       <TextInput
@@ -97,21 +93,21 @@ const AddClientScreen = ({navigation}) => {
         style={styles.input}
       />
       <TextInput
-        placeholder="Custom Code"
+        placeholder="Customer Code"
         value={client.custom_code}
         onChangeText={(text) => setClient({ ...client, custom_code: text })}
         style={styles.input}
       />
       <TextInput
-        placeholder="Custom Adresse"
+        placeholder="Customer Adresse"
         value={client.custom_address}
         onChangeText={(text) => setClient({ ...client, custom_address: text })}
         style={styles.input}
       />
       <TextInput
-        placeholder="Custom Phone"
+        placeholder="Customer Phone"
         value={client.custom_phone}
-        onChangeText={(text) => setClient({ ...client, custom_phone: parseInt(text) })}
+        onChangeText={(text) => setClient({ ...client, custom_phone: text })}
         style={styles.input}
       />
       <TouchableOpacity style={styles.button} onPress={handleSave}>

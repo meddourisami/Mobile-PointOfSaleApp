@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView} from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
@@ -11,8 +12,12 @@ import { FontAwesome6 } from '@expo/vector-icons';
 
 async function initDatabase(db) {
   try{
+    //await db.execAsync(`
+    //  DROP TABLE IF EXISTS Customers;
+    //  DROP TABLE IF EXISTS Deliveries;
+    //  `
+    //)
     await db.execAsync(`
-      PRAGMA journal_mode = WAL;
       CREATE TABLE IF NOT EXISTS Customers (
         name TEXT PRIMARY KEY,
         creation Date DEFAULT CURRENT_TIMESTAMP,
@@ -23,6 +28,7 @@ async function initDatabase(db) {
         idx INTEGER DEFAULT 0,
         naming_series TEXT DEFAULT "CUST-.YYYY.-",
         salutation TEXT DEFAULT NULL,
+        customer_name TEXT,
         customer_type TEXT DEFAULT NULL,
         customer_group TEXT DEFAULT NULL,
         territory TEXT,
@@ -68,7 +74,7 @@ async function initDatabase(db) {
         custom_nai INTEGER DEFAULT NULL,
         custom_code INTEGER,
         custom_address TEXT,
-        custom_phone INTEGER,
+        custom_phone TEXT,
         custom_nif TEXT,
         custom_stateprovince TEXT DEFAULT NULL,
         custom_fax INTEGER DEFAULT NULL,
@@ -82,9 +88,8 @@ async function initDatabase(db) {
         custom_item INTEGER
       );
 
-      CREATE TABLE IF NOT EXISTS Deliveries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
+      CREATE TABLE IF NOT EXISTS Deliveries(
+        name TEXT PRIMARY KEY,
         creation DATE DEFAULT CURRENT_TIMESTAMP,
         modified DATE DEFAULT CURRENT_TIMESTAMP,
         modified_by TEXT DEFAULT "Adminstrator",
@@ -208,7 +213,6 @@ async function initDatabase(db) {
     console.log("Error initializing database",error);
   }
 }
-
 
 
 export default function App() {

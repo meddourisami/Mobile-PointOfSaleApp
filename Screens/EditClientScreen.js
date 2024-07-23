@@ -7,9 +7,8 @@ import { useRoute } from '@react-navigation/native';
 const EditClientScreen = ({navigation}) => {
   const db = useSQLiteContext();
   const route = useRoute();
-  const { customerId } = route.params;
+  const { customerName } = route.params;
   const [client, setClient] = React.useState({
-    Id: 0,
     name: '',
     customer_name: '',
     customer_type: '',
@@ -26,9 +25,9 @@ const EditClientScreen = ({navigation}) => {
 
   const getClient = async () => {
     try{
-    const selectedClient = await db.getFirstAsync(`SELECT * FROM Customers WHERE name = ?;`, [customerId]);
+    const selectedClient = await db.getFirstAsync(`SELECT * FROM Customers WHERE name = ?;`, [customerName]);
     if(selectedClient.custom_code=== null || selectedClient.custom_address=== null || selectedClient.custom_phone=== null){
-      selectedClient.custom_codes='';
+      selectedClient.custom_code='';
       selectedClient.custom_address='';
       selectedClient.custom_phone='';
     }
@@ -45,8 +44,8 @@ const EditClientScreen = ({navigation}) => {
       );
 
       await db.runAsync(
-        `INSERT INTO CustomerLocalChanges (customer_id, action, data) VALUES (?, ?, ?)`,
-        [client.Id, 'UPDATE', JSON.stringify(client)]
+        `INSERT INTO CustomerLocalLogs (customer_name, action, data) VALUES (?, ?, ?)`,
+        [client.name, 'UPDATE', JSON.stringify(client)]
       );
 
       await getClient();
@@ -66,8 +65,8 @@ const EditClientScreen = ({navigation}) => {
       await db.runAsync('DELETE FROM Customers WHERE name = ?', [client.name]);
 
       await db.runAsync(
-        `INSERT INTO CustomerChanges (customer_id, action, data) VALUES (?, ?, ?)`,
-        [client.Id, 'DELETE', JSON.stringify(client)]
+        `INSERT INTO CustomerLocalLogs (customer_name, action, data) VALUES (?, ?, ?)`,
+        [client.name, 'DELETE', JSON.stringify(client)]
       );
 
       Alert.alert('client deleted successfully');
@@ -95,7 +94,7 @@ const EditClientScreen = ({navigation}) => {
       <TextInput
         placeholder="Custom Code"
         value={client.custom_code}
-        onChangeText={(text) => setClient({ ...client, custom_code: text })}
+        onChangeText={(text) => setClient({ ...client, custom_code: parseInt(text) })}
         style={styles.input}
       />
       <Text>Name</Text>

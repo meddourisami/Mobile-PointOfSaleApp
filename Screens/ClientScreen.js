@@ -36,10 +36,11 @@ const ClientScreen = () => {
         };
 
         const createLocalChangesTable = async () => {
+            //await db.runAsync(`DELETE FROM CustomerLocalLogs`);
             await db.runAsync(`
-                CREATE TABLE IF NOT EXISTS CustomerLocalChanges (
+                CREATE TABLE IF NOT EXISTS CustomerLocalLogs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    customer_id INTEGER,
+                    customer_name TEXT,
                     action TEXT,
                     data TEXT
                 );
@@ -77,7 +78,7 @@ const ClientScreen = () => {
                     await db.runAsync(`INSERT OR REPLACE INTO Customers 
                             (
                                 name, creation, modified, modified_by, owner,
-                                docstatus, idx, naming_series, salutation, customer_type,
+                                docstatus, idx, naming_series, salutation, customer_name, customer_type,
                                 customer_group, territory, gender, lead_name, opportunity_name,
                                 account_manager, image, default_price_list, default_bank_account, default_currency,
                                 is_internal_customer, represents_company, market_segment, industry, customer_pos_id,
@@ -92,7 +93,7 @@ const ClientScreen = () => {
                                 custom_item
                             ) VALUES (
                                 ?, ?, ?, ?, ?,
-                                ?, ?, ?, ?, ?,
+                                ?, ?, ?, ?, ?, ?,
                                 ?, ?, ?, ?, ?,
                                 ?, ?, ?, ?, ?,
                                 ?, ?, ?, ?, ?,
@@ -107,7 +108,7 @@ const ClientScreen = () => {
                                 ?)`,
                             [
                                 customer.name, customer.creation, customer.modified, customer.modified_by, customer.owner,
-                                customer.docstatus, customer.idx, customer.naming_series, customer.salutation, customer.customer_type,
+                                customer.docstatus, customer.idx, customer.naming_series, customer.salutation, customer.customer_name, customer.customer_type,
                                 customer.customer_group, customer.territory, customer.gender, customer.lead_name, customer.opportunity_name,
                                 customer.account_manager, customer.image, customer.default_price_list, customer.default_bank_account, customer.default_currency,
                                 customer.is_internal_customer, customer.represents_company, customer.market_segment, customer.industry, customer.customer_pos_id,
@@ -130,12 +131,28 @@ const ClientScreen = () => {
 
         const syncDataWithServer = async () => {
             try {
-                const changes = await db.getAllAsync(`SELECT * FROM CustomerLocalChanges;`);
+                
+                const changes = await db.getAllAsync(`SELECT * FROM CustomerLocalLogs;`);
+                
                 await Promise.all(changes.map(async (change) => {
-                    const customerData = JSON.parse(change.data);
+
+                    let data={
+                       ...JSON.parse(change.data),
+                       doctype:"Customer",
+                       __islocal: 1,
+                       owner: "Administrator",
+                    }
+                    //console.log(data);
+                        //console.log("change.data",change.data?.name)
+                        console.log("data", JSON.stringify({
+                             "doc": JSON.stringify(data),  
+                             "action": "Save"
+                        }))
+                    let jsonString = JSON.stringify(change.data);
                     let response;
                     try {
                         if (change.action === 'INSERT') {
+                            console.log(JSON.stringify(data))
                             response = await fetch(
                                 'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
                                 {
@@ -144,13 +161,13 @@ const ClientScreen = () => {
                                         'Content-Type': 'application/json',
                                         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
                                     },
-                                    body:{                                  
-                                        "doc": JSON.stringify(change.data),  
+                                    body: JSON.stringify({
+                                        "doc": JSON.stringify(data),  
                                         "action": "Save"
-                                    }
+                                    })
                                 }
                             );
-
+                          
                         } else if (change.action === 'UPDATE') {
                             response = await fetch(
                                 `//**********UPDATE ENDPOINT***********//`,
@@ -180,7 +197,8 @@ const ClientScreen = () => {
                         }
                         if (response.ok) {
 
-                            await db.runAsync(`DELETE FROM CustomerChanges WHERE id = ?`, [change.id]);
+                            await db.runAsync(`DELETE FROM CustomerLocalLogs WHERE id = ?`, [change.id]);
+                            console.log("Successfully synchronized changes");
 
                         } else{
 
@@ -201,6 +219,7 @@ const ClientScreen = () => {
             try{
                 const allClients = await db.getAllAsync(`SELECT * FROM Customers;`);
                 setClients(allClients);
+                console.log(clients);
                 setDisplayData(allClients);
             }catch(e){
                 console.log(e);
@@ -234,7 +253,7 @@ const ClientScreen = () => {
                             data ={displayData}
                             keyExtractor={(item) => item.name}
                             renderItem={({item}) => (
-                                <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10}} onPress={() => navigation.navigate('EditClientScreen', { customerId: item.name })}>
+                                <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10}} onPress={() => navigation.navigate('EditClientScreen', { customerName: item.name })}>
                                     <View style={{marginBottom:10}}>
                                         <Text style={{fontWeight:'bold'}}>{item.name}</Text>
                                         <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>
