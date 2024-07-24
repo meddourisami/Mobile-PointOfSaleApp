@@ -3,8 +3,9 @@ import React, { useState , useEffect } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { AntDesign } from '@expo/vector-icons';
-import NetInfo from '@react-native-community/netinfo';
+//import NetInfo from '@react-native-community/netinfo';
 import * as CryptoJS from 'crypto-js';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 
 const ClientScreen = () => {
@@ -16,7 +17,7 @@ const ClientScreen = () => {
     const Content =  () => {
         const [clients , setClients] = useState([]);
         const [customers , setCustomers] = useState([]);
-        const [displayData , setDisplayData] = useState([]);
+        //const [displayData , setDisplayData] = useState([]);
 
         const getHash = (data) => {
             return CryptoJS.MD5(JSON.stringify(data)).toString();
@@ -35,17 +36,17 @@ const ClientScreen = () => {
             }
         };
 
-        const createLocalChangesTable = async () => {
-            //await db.runAsync(`DELETE FROM CustomerLocalLogs`);
-            await db.runAsync(`
-                CREATE TABLE IF NOT EXISTS CustomerLocalLogs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    customer_name TEXT,
-                    action TEXT,
-                    data TEXT
-                );
-            `);
-        };
+        // const createLocalChangesTable = async () => {
+        //     //await db.runAsync(`DELETE FROM CustomerLocalLogs`);
+        //     await db.runAsync(`
+        //         CREATE TABLE IF NOT EXISTS CustomerLocalLogs (
+        //             id INTEGER PRIMARY KEY AUTOINCREMENT,
+        //             customer_name TEXT,
+        //             action TEXT,
+        //             data TEXT
+        //         );
+        //     `);
+        // };
 
         const getCustomersfromAPI = async () => {
             try{
@@ -56,15 +57,20 @@ const ClientScreen = () => {
                     },
                 });
                 const json = await response.json();
+                
                 const newHash = getHash(json.data);
 
                 const existingHash = await db.runAsync('SELECT data_hash FROM CustomerMetadata WHERE id = 1;');
                 if (existingHash !== newHash) {
-                    setCustomers(json.data);
+
+                    await Promise.all(customers.map(async (customer) => {
+                        await db.runAsync(`DELETE FROM Customers WHERE name = ?;`, [customer.name]);
+                    }));
+
                     await saveInLocalCustomers(json.data);
                     await db.runAsync('UPDATE CustomerMetadata SET data_hash = ? WHERE id = 1;', [newHash]);
+                    setCustomers(json.data);
                 }
-                setDisplayData(json.data);
                 return json.data;
             } catch (error){
                 console.log('error fetching data',error);
@@ -73,7 +79,6 @@ const ClientScreen = () => {
 
         const saveInLocalCustomers = async (customers) => {
             try{
-                await db.runAsync('DELETE FROM Customers;');
                 await Promise.all(customers.map(async (customer) => {
                     await db.runAsync(`INSERT OR REPLACE INTO Customers 
                             (
@@ -129,89 +134,49 @@ const ClientScreen = () => {
             }
         };
 
-        const syncDataWithServer = async () => {
+        const syncDataWithServer = async (client) => {
             try {
-                
-                const changes = await db.getAllAsync(`SELECT * FROM CustomerLocalLogs;`);
-                
-                await Promise.all(changes.map(async (change) => {
+                const data = {
+                    customer_name,
+                    customer_type,
+                    customer_group,
+                    territory,
+                    custom_code,
+                    custom_address,
+                    custom_phone,
+                    doctype:"Customer",
+                    __islocal: 1,
+                    owner: "Administrator",
+                };
 
-                    let data={
-                       ...JSON.parse(change.data),
-                       doctype:"Customer",
-                       __islocal: 1,
-                       owner: "Administrator",
-                    }
-                    //console.log(data);
-                        //console.log("change.data",change.data?.name)
-                        console.log("data", JSON.stringify({
-                             "doc": JSON.stringify(data),  
-                             "action": "Save"
-                        }))
-                    let jsonString = JSON.stringify(change.data);
-                    let response;
-                    try {
-                        if (change.action === 'INSERT') {
-                            console.log(JSON.stringify(data))
-                            response = await fetch(
-                                'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
-                                {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
-                                    },
-                                    body: JSON.stringify({
-                                        "doc": JSON.stringify(data),  
-                                        "action": "Save"
-                                    })
-                                }
-                            );
-                          
-                        } else if (change.action === 'UPDATE') {
-                            response = await fetch(
-                                `//**********UPDATE ENDPOINT***********//`,
-                                {
-                                    method: 'PUT',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
-                                    },
-                                    body: {
-                                        doc: change.data,
-                                        action: 'Update'
-                                    }
-                                }
-                            );
-                        
-                        } else if (change.action === 'DELETE') {
-                            response = await fetch(
-                                `//**********DELETE ENDPOINT***********//`,
-                                {
-                                    method: 'DELETE',
-                                    headers: {
-                                        'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
-                                    }
-                                }
-                            );
-                        }
-                        if (response.ok) {
+                console.log ("data to send", data);
 
-                            await db.runAsync(`DELETE FROM CustomerLocalLogs WHERE id = ?`, [change.id]);
-                            console.log("Successfully synchronized changes");
+                console.log("data", JSON.stringify({
+                    "doc": JSON.stringify(data),  
+                    "action": "Save"
+                }));
 
-                        } else{
-
-                            console.log('Error from server:', await response.text());
-                        }
-
-                    } catch (error) {
-                        console.log('Network error:', error);
-                    }
-                    })
-                );
-            } catch (e) {
-                console.log('Error syncing data with server', e);
+                // const response = await fetch(
+                //     'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
+                //         {
+                //             method: 'POST',
+                //             headers: {
+                //                 'Content-Type': 'application/json',
+                //                 'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
+                //             },
+                //             body: JSON.stringify({
+                //                 "doc": JSON.stringify(data),  
+                //                 "action": "Save"
+                //             })
+                //         }
+                //     );
+                // if(response.ok){
+                //     console.log("Synced successfully");
+                // }else{
+                //     console.log("Error from the server", await response.text());
+                // }
+            }catch(e){
+                console.log('Error saving data to server', e);
             }
         };
 
@@ -219,47 +184,59 @@ const ClientScreen = () => {
             try{
                 const allClients = await db.getAllAsync(`SELECT * FROM Customers;`);
                 setClients(allClients);
-                console.log(clients);
-                setDisplayData(allClients);
+                //setDisplayData(allClients);
             }catch(e){
-                console.log(e);
+                console.log("error retreiving clients", e);
             }
         };
 
-        useEffect(() => {
+        useEffect(() => {   
             if(isFocused){
                 const initialize = async () => {
-                    await createMetadataTable();
-                    await createLocalChangesTable();
-                    NetInfo.fetch().then((state) => {
-                        if (state.isConnected) {
-                            syncDataWithServer();
-                            getCustomersfromAPI();
-                        } else {
-                            getClients();
-                        }
-                    });
+                    getCustomersfromAPI();
+                    getClients();
+
+                    //NetInfo.fetch().then((state) => {
+                      //  if (state.isConnected) {
+                            //console.log("Connection established")
+                            //syncDataWithServer();
+                        //} else {
+                            //console.log("No internet connection")
+                        //}
+                    //});
                 };
                 initialize();
             }
         }, [isFocused]);
 
+        useEffect(() => {
+            if (clients) {
+                getClients();
+            }
+        }, [clients]);
+
         return (
             <View>
-                    {displayData.length=== 0 ? (
+                    {clients.length=== 0 ? (
                         <Text>No data yet.</Text>
                     ) : (
                         <FlatList 
-                            data ={displayData}
+                            data ={clients}
                             keyExtractor={(item) => item.name}
                             renderItem={({item}) => (
-                                <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10}} onPress={() => navigation.navigate('EditClientScreen', { customerName: item.name })}>
-                                    <View style={{marginBottom:10}}>
+                                <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10}} >
+                                    <View style={{marginBottom:10, marginStart:10}}>
                                         <Text style={{fontWeight:'bold'}}>{item.name}</Text>
                                         <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>
-                                            <Text>{item.name}</Text>
-                                            <Text style={{fontWeight:'semibold'}}>Adresse:{item.custom_address}</Text>
-                                            <Text>Phone: {item.custom_phone}</Text>
+                                            <View>
+                                                <Text>{item.name}</Text>
+                                                <Text style={{fontWeight:'semibold'}}>Adresse:{item.custom_address}</Text>
+                                                <Text>Phone: {item.custom_phone}</Text>
+                                            </View>
+                                            <View style={{flexDirection:'column', marginEnd:20 , paddingLeft:20, marginLeft:10}}>
+                                                <AntDesign name="edit" size={24} style={{paddingBottom:10}} color="black" onPress={() => navigation.navigate('EditClientScreen', { customerName: item.name })} />
+                                                <FontAwesome5 name="sync" size={24} color="black" onPress={() => syncDataWithServer(item)}/>
+                                            </View>
                                         </View>
                                     </View>
                                 </TouchableOpacity>
@@ -279,7 +256,7 @@ const ClientScreen = () => {
             </View>
             <AntDesign 
                 name="pluscircle" 
-                size={30} 
+                size={35} 
                 color="#284979" 
                 style={styles.icon} 
                 onPress={() => navigation.navigate('AddClientScreen')}

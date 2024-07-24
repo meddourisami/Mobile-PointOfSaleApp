@@ -1,5 +1,5 @@
 import { Text, TextInput, StyleSheet, View ,Alert, ScrollView, TouchableOpacity} from 'react-native';
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useRoute } from '@react-navigation/native';
 
@@ -8,7 +8,7 @@ const EditClientScreen = ({navigation}) => {
   const db = useSQLiteContext();
   const route = useRoute();
   const { customerName } = route.params;
-  const [client, setClient] = React.useState({
+  const [client, setClient] = useState({
     name: '',
     customer_name: '',
     customer_type: '',
@@ -18,10 +18,7 @@ const EditClientScreen = ({navigation}) => {
     custom_address: '',
     custom_phone: ''
   });
-
-  React.useEffect(() => {
-    getClient();
-  }, []);
+  const [clients, setClients] = useState([]);
 
   const getClient = async () => {
     try{
@@ -31,24 +28,39 @@ const EditClientScreen = ({navigation}) => {
       selectedClient.custom_address='';
       selectedClient.custom_phone='';
     }
+
     setClient(selectedClient);
     }catch(e){
-      console.log(e);
+      console.log("error retreiving client",e);
+    }
+  };
+
+  const getClients = async () => {
+    try{
+        const allClients = await db.getAllAsync(`SELECT * FROM Customers;`);
+        setClients(allClients);
+    }catch(e){
+        console.log("error retreiving clients",e);
     }
   };
 
   const updateClient = async () => {
     try{
-      await db.runAsync('UPDATE Customers SET name = ?, customer_type = ?, customer_group = ?, territory = ?,  custom_code = ?, custom_address = ?, custom_phone = ? WHERE name = ?',
-        [client.name, client.customer_type, client.customer_group, client.territory, client.custom_code, client.custom_address, client.custom_phone, client.name]
+      await db.runAsync('UPDATE Customers SET name = ?, customer_name=?, customer_type = ?, customer_group = ?, territory = ?,  custom_code = ?, custom_address = ?, custom_phone = ? WHERE name = ?',
+        [client.name, client.customer_name, client.customer_type, client.customer_group, client.territory, client.custom_code, client.custom_address, client.custom_phone, client.name]
       );
 
-      await db.runAsync(
-        `INSERT INTO CustomerLocalLogs (customer_name, action, data) VALUES (?, ?, ?)`,
-        [client.name, 'UPDATE', JSON.stringify(client)]
-      );
+
+      // await db.runAsync(
+      //   `INSERT INTO CustomerLocalLogs (customer_name, action, data) VALUES (?, ?, ?)`,
+      //   [client.name, 'UPDATE', JSON.stringify(client)]
+      // );
 
       await getClient();
+      await getClients();
+
+
+      console.log(client);
       Alert.alert('client updated successfully');
       navigation.goBack();
     }catch(e){
@@ -57,17 +69,25 @@ const EditClientScreen = ({navigation}) => {
   };
 
   const handleSave = () => {
-    updateClient();
+    Alert.alert(
+      'Confirmer mofication',
+      'T\'es sur de modifier ce client',
+      [
+        {text: 'Yes', onPress: () => updateClient()}, 
+        {text: 'No', onPress: () => console.log('Cancel Pressed'), style: 'cancel'},
+      ],
+      {cancelable: true}
+    );
   };
 
   const deleteClient = async () => {
     try{
       await db.runAsync('DELETE FROM Customers WHERE name = ?', [client.name]);
 
-      await db.runAsync(
-        `INSERT INTO CustomerLocalLogs (customer_name, action, data) VALUES (?, ?, ?)`,
-        [client.name, 'DELETE', JSON.stringify(client)]
-      );
+      // await db.runAsync(
+      //   `INSERT INTO CustomerLocalLogs (customer_name, action, data) VALUES (?, ?, ?)`,
+      //   [client.name, 'DELETE', JSON.stringify(client)]
+      // );
 
       Alert.alert('client deleted successfully');
       navigation.goBack();
@@ -88,6 +108,14 @@ const EditClientScreen = ({navigation}) => {
     );
   };
 
+  useEffect(() => {
+    getClient();
+  }, [customerName]);
+
+  useEffect(() => {
+    getClients();
+  }, []);
+
   return (
     <ScrollView style={styles.container}>
       <Text>Custom Code</Text>
@@ -100,8 +128,8 @@ const EditClientScreen = ({navigation}) => {
       <Text>Name</Text>
       <TextInput
         placeholder="Name"
-        value={client.name}
-        onChangeText={(text) => setClient({ ...client, name: text })}
+        value={client.customer_name}
+        onChangeText={(text) => setClient({ ...client, name: text , customer_name: text})}
         style={styles.input}
       />
       <Text>Customer Type</Text>

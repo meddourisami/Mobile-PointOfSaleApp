@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, Text, TextInput, View , Button, Alert, TouchableOpacity} from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect} from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 
 const AddClientScreen = ({navigation}) => {
@@ -19,10 +20,6 @@ const AddClientScreen = ({navigation}) => {
 
   const [clients, setClients] = useState([]);
 
-  useEffect(() => {
-    getClients();
-  }, []);
-
   const getClients = async () => {
     try{
         const allClients = await db.getAllAsync(`SELECT * FROM Customers;`);
@@ -31,6 +28,10 @@ const AddClientScreen = ({navigation}) => {
         console.log(e);
     }
   };
+
+  useEffect(() => {
+    getClients();
+  }, []);
 
   const addClient = async (newClient) => {
     if (
@@ -50,10 +51,10 @@ const AddClientScreen = ({navigation}) => {
         [newClient.name, newClient.customer_name, newClient.customer_type, newClient.customer_group, newClient.territory, newClient.custom_code, newClient.custom_address, newClient.custom_phone]
       );
 
-      await db.runAsync(
-        `INSERT INTO CustomerLocalLogs (customer_name, action, data) VALUES (?, ?, ?)`,
-        [newClient.name, 'INSERT', JSON.stringify(newClient)]
-      );
+      //await db.runAsync(
+      //  `INSERT INTO CustomerLocalLogs (customer_name, action, data) VALUES (?, ?, ?)`,
+      //  [newClient.name, 'INSERT', JSON.stringify(newClient)]
+      //);
       await getClients();
       Alert.alert('Client added successfully');
       navigation.goBack();
