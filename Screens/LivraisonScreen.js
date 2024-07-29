@@ -146,9 +146,9 @@ const LivraisonScreen = () => {
           }
     };
 
-    const syncDataWithServer = async (data) => {
-      const request = await fetch("");
-    };
+    // const syncDataWithServer = async (data) => {
+    //   const request = await fetch("");
+    // };
 
       const getLivraisons = async () => {
           try{
