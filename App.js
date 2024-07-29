@@ -12,11 +12,11 @@ import { FontAwesome6 } from '@expo/vector-icons';
 
 async function initDatabase(db) {
   try{
-    //await db.execAsync(`
+    // await db.execAsync(`
     //  DROP TABLE IF EXISTS Customers;
     //  DROP TABLE IF EXISTS Deliveries;
     //  `
-    //)
+    // )
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS Customers (
         name TEXT PRIMARY KEY,
@@ -85,7 +85,8 @@ async function initDatabase(db) {
         custom_deadlines_to_max_in_nb_day INTEGER DEFAULT 0,
         custom_total_unpaid REAL DEFAULT 0,
         custom_capital_stock INTEGER DEFAULT NULL,
-        custom_item INTEGER
+        custom_item INTEGER,
+        synced INTEGER DEFAULT 0
       );
 
       CREATE TABLE IF NOT EXISTS Deliveries(

@@ -64,6 +64,11 @@ const ClientScreen = () => {
                 if (existingHash !== newHash) {
 
                     await Promise.all(customers.map(async (customer) => {
+                        const syncedCustomer = await db.runAsync(`SELECT synced FROM Customers WHERE name = ?;`, [customer.name]);
+                        if (syncedCustomer && syncedCustomer.synced === 1) {
+
+                            return;
+                        }
                         await db.runAsync(`DELETE FROM Customers WHERE name = ?;`, [customer.name]);
                     }));
 
@@ -80,6 +85,7 @@ const ClientScreen = () => {
         const saveInLocalCustomers = async (customers) => {
             try{
                 await Promise.all(customers.map(async (customer) => {
+                    let customer_synced = 1;
                     await db.runAsync(`INSERT OR REPLACE INTO Customers 
                             (
                                 name, creation, modified, modified_by, owner,
@@ -95,7 +101,7 @@ const ClientScreen = () => {
                                 custom_nic, custom_nai, custom_code, custom_address, custom_phone,
                                 custom_nif, custom_stateprovince, custom_fax, custom_activity, custom_email_address,
                                 custom_credit_limit, custom_register, custom_deadlines_to_max_in_nb_day, custom_total_unpaid, custom_capital_stock,
-                                custom_item
+                                custom_item, synced
                             ) VALUES (
                                 ?, ?, ?, ?, ?,
                                 ?, ?, ?, ?, ?, ?,
@@ -110,7 +116,7 @@ const ClientScreen = () => {
                                 ?, ?, ?, ?, ?,
                                 ?, ?, ?, ?, ?,
                                 ?, ?, ?, ?, ?,
-                                ?)`,
+                                ?, ?)`,
                             [
                                 customer.name, customer.creation, customer.modified, customer.modified_by, customer.owner,
                                 customer.docstatus, customer.idx, customer.naming_series, customer.salutation, customer.customer_name, customer.customer_type,
@@ -125,7 +131,7 @@ const ClientScreen = () => {
                                 customer.custom_nic, customer.custom_nai, customer.custom_code, customer.custom_address, customer.custom_phone,
                                 customer.custom_nif, customer.custom_stateprovince, customer.custom_fax, customer.custom_activity, customer.custom_email_address,
                                 customer.custom_credit_limit, customer.custom_register, customer.custom_deadlines_to_max_in_nb_day, customer.custom_total_unpaid, customer.custom_capital_stock,
-                                customer.custom_item
+                                customer.custom_item, customer_synced
                             ]
                         );
                 }));
@@ -136,7 +142,21 @@ const ClientScreen = () => {
 
         const syncDataWithServer = async (client) => {
             try {
+                const {
+                    name,
+                    customer_name,
+                    customer_type,
+                    customer_group,
+                    territory,
+                    custom_code,
+                    custom_address,
+                    custom_phone
+                } = client;
+
+                console.log(name);
+
                 const data = {
+                    name,
                     customer_name,
                     customer_type,
                     customer_group,
@@ -144,37 +164,38 @@ const ClientScreen = () => {
                     custom_code,
                     custom_address,
                     custom_phone,
-                    doctype:"Customer",
+                    doctype: "Customer",
                     __islocal: 1,
                     owner: "Administrator",
                 };
-
-                console.log ("data to send", data);
 
                 console.log("data", JSON.stringify({
                     "doc": JSON.stringify(data),  
                     "action": "Save"
                 }));
 
-                // const response = await fetch(
-                //     'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
-                //         {
-                //             method: 'POST',
-                //             headers: {
-                //                 'Content-Type': 'application/json',
-                //                 'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
-                //             },
-                //             body: JSON.stringify({
-                //                 "doc": JSON.stringify(data),  
-                //                 "action": "Save"
-                //             })
-                //         }
-                //     );
-                // if(response.ok){
-                //     console.log("Synced successfully");
-                // }else{
-                //     console.log("Error from the server", await response.text());
-                // }
+                const response = await fetch(
+                    'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
+                            },
+                            body: JSON.stringify({
+                                "doc": JSON.stringify(data),  
+                                "action": "Save"
+                            })
+                        }
+                    );
+                if(response.ok){
+                    console.log("Synced successfully");
+                    let customer_synced = 1;
+                    await db.runAsync(`UPDATE Customers SET synced = 1 WHERE name = ?`, [name]);
+                }else{
+                    console.log("Error from the server", await response.text());
+                }
+
             }catch(e){
                 console.log('Error saving data to server', e);
             }
@@ -224,7 +245,7 @@ const ClientScreen = () => {
                             data ={clients}
                             keyExtractor={(item) => item.name}
                             renderItem={({item}) => (
-                                <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10}} >
+                                <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10}} onPress={() => navigation.navigate('ArticleScreen')}>
                                     <View style={{marginBottom:10, marginStart:10}}>
                                         <Text style={{fontWeight:'bold'}}>{item.name}</Text>
                                         <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>
@@ -235,7 +256,10 @@ const ClientScreen = () => {
                                             </View>
                                             <View style={{flexDirection:'column', marginEnd:20 , paddingLeft:20, marginLeft:10}}>
                                                 <AntDesign name="edit" size={24} style={{paddingBottom:10}} color="black" onPress={() => navigation.navigate('EditClientScreen', { customerName: item.name })} />
-                                                <FontAwesome5 name="sync" size={24} color="black" onPress={() => syncDataWithServer(item)}/>
+                                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                    <FontAwesome5 name="sync" size={24} color="black"  onPress={() => syncDataWithServer(item)} />
+                                                    <Text style={{width: 15,height: 15, borderRadius: 5, backgroundColor: item.synced === 1 ? 'green' : 'red', marginLeft: 5}} />
+                                                </View>
                                             </View>
                                         </View>
                                     </View>

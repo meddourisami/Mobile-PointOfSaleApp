@@ -164,7 +164,7 @@ const EditClientScreen = ({navigation}) => {
       <TextInput
         placeholder="Custom Phone"
         value={client.custom_phone.toString()}
-        onChangeText={(text) => setClient({ ...client, custom_phone: parseInt(text) })}
+        onChangeText={(text) => setClient({ ...client, custom_phone: text })}
         style={styles.input}
       />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 20 }}>
