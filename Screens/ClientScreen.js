@@ -32,7 +32,7 @@ const ClientScreen = () => {
             `);
             const rowCount = await db.runAsync('SELECT COUNT(*) as count FROM CustomerMetadata;');
             if (rowCount.count === 0) {
-                await db.runAsync('INSERT INTO Metadata (id, data_hash) VALUES (1, "");');
+                await db.runAsync('INSERT INTO CustomerMetadata (id, data_hash) VALUES (1, "");');
             }
         };
 
@@ -50,6 +50,12 @@ const ClientScreen = () => {
 
         const getCustomersfromAPI = async () => {
             try{
+                // const response = await fetch('http://195.201.138.202:8006/api/resource/Customer?fields=["*"]', {
+                //     method: 'GET',
+                //     headers: {
+                //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
+                //     },
+                // });
                 const response = await fetch('http://195.201.138.202:8006/api/resource/Customer?fields=["*"]', {
                     method: 'GET',
                     headers: {
@@ -78,7 +84,7 @@ const ClientScreen = () => {
                 }
                 return json.data;
             } catch (error){
-                console.log('error fetching data',error);
+                console.log('error fetching customers',error);
             }
         };
 
@@ -136,7 +142,7 @@ const ClientScreen = () => {
                         );
                 }));
             }catch(e){
-                console.log('Error saving data to local database', e);
+                console.log('Error saving customers to local database', e);
             }
         };
 
@@ -245,7 +251,7 @@ const ClientScreen = () => {
                             data ={clients}
                             keyExtractor={(item) => item.name}
                             renderItem={({item}) => (
-                                <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10}} onPress={() => navigation.navigate('ItemGroupScreen')}>
+                                <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10}} onPress={() => navigation.navigate('ItemGroupScreen', { customerName: item.name })}>
                                     <View style={{marginBottom:10, marginStart:10}}>
                                         <Text style={{fontWeight:'bold'}}>{item.name}</Text>
                                         <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>

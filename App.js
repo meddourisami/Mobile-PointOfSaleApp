@@ -13,8 +13,10 @@ import { FontAwesome6 } from '@expo/vector-icons';
 async function initDatabase(db) {
   try{
     // await db.execAsync(`
-    //  DROP TABLE IF EXISTS Customers;
-    //  DROP TABLE IF EXISTS Deliveries;
+    //   DROP TABLE IF EXISTS Customers;
+    //   DROP TABLE IF EXISTS Deliveries;
+    //   DROP TABLE IF EXISTS GroupItem;
+    //   DROP TABLE IF EXISTS Item;
     //  `
     // )
     await db.execAsync(`
@@ -207,6 +209,26 @@ async function initDatabase(db) {
         custom_driver TEXT DEFAULT NULL,
         custom_driver_name TEXT,
         custom_vehicle TEXT
+      );
+      CREATE TABLE IF NOT EXISTS GroupItem(
+      name TEXT PRIMARY KEY,
+      item_group_name TEXT,
+      parent_item_group TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS Item(
+      name TEXT PRIMARY KEY,
+      item_code TEXT,
+      item_name TEXT,
+      item_group TEXT,
+      stock_uom TEXT,
+      opening_stock FLOAT,
+      description TEXT,
+      last_purchase_rate FLOAT,
+      country_of_origin TEXT,
+      custom_invoicing_unit_price FLOAT,
+      custom_unit_purchase_price FLOAT,
+      custom_wholesale_unit_selling_price FLOAT
       );
     `);
     console.log('Database initialized');

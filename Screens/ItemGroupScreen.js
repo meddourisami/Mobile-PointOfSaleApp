@@ -1,12 +1,33 @@
-import { Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { useIsFocused } from '@react-navigation/native'
+import { Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { useIsFocused } from '@react-navigation/native';
+import { useSQLiteContext } from 'expo-sqlite';
+import * as CryptoJS from 'crypto-js';
 
 const ItemGroupScreen = ({navigation}) => {
+  const db = useSQLiteContext();
   const isFocused = useIsFocused();
 
   const Content = () => {
     const [item_groups, setItem_groups] = useState([]);
+    const [groupItems, setGroupItems] = useState([]);
+
+    const getHash = (data) => {
+      return CryptoJS.MD5(JSON.stringify(data)).toString();
+  };
+
+  const createMetadataTable = async () => {
+      await db.runAsync(`
+          CREATE TABLE IF NOT EXISTS GroupItemMetadata (
+              id INTEGER PRIMARY KEY,
+              data_hash TEXT
+          );
+      `);
+      const rowCount = await db.runAsync('SELECT COUNT(*) as count FROM GroupItemMetadata;');
+      if (rowCount.count === 0) {
+          await db.runAsync('INSERT INTO GroupItemMetadata (id, data_hash) VALUES (1, "");');
+      }
+  };
 
     const getItemGroupsFromApi = async () => {
       try{
@@ -48,7 +69,20 @@ const ItemGroupScreen = ({navigation}) => {
         );
 
       const json = await response.json();
-      setItem_groups(json.message.values);
+
+      const newHash = getHash(json.data);
+
+      const existingHash = await db.runAsync('SELECT data_hash FROM GroupItemMetadata WHERE id = 1;');
+      if (existingHash !== newHash) {
+        await Promise.all(item_groups.map(async (group) => {
+          
+          await db.runAsync(`DELETE FROM Customers WHERE name = ?;`, [group[0]]);
+        }));
+
+        saveInLocalItemGroups(json.message.values);
+        await db.runAsync('UPDATE CustomerMetadata SET data_hash = ? WHERE id = 1;', [newHash]);
+        setItem_groups(json.message.values);
+      }
       return json.message.values;
 
       }catch(e){
@@ -56,28 +90,59 @@ const ItemGroupScreen = ({navigation}) => {
       }
     };
 
+    const saveInLocalItemGroups = async (item_groups) => {
+      try{
+          await Promise.all(item_groups.map(async (group) => {
+              await db.runAsync(`INSERT OR REPLACE INTO GroupItem(name, item_group_name, parent_item_group) VALUES (? , ? , ?)`,
+                [group[0], group[11], group[12]]
+              );   
+          }))
+      }catch(e){
+        console.log(e, 'Error saving in local');
+      }
+    };
+
+    const getGroupItems = async () => {
+      try{
+        const groups = await db.getAllAsync(`SELECT * FROM GroupItem;`);
+        setGroupItems(groups);
+        // console.log(groups);
+
+      }catch(e){
+        console.log("Error retreiving group items from database",e);
+      }
+    };
+
     useEffect(() => {
       if(isFocused){
+        // createMetadataTable();
         getItemGroupsFromApi();
+        getGroupItems();
       }
     }, [isFocused]);
 
+    // useEffect(() => {
+    //   if (groupItems){
+    //     getGroupItems();
+    //   }
+    // }, [groupItems]);
+
     return (
       <View style={styles.container}>
-        {item_groups=== 0 ? (
+        {groupItems=== 0 ? (
           <Text>No data yet.</Text>
         ) : (
           <FlatList
-          data= {item_groups}
+          data= {groupItems}
           keyExtractor={(item, index) => index.toString()}
           numColumns={2}
           renderItem={({item, index}) => (
-            <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('FilteredItemsScreen', {Item_group : item[0]})}>
+            <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ArticleScreen', {ItemGroup : item.name})}>
               <View>
                 {/* <Text style={{fontWeight:'bold'}}>Group Name</Text> */}
-                <Text style={{fontWeight:'bold'}}>{item[0]}</Text>
+                <Text style={{fontWeight:'bold'}}>{item.name}</Text>
                 {/* <Text style={{fontWeight:'bold'}}>Parent Item Group</Text> */}
-                <Text>{item[12]}</Text>
+                <Text>{item.parent_item_group}</Text>
               </View>  
             </TouchableOpacity>
           )}

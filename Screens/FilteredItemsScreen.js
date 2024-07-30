@@ -34,9 +34,7 @@ const FilteredItemsScreen = ({navigation}) => {
                 });
   
             const json = await response.json();
-            //console.log(json);
             setItems(json.message.values);
-            //console.log(json.message.values);
             return json.message.values;
   
             }catch(e){
@@ -52,7 +50,7 @@ const FilteredItemsScreen = ({navigation}) => {
 
         return (
             <View>
-                {items.length === 0? (
+                {items.length === 0 ? (
                     <Text>No data yet.</Text>
                 ) : (
                     <FlatList
