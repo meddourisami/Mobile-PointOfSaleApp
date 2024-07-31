@@ -1,12 +1,14 @@
 import { Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useRoute } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
 import * as CryptoJS from 'crypto-js';
 
 const ItemGroupScreen = ({navigation}) => {
   const db = useSQLiteContext();
   const isFocused = useIsFocused();
+  const route = useRoute();
+  const {customerName} = route.params;
 
   const Content = () => {
     const [item_groups, setItem_groups] = useState([]);
@@ -137,7 +139,7 @@ const ItemGroupScreen = ({navigation}) => {
           keyExtractor={(item, index) => index.toString()}
           numColumns={2}
           renderItem={({item, index}) => (
-            <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ArticleScreen', {ItemGroup : item.name})}>
+            <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ArticleScreen', {ItemGroup : item.name, customerName})}>
               <View>
                 {/* <Text style={{fontWeight:'bold'}}>Group Name</Text> */}
                 <Text style={{fontWeight:'bold'}}>{item.name}</Text>

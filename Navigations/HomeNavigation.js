@@ -9,6 +9,10 @@ import PaimentScreen from '../Screens/PaimentScreen';
 import VenteScreen from '../Screens/VenteScreen';
 import HomeScreen from '../Screens/HomeScreen';
 import CommandeScreen from '../Screens/CommandeScreen';
+import AddArticleScreen from '../Screens/AddArticleScreen';
+import AddClientScreen from '../Screens/AddClientScreen';
+import EditClientScreen from '../Screens/EditClientScreen';
+import ItemGroupScreen from '../Screens/ItemGroupScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -24,6 +28,10 @@ const HomeNavigation = () => {
             <Stack.Screen name="PaimentScreen" component={PaimentScreen} />
             <Stack.Screen name="VenteScreen" component={VenteScreen} />
             <Stack.Screen name="CommandeScreen" component={CommandeScreen} />
+            <Stack.Screen name="AddArticleScreen" component={AddArticleScreen} />
+            <Stack.Screen name="AddClientScreen" component={AddClientScreen} />
+            <Stack.Screen name="EditClientScreen"  component={EditClientScreen} />
+            <Stack.Screen name="ItemGroupScreen" component={ItemGroupScreen} />
         </Stack.Navigator>
     );
 }

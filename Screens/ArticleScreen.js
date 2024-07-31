@@ -1,14 +1,16 @@
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import { useIsFocused, useRoute } from '@react-navigation/native';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
 import * as CryptoJS from 'crypto-js';
+import { AntDesign } from '@expo/vector-icons';
 
 const ArticleScreen = () => {
     const isFocused = useIsFocused();
     const db = useSQLiteContext();
     const route = useRoute();
     const { ItemGroup } = route.params || {};
+    const navigation = useNavigation();
 
     const Content = () => {
         const [items, setItems] = useState([]);
@@ -98,7 +100,7 @@ const ArticleScreen = () => {
 
         const getItemsByGroup = async (item_group) => {
             try{
-                const articlesByGroup = await db.getAllAsync(`SELECT * FROM Item WHERE item_group =?`,[item_group]);
+                const articlesByGroup = await db.getAllAsync(`SELECT * FROM Item WHERE item_group = ?`,[item_group]);
                 //console.log(articlesByGroup);
                 setArticles(articlesByGroup);
             }
@@ -111,21 +113,19 @@ const ArticleScreen = () => {
             if(isFocused){
                 //createMetadataTable();
                 getItemsFromApi();
-                // if(itemGroup){
-                // getItemsByGroup(ItemGroup);
-                // }else{
-                //getItems();
-                // }
-            }
-        }, [isFocused]);
+                    if(ItemGroup){
+                        getItemsByGroup(ItemGroup);
+                    }else{
+                        getItems();
+                    }
+                }
+        }, [isFocused, ItemGroup]);
 
-        useEffect(()=>{
-            if(ItemGroup !== null){
-                getItemsByGroup(ItemGroup);
-            }else{
-                getItems();
+        useEffect(() => {
+            if (articles && !ItemGroup) {
+              getItems();
             }
-        },[ItemGroup]);
+          }, [articles, ItemGroup]);
 
         // useEffect(() =>{
         //     if(articles){
@@ -142,13 +142,18 @@ const ArticleScreen = () => {
                             data={articles}
                             keyExtractor= {(item) => item.name}
                             renderItem={({item}) => (
-                                <TouchableOpacity>
-                                    <Text>
-                                        {item.name} - {item.item_group}
-                                    </Text>
-                                    <Text>On Stock {item.opening_stock}</Text>
-                                    <Text>Prix de vente : {item.custom_invoicing_unit_price}</Text>
-                                </TouchableOpacity>
+                                <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10, backgroundColor: "#FFF"}}>
+                                    <TouchableOpacity>
+                                        <Text>
+                                            {item.item_name} - {item.item_group}
+                                        </Text>
+                                        <Text>On Stock {item.opening_stock}</Text>
+                                        <Text>Prix de vente : {item.custom_invoicing_unit_price}</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center', backgroundColor:"#E59135", height:20, marginRight:10}}>
+                                        <Text style={{color:"#FFF"}}>Add to cart</Text>
+                                    </TouchableOpacity>
+                                </View>
                             )}
                         />
                     )}
@@ -158,17 +163,27 @@ const ArticleScreen = () => {
   return (
     <View>
         <Text style={{fontSize:24}}>Liste des articles</Text>
-        {/* {itemGroup ? ( */}
-            {/* <Text>Articles du groupe : {ItemGroup}</Text> */}
-        {/* ) : ( */}
             <View>
                 <Content />
             </View>
-        {/* )} */}
+            <AntDesign 
+                name="pluscircle" 
+                size={35} 
+                color="#284979" 
+                style={styles.icon} 
+                onPress={() => navigation.navigate('AddArticleScreen')}
+            />
     </View>
   );
 }
 
 export default ArticleScreen
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+    icon: {
+        position: 'absolute',
+        bottom: 30,
+        right: 30,
+        marginBottom:30,
+    },
+})
