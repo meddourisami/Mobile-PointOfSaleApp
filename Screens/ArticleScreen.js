@@ -52,7 +52,7 @@ const ArticleScreen = () => {
                 if (existingHash !== newHash) {
 
                     await Promise.all(items.map(async (item) => {
-                        await db.runAsync(`DELETE FROM Item WHERE name = ?;`, [item.name]);
+                        await db.runAsync(`DELETE FROM Items WHERE name = ?;`, [item.name]);
                     }));
 
                     await saveInLocalItems(json.data);
@@ -67,7 +67,7 @@ const ArticleScreen = () => {
         const saveInLocalItems = async (items) => {
             try{
                 await Promise.all(items.map(async (item) => {
-                    await db.runAsync(`INSERT OR REPLACE INTO Item(
+                    await db.runAsync(`INSERT OR REPLACE INTO Items(
                             name, item_code, item_name, item_group, stock_uom,
                             opening_stock, description, last_purchase_rate, country_of_origin, custom_invoicing_unit_price,
                             custom_unit_purchase_price, custom_wholesale_unit_selling_price
@@ -88,9 +88,70 @@ const ArticleScreen = () => {
             }
         };
 
+        // const syncDataWithServer = async (item) => {
+        //     try {
+        //         const {
+        //             name,
+        //             customer_name,
+        //             customer_type,
+        //             customer_group,
+        //             territory,
+        //             custom_code,
+        //             custom_address,
+        //             custom_phone
+        //         } = client;
+
+        //         console.log(name);
+
+        //         const data = {
+        //             name,
+        //             customer_name,
+        //             customer_type,
+        //             customer_group,
+        //             territory,
+        //             custom_code,
+        //             custom_address,
+        //             custom_phone,
+        //             doctype: "Customer",
+        //             __islocal: 1,
+        //             owner: "Administrator",
+        //         };
+
+        //         console.log("data", JSON.stringify({
+        //             "doc": JSON.stringify(data),  
+        //             "action": "Save"
+        //         }));
+
+        //         const response = await fetch(
+        //             'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
+        //                 {
+        //                     method: 'POST',
+        //                     headers: {
+        //                         'Content-Type': 'application/json',
+        //                         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
+        //                     },
+        //                     body: JSON.stringify({
+        //                         "doc": JSON.stringify(data),  
+        //                         "action": "Save"
+        //                     })
+        //                 }
+        //             );
+        //         if(response.ok){
+        //             console.log("Synced successfully");
+        //             let customer_synced = 1;
+        //             await db.runAsync(`UPDATE Customers SET synced = 1 WHERE name = ?`, [name]);
+        //         }else{
+        //             console.log("Error from the server", await response.text());
+        //         }
+
+        //     }catch(e){
+        //         console.log('Error saving data to server', e);
+        //     }
+        // };
+
         const getItems = async () => {
             try{
-                const allArticles = await db.getAllAsync(`SELECT * FROM Item;`);
+                const allArticles = await db.getAllAsync(`SELECT * FROM Items;`);
                 //console.log(allArticles);
                 setArticles(allArticles);
             }catch(e){
@@ -100,7 +161,7 @@ const ArticleScreen = () => {
 
         const getItemsByGroup = async (item_group) => {
             try{
-                const articlesByGroup = await db.getAllAsync(`SELECT * FROM Item WHERE item_group = ?`,[item_group]);
+                const articlesByGroup = await db.getAllAsync(`SELECT * FROM Items WHERE item_group = ?`,[item_group]);
                 //console.log(articlesByGroup);
                 setArticles(articlesByGroup);
             }

@@ -18,7 +18,7 @@ async function initDatabase(db) {
     //   DROP TABLE IF EXISTS GroupItem;
     //   DROP TABLE IF EXISTS Item;
     //  `
-    // )
+    // );
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS Customers (
         name TEXT PRIMARY KEY,
@@ -216,7 +216,7 @@ async function initDatabase(db) {
       parent_item_group TEXT
       );
 
-      CREATE TABLE IF NOT EXISTS Item(
+      CREATE TABLE IF NOT EXISTS Items(
       name TEXT PRIMARY KEY,
       item_code TEXT,
       item_name TEXT,
@@ -240,8 +240,7 @@ async function initDatabase(db) {
 
 export default function App() {
   const Tab = createBottomTabNavigator();
-  return (
-    
+  return (  
     <SQLiteProvider databaseName='myDB.db' onInit={initDatabase}>
       <NavigationContainer>
         <Tab.Navigator screenOptions={{
@@ -282,9 +281,7 @@ export default function App() {
             }}/>
         </Tab.Navigator>
       </NavigationContainer>
-    </SQLiteProvider>
-    
-    
+    </SQLiteProvider>  
   );
 }
 

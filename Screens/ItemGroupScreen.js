@@ -16,9 +16,9 @@ const ItemGroupScreen = ({navigation}) => {
 
     const getHash = (data) => {
       return CryptoJS.MD5(JSON.stringify(data)).toString();
-  };
+    };
 
-  const createMetadataTable = async () => {
+    const createMetadataTable = async () => {
       await db.runAsync(`
           CREATE TABLE IF NOT EXISTS GroupItemMetadata (
               id INTEGER PRIMARY KEY,
@@ -29,7 +29,7 @@ const ItemGroupScreen = ({navigation}) => {
       if (rowCount.count === 0) {
           await db.runAsync('INSERT INTO GroupItemMetadata (id, data_hash) VALUES (1, "");');
       }
-  };
+    };
 
     const getItemGroupsFromApi = async () => {
       try{

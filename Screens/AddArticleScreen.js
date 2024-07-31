@@ -20,7 +20,7 @@ const AddArticleScreen = ({navigation}) => {
 
     const getItems = async () => {
         try{
-            const allItems = await db.getAllAsync(`SELECT * FROM Item;`);
+            const allItems = await db.getAllAsync(`SELECT * FROM Items;`);
             setItems(allItems);
         }catch(e){
             console.log(e);
@@ -46,7 +46,7 @@ const AddArticleScreen = ({navigation}) => {
           return;
         }
         try {
-            await db.runAsync('INSERT INTO Item (name, item_name, item_group, country_of_origin, item_code, opening_stock, description, custom_invoicing_unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            await db.runAsync('INSERT INTO Items (name, item_name, item_group, country_of_origin, item_code, opening_stock, description, custom_invoicing_unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                 [newItem.name, newItem.item_name, newItem.item_group, newItem.country_of_origin, newItem.item_code, newItem.opening_stock, newItem.description, newItem.custom_invoicing_unit_price]
             );
             await getItems();
