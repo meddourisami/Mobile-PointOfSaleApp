@@ -1,9 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ClientScreen from '../Screens/ClientScreen';
-import AddClientScreen from '../Screens/AddClientScreen';
-import EditClientScreen from '../Screens/EditClientScreen';
+import ClientScreen from '../Screens/client/ClientScreen';
+import AddClientScreen from '../Screens/client/AddClientScreen';
+import EditClientScreen from '../Screens/client/EditClientScreen';
 import ItemGroupScreen from '../Screens/ItemGroupScreen';
 import FilteredItemsScreen from '../Screens/FilteredItemsScreen';
 

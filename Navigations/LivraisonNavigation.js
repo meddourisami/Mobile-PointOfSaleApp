@@ -1,9 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import LivraisonScreen from '../Screens/LivraisonScreen';
-import AddLivraisonScreen from '../Screens/AddLivraisonScreen';
-import EditLivraisonScreen from '../Screens/EditLivraisonScreen';
+import LivraisonScreen from '../Screens/Livraison/LivraisonScreen';
+import AddLivraisonScreen from '../Screens/Livraison/AddLivraisonScreen';
+import EditLivraisonScreen from '../Screens/Livraison/EditLivraisonScreen';
 
 
 const Stack = createNativeStackNavigator();

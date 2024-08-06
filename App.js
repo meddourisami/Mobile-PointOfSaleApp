@@ -12,13 +12,14 @@ import { FontAwesome6 } from '@expo/vector-icons';
 
 async function initDatabase(db) {
   try{
-    // await db.execAsync(`
-    //   DROP TABLE IF EXISTS Customers;
-    //   DROP TABLE IF EXISTS Deliveries;
-    //   DROP TABLE IF EXISTS GroupItem;
-    //   DROP TABLE IF EXISTS Item;
-    //  `
-    // );
+    await db.execAsync(`
+      DROP TABLE IF EXISTS Customers;
+      DROP TABLE IF EXISTS Deliveries;
+      DROP TABLE IF EXISTS GroupItem;
+      DROP TABLE IF EXISTS Item;
+      DROP TABLE IF EXISTS Items;
+     `
+    );
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS Customers (
         name TEXT PRIMARY KEY,
@@ -210,26 +211,126 @@ async function initDatabase(db) {
         custom_driver_name TEXT,
         custom_vehicle TEXT
       );
+      
       CREATE TABLE IF NOT EXISTS GroupItem(
       name TEXT PRIMARY KEY,
       item_group_name TEXT,
       parent_item_group TEXT
       );
 
-      CREATE TABLE IF NOT EXISTS Items(
-      name TEXT PRIMARY KEY,
-      item_code TEXT,
-      item_name TEXT,
-      item_group TEXT,
-      stock_uom TEXT,
-      opening_stock FLOAT,
-      description TEXT,
-      last_purchase_rate FLOAT,
-      country_of_origin TEXT,
-      custom_invoicing_unit_price FLOAT,
-      custom_unit_purchase_price FLOAT,
-      custom_wholesale_unit_selling_price FLOAT
-      );
+      CREATE TABLE IF NOT EXISTS Item (
+          name TEXT PRIMARY KEY NOT NULL,
+          owner TEXT,
+          creation TIMESTAMP,
+          modified TIMESTAMP,
+          modified_by TEXT,
+          docstatus INTEGER,
+          idx INTEGER,
+          naming_series TEXT,
+          item_code TEXT,
+          item_name TEXT,
+          item_group TEXT,
+          stock_uom TEXT,
+          disabled BOOLEAN,
+          allow_alternative_item BOOLEAN,
+          is_stock_item BOOLEAN,
+          has_variants BOOLEAN,
+          opening_stock REAL,
+          valuation_rate REAL,
+          standard_rate REAL,
+          is_fixed_asset BOOLEAN,
+          auto_create_assets BOOLEAN,
+          is_grouped_asset BOOLEAN,
+          asset_category TEXT,
+          asset_naming_series TEXT,
+          over_delivery_receipt_allowance REAL,
+          over_billing_allowance REAL,
+          image TEXT,
+          description TEXT,
+          brand TEXT,
+          shelf_life_in_days INTEGER,
+          end_of_life DATE,
+          default_material_request_type TEXT,
+          valuation_method TEXT,
+          warranty_period INTEGER,
+          weight_per_unit REAL,
+          weight_uom TEXT,
+          allow_negative_stock BOOLEAN,
+          has_batch_no BOOLEAN,
+          create_new_batch BOOLEAN,
+          batch_number_series TEXT,
+          has_expiry_date BOOLEAN,
+          retain_sample BOOLEAN,
+          sample_quantity REAL,
+          has_serial_no BOOLEAN,
+          serial_no_series TEXT,
+          variant_of TEXT,
+          variant_based_on TEXT,
+          enable_deferred_expense BOOLEAN,
+          no_of_months_exp INTEGER,
+          enable_deferred_revenue BOOLEAN,
+          no_of_months INTEGER,
+          purchase_uom TEXT,
+          min_order_qty REAL,
+          safety_stock REAL,
+          is_purchase_item BOOLEAN,
+          lead_time_days INTEGER,
+          last_purchase_rate REAL,
+          is_customer_provided_item BOOLEAN,
+          customer TEXT,
+          delivered_by_supplier BOOLEAN,
+          country_of_origin TEXT,
+          customs_tariff_number TEXT,
+          sales_uom TEXT,
+          grant_commission BOOLEAN,
+          is_sales_item BOOLEAN,
+          max_discount REAL,
+          inspection_required_before_purchase BOOLEAN,
+          quality_inspection_template TEXT,
+          inspection_required_before_delivery BOOLEAN,
+          include_item_in_manufacturing BOOLEAN,
+          is_sub_contracted_item BOOLEAN,
+          default_bom TEXT,
+          customer_code TEXT,
+          default_item_manufacturer TEXT,
+          default_manufacturer_part_no TEXT,
+          total_projected_qty REAL,
+          _comment_count INTEGER
+        );
+
+        CREATE TABLE IF NOT EXISTS Warehouse (
+          name TEXT NOT NULL PRIMARY KEY,
+          creation DATETIME,
+          modified DATETIME,
+          modified_by TEXT,
+          owner TEXT,
+          docstatus INTEGER DEFAULT 0 NOT NULL,
+          idx INTEGER DEFAULT 0 NOT NULL,
+          disabled INTEGER DEFAULT 0 NOT NULL,
+          warehouse_name TEXT,
+          is_group INTEGER DEFAULT 0 NOT NULL,
+          parent_warehouse TEXT,
+          is_rejected_warehouse INTEGER DEFAULT 0 NOT NULL,
+          account TEXT,
+          company TEXT,
+          email_id TEXT,
+          phone_no TEXT,
+          mobile_no TEXT,
+          address_line_1 TEXT,
+          address_line_2 TEXT,
+          city TEXT,
+          state TEXT,
+          pin TEXT,
+          warehouse_type TEXT,
+          default_in_transit_warehouse TEXT,
+          lft INTEGER DEFAULT 0 NOT NULL,
+          rgt INTEGER DEFAULT 0 NOT NULL,
+          old_parent TEXT,
+          _user_tags TEXT,
+          _comments TEXT,
+          _assign TEXT,
+          _liked_by TEXT
+        );
     `);
     console.log('Database initialized');
   }catch(error){

@@ -3,9 +3,10 @@ import React, { useState , useEffect } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { AntDesign } from '@expo/vector-icons';
-//import NetInfo from '@react-native-community/netinfo';
 import * as CryptoJS from 'crypto-js';
 import { FontAwesome5 } from '@expo/vector-icons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 
 const ClientScreen = () => {
@@ -288,7 +289,7 @@ const ClientScreen = () => {
                 name="pluscircle" 
                 size={35} 
                 color="#284979" 
-                style={styles.icon} 
+                style={styles.iconAdd} 
                 onPress={() => navigation.navigate('AddClientScreen')}
             />
         </View>
@@ -305,10 +306,20 @@ const styles = StyleSheet.create({
     header: {
         fontSize: 24,
     },
-    icon: {
+    iconAdd: {
         position: 'absolute',
         bottom: 30,
         right: 30,
+    },
+    iconEdit: {
+        position: 'absolute',
+        bottom: 30,
+        left: 30,
+    },
+    iconDelete: {
+        position: 'absolute',
+        bottom: 30,
+        
     },
     items: {
         backgroundColor: '#fff',

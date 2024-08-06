@@ -787,6 +787,7 @@ const HomeScreen = () => {
           additional_notes TEXT,
           page_break INTEGER DEFAULT 0 NOT NULL,
           parent TEXT,
+          
           parentfield TEXT,
           parenttype TEXT,
           FOREIGN KEY (parent) REFERENCES Quotation(name) ON DELETE CASCADE ON UPDATE CASCADE
@@ -936,9 +937,6 @@ const HomeScreen = () => {
         );
       `);
       console.log("Database initialized successfully");
-
-        // TODO SALES_ORDER AND SALES_ORDER_ITEM
-        // TODO QUOTATION AND QUOTATION_ITEM
     } catch(e){
       console.log("Error initializing database",e);
     }
@@ -967,7 +965,6 @@ const HomeScreen = () => {
       console.log("error deleting database", e);
     }
   };
-
 
   return (
     <View style={styles.container}>

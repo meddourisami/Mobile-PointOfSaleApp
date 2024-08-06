@@ -1,18 +1,19 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ClientScreen from '../Screens/ClientScreen';
-import ArticleScreen from '../Screens/ArticleScreen';
-import StockScreen from '../Screens/StockScreen';
-import LivraisonScreen from '../Screens/LivraisonScreen';
-import PaimentScreen from '../Screens/PaimentScreen';
-import VenteScreen from '../Screens/VenteScreen';
+import ClientScreen from '../Screens/client/ClientScreen';
+import ArticleScreen from '../Screens/article/ArticleScreen';
+import StockScreen from '../Screens/stock/StockScreen';
+import LivraisonScreen from '../Screens/Livraison/LivraisonScreen';
+import PaimentScreen from '../Screens/paiment/PaimentScreen';
+import VenteScreen from '../Screens/vente/VenteScreen';
 import HomeScreen from '../Screens/HomeScreen';
-import CommandeScreen from '../Screens/CommandeScreen';
-import AddArticleScreen from '../Screens/AddArticleScreen';
-import AddClientScreen from '../Screens/AddClientScreen';
-import EditClientScreen from '../Screens/EditClientScreen';
+import CommandeScreen from '../Screens/Commande/CommandeScreen';
+import AddArticleScreen from '../Screens/article/AddArticleScreen';
+import AddClientScreen from '../Screens/client/AddClientScreen';
+import EditClientScreen from '../Screens/client/EditClientScreen';
 import ItemGroupScreen from '../Screens/ItemGroupScreen';
+import Cart from '../Screens/Cart/Cart';
 
 
 const Stack = createNativeStackNavigator();
@@ -32,6 +33,7 @@ const HomeNavigation = () => {
             <Stack.Screen name="AddClientScreen" component={AddClientScreen} />
             <Stack.Screen name="EditClientScreen"  component={EditClientScreen} />
             <Stack.Screen name="ItemGroupScreen" component={ItemGroupScreen} />
+            <Stack.Screen name="Cart" component={Cart} />
         </Stack.Navigator>
     );
 }
