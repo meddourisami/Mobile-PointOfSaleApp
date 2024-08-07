@@ -9,7 +9,7 @@ const ArticleScreen = () => {
     const isFocused = useIsFocused();
     const db = useSQLiteContext();
     const route = useRoute();
-    const { ItemGroup, customerName } = route.params || {};
+    const { ItemGroup, customer } = route.params || {};
     const navigation = useNavigation();
     const [selecteditems, setSelecteditems] = useState([]);
 
@@ -261,8 +261,8 @@ const ArticleScreen = () => {
                             data={articles}
                             keyExtractor= {(item) => item.name}
                             renderItem={({item}) => (
-                                <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10, backgroundColor: "#FFF"}}>
-                                    <TouchableOpacity>
+                                <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10, backgroundColor: "#FFF", borderRadius:15, margin:5}}>
+                                    <TouchableOpacity style={{borderRadius:15, margin:5}}>
                                         <Text>
                                             {item.item_name} - {item.item_group}
                                         </Text>
@@ -293,7 +293,7 @@ const ArticleScreen = () => {
     };
 
     const calculateTotalPrice = () => {
-        return selecteditems.reduce((total, item) => total + item.custom_invoicing_unit_price, 0);
+        return selecteditems.reduce((total, item) => total + item.standard_rate, 0);
     };
 
   return (
@@ -323,7 +323,7 @@ const ArticleScreen = () => {
                     borderRadius: 5,
                     alignItems: 'center',
                 }}
-                onPress={() => navigation.navigate('Cart', { selectedItems : selecteditems , customerName })}
+                onPress={() => navigation.navigate('Cart', { selectedItems : selecteditems , customer })}
                 >
                     <Text style={{ color: '#FFF', fontSize: 18 }}>
                         {`Items: ${selecteditems.length}, Total: $${calculateTotalPrice().toFixed(2)}`}

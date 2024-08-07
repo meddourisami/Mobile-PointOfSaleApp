@@ -12,14 +12,17 @@ import { FontAwesome6 } from '@expo/vector-icons';
 
 async function initDatabase(db) {
   try{
-    await db.execAsync(`
-      DROP TABLE IF EXISTS Customers;
-      DROP TABLE IF EXISTS Deliveries;
-      DROP TABLE IF EXISTS GroupItem;
-      DROP TABLE IF EXISTS Item;
-      DROP TABLE IF EXISTS Items;
-     `
-    );
+    // await db.execAsync(`
+    //   DROP TABLE IF EXISTS Customers;
+    //   DROP TABLE IF EXISTS Deliveries;
+    //   DROP TABLE IF EXISTS GroupItem;
+    //   DROP TABLE IF EXISTS Item;
+    //   DROP TABLE IF EXISTS Warehouse;
+    //   DROP TABLE IF EXISTS Sales_Taxes_and_Charges;
+    //   DROP TABLE IF EXISTS Sales_Order;
+    //   DROP TABLE IF EXISTS Sales_Order_Item;
+    //  `
+    // );
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS Customers (
         name TEXT PRIMARY KEY,
@@ -330,6 +333,179 @@ async function initDatabase(db) {
           _comments TEXT,
           _assign TEXT,
           _liked_by TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS Sales_Taxes_and_Charges (
+          name TEXT PRIMARY KEY,
+          owner TEXT,
+          creation DATETIME,
+          modified DATETIME,
+          modified_by TEXT,
+          docstatus INTEGER,
+          idx INTEGER,
+          charge_type TEXT,
+          row_id TEXT,
+          account_head TEXT,
+          description TEXT,
+          included_in_print_rate INTEGER,
+          included_in_paid_amount INTEGER,
+          cost_center TEXT,
+          rate REAL,
+          account_currency TEXT,
+          tax_amount REAL,
+          total REAL,
+          tax_amount_after_discount_amount REAL,
+          base_tax_amount REAL,
+          base_total REAL,
+          base_tax_amount_after_discount_amount REAL,
+          item_wise_tax_detail TEXT,
+          dont_recompute_tax INTEGER,
+          parent TEXT,
+          parentfield TEXT,
+          parenttype TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS Sales_Order (
+          name TEXT PRIMARY KEY NOT NULL,
+          creation DATETIME,
+          modified DATETIME,
+          modified_by TEXT,
+          owner TEXT,
+          docstatus INTEGER DEFAULT 0 NOT NULL,
+          idx INTEGER DEFAULT 0 NOT NULL,
+          title TEXT DEFAULT '{customer_name}',
+          naming_series TEXT,
+          customer TEXT,
+          customer_name TEXT,
+          tax_id TEXT,
+          order_type TEXT DEFAULT 'Sales',
+          transaction_date DATE,
+          delivery_date DATE,
+          po_no TEXT,
+          po_date DATE,
+          company TEXT,
+          skip_delivery_note INTEGER DEFAULT 0 NOT NULL,
+          amended_from TEXT,
+          cost_center TEXT,
+          project TEXT,
+          currency TEXT,
+          conversion_rate REAL DEFAULT 0.0 NOT NULL,
+          selling_price_list TEXT,
+          price_list_currency TEXT,
+          plc_conversion_rate REAL DEFAULT 0.0 NOT NULL,
+          ignore_pricing_rule INTEGER DEFAULT 0 NOT NULL,
+          scan_barcode TEXT,
+          set_warehouse TEXT,
+          reserve_stock INTEGER DEFAULT 0 NOT NULL,
+          total_qty REAL DEFAULT 0.0 NOT NULL,
+          total_net_weight REAL DEFAULT 0.0 NOT NULL,
+          base_total REAL DEFAULT 0.0 NOT NULL,
+          base_net_total REAL DEFAULT 0.0 NOT NULL,
+          total REAL DEFAULT 0.0 NOT NULL,
+          net_total REAL DEFAULT 0.0 NOT NULL,
+          tax_category TEXT,
+          taxes_and_charges TEXT,
+          shipping_rule TEXT,
+          incoterm TEXT,
+          named_place TEXT,
+          base_total_taxes_and_charges REAL DEFAULT 0.0 NOT NULL,
+          total_taxes_and_charges REAL DEFAULT 0.0 NOT NULL,
+          base_grand_total REAL DEFAULT 0.0 NOT NULL,
+          base_rounding_adjustment REAL DEFAULT 0.0 NOT NULL,
+          base_rounded_total REAL DEFAULT 0.0 NOT NULL,
+          base_in_words TEXT,
+          grand_total REAL DEFAULT 0.0 NOT NULL,
+          rounding_adjustment REAL DEFAULT 0.0 NOT NULL,
+          rounded_total REAL DEFAULT 0.0 NOT NULL,
+          in_words TEXT,
+          advance_paid REAL DEFAULT 0.0 NOT NULL,
+          disable_rounded_total INTEGER DEFAULT 0 NOT NULL,
+          apply_discount_on TEXT DEFAULT 'Grand Total',
+          base_discount_amount REAL DEFAULT 0.0 NOT NULL,
+          coupon_code TEXT,
+          additional_discount_percentage REAL DEFAULT 0.0 NOT NULL,
+          discount_amount REAL DEFAULT 0.0 NOT NULL,
+          other_charges_calculation TEXT,
+          customer_address TEXT,
+          address_display TEXT,
+          customer_group TEXT,
+          territory TEXT,
+          contact_person TEXT,
+          contact_display TEXT,
+          contact_phone TEXT,
+          contact_mobile TEXT,
+          contact_email TEXT,
+          shipping_address_name TEXT,
+          shipping_address TEXT,
+          dispatch_address_name TEXT,
+          dispatch_address TEXT,
+          company_address TEXT,
+          company_address_display TEXT,
+          payment_terms_template TEXT,
+          tc_name TEXT,
+          terms TEXT,
+          status TEXT DEFAULT 'Draft',
+          delivery_status TEXT,
+          per_delivered REAL DEFAULT 0.0 NOT NULL,
+          per_billed REAL DEFAULT 0.0 NOT NULL,
+          per_picked REAL DEFAULT 0.0 NOT NULL,
+          billing_status TEXT,
+          sales_partner TEXT,
+          amount_eligible_for_commission REAL DEFAULT 0.0 NOT NULL,
+          commission_rate REAL DEFAULT 0.0 NOT NULL,
+          total_commission REAL DEFAULT 0.0 NOT NULL,
+          loyalty_points INTEGER DEFAULT 0 NOT NULL,
+          loyalty_amount REAL DEFAULT 0.0 NOT NULL,
+          from_date DATE,
+          to_date DATE,
+          auto_repeat TEXT,
+          letter_head TEXT,
+          group_same_items INTEGER DEFAULT 0 NOT NULL,
+          select_print_heading TEXT,
+          language TEXT,
+          is_internal_customer INTEGER DEFAULT 0 NOT NULL,
+          represents_company TEXT,
+          source TEXT,
+          inter_company_order_reference TEXT,
+          campaign TEXT,
+          party_account_currency TEXT,
+          _user_tags TEXT,
+          _comments TEXT,
+          _assign TEXT,
+          _liked_by TEXT,
+          _seen TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS Sales_Order_Item (
+          name TEXT PRIMARY KEY NOT NULL,
+          parent TEXT NOT NULL,
+          parentfield TEXT,
+          parenttype TEXT,
+          idx INTEGER,
+          item_code TEXT,
+          item_name TEXT,
+          description TEXT,
+          qty REAL,
+          stock_uom TEXT,
+          rate REAL,
+          amount REAL,
+          base_rate REAL,
+          base_amount REAL,
+          warehouse TEXT,
+          delivered_qty REAL,
+          billed_amt REAL,
+          pending_qty REAL,
+          against_sales_order TEXT,
+          against_sales_order_item TEXT,
+          delivered_by_supplier INTEGER DEFAULT 0 NOT NULL,
+          conversion_factor REAL DEFAULT 0.0 NOT NULL,
+          pricing_rule TEXT,
+          discount_percentage REAL DEFAULT 0.0 NOT NULL,
+          gross_profit REAL DEFAULT 0.0 NOT NULL,
+          gross_margin REAL DEFAULT 0.0 NOT NULL,
+          against_blanket_order TEXT,
+          FOREIGN KEY(parent) REFERENCES Sales_Order(name),
+          FOREIGN KEY(item_code) REFERENCES Item(item_code)
         );
     `);
     console.log('Database initialized');
