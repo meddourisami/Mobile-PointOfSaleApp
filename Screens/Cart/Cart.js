@@ -49,6 +49,10 @@ const Cart = ({navigation}) => {
         return (calculateTotalPrice() - calculateTotalPriceWithoutTax());
     };
 
+    const calculateTaxAmountPerItem = (item) => {
+        return (calculateTotalPricePerItem(item) * (19/100));
+    }
+
     const calculateRoudingAdjustment  = (number) => {
         if (Number.isInteger(number)) {
             return 0;
@@ -60,6 +64,10 @@ const Cart = ({navigation}) => {
     const calculateRoundedTotal = (number) => {
         return Math.round(number);
     };
+
+    const calculateTotalPricePerItem = (item) => {
+        return (item.standard_rate * quantities[item.name]);
+    }
 
     const handleTaxChange = (tax) => {
         setSelectedTax(tax);
@@ -169,7 +177,20 @@ const Cart = ({navigation}) => {
             result += characters.charAt(Math.floor(Math.random() * charactersLength));
         }
         return result;
-    }
+    };
+
+    function generateItemTaxDetail(items) {
+        const itemWiseTaxDetail = {};
+        items.forEach((item, index) => {
+            // Assuming taxRates is an array of arrays like [[rate1, calcTax1], [rate2, calcTax2], ...]
+            itemWiseTaxDetail[item.name] = [19, calculateTaxAmountPerItem(item)];
+        });
+    
+        // Convert the object to a JSON string
+        return JSON.stringify(itemWiseTaxDetail);
+    };
+
+    console.log(generateItemTaxDetail(selectedItems));
 
     const saveSalesOrderItems = async () => {
         try{
@@ -178,6 +199,14 @@ const Cart = ({navigation}) => {
                 )`); //TODO SAVE THE SELECTED ITEMS TO SALES ORDER ITEMS
         }catch(e){
             console.log('Error saving sales order items', e);
+        }
+    };
+
+    const saveSales_Taxes_and_Charges = async () => {
+        try{
+            //TODO SAVE THE SELECTED SALES AND CHARGES
+        }catch(e){
+            console.log('Error saving sales order taxes and charges', e);
         }
     };
 
@@ -227,7 +256,7 @@ const Cart = ({navigation}) => {
                 [
                     salesOrderName, "Administrator",
                     0, customer.name, "SAL-ORD-YYYY", customer.name,
-                    customer.name, "Sales Order", Date.now(), Date.now(),
+                    customer.name, "Sales Order", Date(), Date(),
                     "Saadi", 0, "DA", "Standard Selling",
                     "Entropot 1  - TH",
                     calculateTotalQuantity(quantities), 0, calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(),
@@ -244,6 +273,59 @@ const Cart = ({navigation}) => {
                     "fr", 0,
                     "DA"
                 ]);
+
+            await Promise.all(selectedItems.map(async (item)=> {
+                const sales_order_ItemName = 'new-sales-order-item-'+generateRandomName();
+                console.log(sales_order_ItemName);
+                await db.runAsync(`INSERT INTO Sales_Order_Item(
+                        name, parent, parentfield, parenttype, idx,
+                        item_code, item_name, description, qty, stock_uom,
+                        rate, amount, base_rate, base_amount, warehouse,
+                        delivered_qty, billed_amt, pending_qty,
+                        delivered_by_supplier, conversion_factor, pricing_rule, discount_percentage, gross_profit,
+                        against_blanket_order
+                    ) VALUES (
+                        ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?,
+                        ?, ?, ?,
+                        ?, ?, ?, ?, ?,
+                        ?
+                    )`,
+                    [
+                        sales_order_ItemName, salesOrderName, "items", "Sales Order", 1,
+                        item.item_code, item.item_name, item.description, quantities[item.name], item.stock_uom,
+                        item.standard_rate, calculateTotalPricePerItem(item), item.standard_rate, calculateTotalPricePerItem(item), "Entropot 1  - TH",
+                        0, 0, 0,
+                        0, 1, "", 0, 0,
+                        null
+                    ]);
+                }));
+            
+            const sales_Taxes_and_ChargesName= 'new-sales-taxes-and-charges'+generateRandomName();
+            await db.runAsync(`INSERT INTO Sales_Taxes_and_Charges(
+                    name, owner,
+                    docstatus, idx, charge_type, row_id, account_head,
+                    description, included_in_print_rate, included_in_paid_amount, cost_center, rate,
+                    account_currency, tax_amount, total, tax_amount_after_discount_amount, base_tax_amount,
+                    base_total, base_tax_amount_after_discount_amount, item_wise_tax_detail, dont_recompute_tax, parent,
+                    parentfield, parenttype
+                ) VALUES (
+                    ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?
+                )`,
+                [
+                    sales_Taxes_and_ChargesName, "Administrator",
+                    0, 1, "On Net Total", null, selectedTax.name,
+                    selectedTax.name, 0, 0, "", 19,
+                    null, calculateTaxAmount(), calculateTotalPrice(), calculateTaxAmount(), calculateTaxAmount(),
+                    calculateTotalPrice(), calculateRoundedTotal(), generateItemTaxDetail(selectedItems, selectedTax), 0, salesOrderName,
+                    "taxes", "Sales Order"
+                ])
         }catch(e){
             console.log('Error saving sales order', e);
         }
@@ -254,12 +336,96 @@ const Cart = ({navigation}) => {
         Alert.alert('Saving sales order..');
     };
 
-    const saveQuotation = async => {
+    const saveQuotation = async () => {
         try{
+            const quotationName = 'new-sales-order-'+generateRandomName();
+            console.log(salesOrderName);
+            await db.runAsync(`INSERT INTO Sales_Order(
+                name, owner,
+                docstatus, title, naming_series, customer,
+                customer_name, order_type, transaction_date, delivery_date,
+                company, skip_delivery_note, currency, selling_price_list,
+                set_warehouse,
+                total_qty, total_net_weight, base_total, base_net_total,
+                total, net_total, tax_category, taxes_and_charges,
+                base_total_taxes_and_charges, total_taxes_and_charges, base_grand_total,
+                base_rounding_adjustment, base_rounded_total, base_in_words, grand_total, rounding_adjustment,
+                rounded_total, in_words, advance_paid, disable_rounded_total, apply_discount_on,
+                base_discount_amount, discount_amount,
+                customer_address, customer_group, territory,
+                status, delivery_status,
+                billing_status,
+                amount_eligible_for_commission,
+                group_same_items,
+                language, is_internal_customer,
+                party_account_currency
+            ) VALUES (
+                ?, ?,
+                ?, ?, ?, ?,
+                ?, ?, ?, ?,
+                ?, ?, ?, ?,
+                ?,
+                ?, ?, ?, ?,
+                ?, ?, ?, ?,
+                ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?,
+                ?, ?, ?,
+                ?, ?,
+                ?,
+                ?,
+                ?,
+                ?, ?,
+                ?
+            )`,
+                [
+                    quotationName, "Administrator",
+                    0, customer.name, "SAL-ORD-YYYY", customer.name,
+                    customer.name, "Sales Order", Date(), Date(),
+                    "Saadi", 0, "DA", "Standard Selling",
+                    "Entropot 1  - TH",
+                    calculateTotalQuantity(quantities), 0, calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(),
+                    calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), "", selectedTax.name,
+                    calculateTaxAmount(), calculateTaxAmount(), calculateTotalPrice(),
+                    calculateRoudingAdjustment(calculateTotalPrice()), calculateRoundedTotal(calculateTotalPrice()), "", calculateTotalPrice(), calculateRoudingAdjustment(calculateTotalPrice()),
+                    0, "", 0, 0, "Grand Total",
+                    0, 0,
+                    customer.custom_address, customer.custom_group, customer.territory,
+                    "Draft", "Not Delivered",
+                    "Not Billed",
+                    calculateTotalPriceWithoutTax(),
+                    0,
+                    "fr", 0,
+                    "DA"
+                ]);
 
         }catch(e){
             console.log('Error saving quotation', e);
         }
+    };
+
+    const saveQuotationItems = async () => {
+        try{
+
+        }catch(e){
+            console.log("Error saving quotation items", e);
+        }
+    };
+
+    const saveQuotation_Taxes_and_Charges = async () => {
+        try{
+
+        }catch(e){
+            console.log("Error saving quotation taxes and charges", e);
+        }
+    };
+
+    const handleSaveQuotation = () => {
+        saveQuotation();
+        saveQuotationItems();
+        saveQuotation_Taxes_and_Charges();
+        Alert.alert('Saving quotation..');
     };
 
     useEffect(() => {   
@@ -325,7 +491,7 @@ const Cart = ({navigation}) => {
                     <TouchableOpacity style={styles.button} onPress={handleSaveSaleOrder}>
                         <Text style={styles.buttonText}>Passer Commande</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.button}>
+                    <TouchableOpacity style={styles.button} onPress={handleSaveQuotation}>
                         <Text style={styles.buttonText}>Demander Devis</Text>
                     </TouchableOpacity>
                 </View>

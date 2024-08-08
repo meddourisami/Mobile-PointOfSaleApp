@@ -14,6 +14,8 @@ import AddClientScreen from '../Screens/client/AddClientScreen';
 import EditClientScreen from '../Screens/client/EditClientScreen';
 import ItemGroupScreen from '../Screens/ItemGroupScreen';
 import Cart from '../Screens/Cart/Cart';
+import Quotation from '../Screens/Quotation/Quotation';
+import CommandeArticles from '../Screens/Commande/CommandeArticles';
 
 
 const Stack = createNativeStackNavigator();
@@ -34,6 +36,8 @@ const HomeNavigation = () => {
             <Stack.Screen name="EditClientScreen"  component={EditClientScreen} />
             <Stack.Screen name="ItemGroupScreen" component={ItemGroupScreen} />
             <Stack.Screen name="Cart" component={Cart} />
+            <Stack.Screen name="Quotation" component={Quotation} />
+            <Stack.Screen name="CommandeArticles" component={CommandeArticles} />
         </Stack.Navigator>
     );
 }

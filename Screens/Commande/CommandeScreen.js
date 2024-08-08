@@ -245,6 +245,9 @@ const CommandeScreen = () => {
                                           </View>
                                           <View style={{flexDirection:'column', marginEnd:20 , paddingLeft:20, marginLeft:10}}>
                                               <AntDesign name="edit" size={24} style={{paddingBottom:10}} color="black" />
+                                              <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center', backgroundColor:"#E59135", height:20, marginRight:10}}>
+                                                <Text style={{color:"#FFF"}} onPress={() => navigation.navigate('CommandeArticles', {CommandeName : item.name})}>View items</Text>
+                                              </TouchableOpacity>
                                           </View>
                                       </View>
                                   </View>
