@@ -5,7 +5,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 
 const CommandeArticles = ({navigation}) => {
     const route = useRoute();
-    const { commandeName } = route.params;
+    const { CommandeName } = route.params;
     const db = useSQLiteContext();
     const isFocused = useIsFocused();
 
@@ -14,21 +14,30 @@ const CommandeArticles = ({navigation}) => {
 
         const getSalesOrderItems = async () => {
             try{
-                const items = await db.getAllAsync(`SELECT * FROM Sales_Order_Item WHERE parent= ?`, [commandeName]);
+                const items = await db.getAllAsync(
+                    `SELECT * FROM Sales_Order_Item WHERE parent = ?;`,
+                    [CommandeName]
+                );
                 setSalesOrderItems(items);
             }catch(e){
-                console.log("Error getting sales order items from database",e)
+                console.log("Error getting sales order items from database",e);
             }
         };
 
         useEffect(() => {
             if(isFocused){
-                const initialize = async() => {
+                const initialize = async () => {
                     getSalesOrderItems();
                 };
             initialize();
             };
-        },[isFocused])
+        },[isFocused]);
+
+        // useEffect(() => {
+        //     if(salesOrderItems){
+        //         getSalesOrderItems();
+        //     };
+        // },[salesOrderItems]);
 
         return(
             <View>
@@ -42,9 +51,9 @@ const CommandeArticles = ({navigation}) => {
                             <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, margin:5}}>
                                 <View style={{marginBottom:10, marginStart:10}}>
                                     <Text style={{fontWeight:'bold'}}>{item.name}</Text>
-                                    <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>
+                                    <View style={{flexDirection:'column', justifyContent:'space-between', marginBottom:10}}>
                                         <Text>Item Name:{item.item_name}</Text>
-                                        <Text style={{fontWeight:'semibold'}}>Price:{item.rate}</Text>
+                                        <Text style={{fontWeight:'semibold'}}>Price Per One:{item.rate}</Text>
                                         <Text>Quantity:{item.qty}</Text>
                                         <Text>Total Price:{item.amount}</Text>
                                     </View>

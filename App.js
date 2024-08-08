@@ -23,6 +23,7 @@ async function initDatabase(db) {
     //   DROP TABLE IF EXISTS Sales_Order_Item;
     //   DROP TABLE IF EXISTS Quotation;
     //   DROP TABLE IF EXISTS Quotation_Item;
+    //   DROP TABLE IF EXISTS Tax_Categories;
     //  `
     // );
     await db.execAsync(`
@@ -658,6 +659,22 @@ async function initDatabase(db) {
           parentfield TEXT,
           parenttype TEXT,
           FOREIGN KEY (parent) REFERENCES Quotation(name) ON DELETE CASCADE ON UPDATE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS Tax_Categories(
+          name TEXT NOT NULL PRIMARY KEY,
+          creation DATE,
+          modified DATE,
+          modified_by TEXT,
+          owner TEXT DEFAULT "Administrator",
+          docstatus INTEGER DEFAULT 0,
+          idx INTEGER DEFAULT 0,
+          title TEXT,
+          disabled INTEGER DEFAULT 0,
+          user_tags TEXT,
+          _comments TEXT,
+          _assign TEXT,
+          _liked_by TEXT
         );
     `);
     console.log('Database initialized');

@@ -9,8 +9,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AntDesign } from '@expo/vector-icons';
 
 const CommandeScreen = () => {
-  const db = useSQLiteContext();
-
+    const db = useSQLiteContext();
     const navigation = useNavigation();
     const isFocused = useIsFocused();
 

@@ -114,7 +114,7 @@ const Cart = ({navigation}) => {
             if (existingHash !== newHash) {
 
                 await Promise.all(taxes.map(async (tax) => {
-                    await db.runAsync(`DELETE FROM Sales_Taxes_and_Charges WHERE name = ?;`, [tax.name]);
+                    await db.runAsync(`DELETE FROM Tax_Categories WHERE name = ?;`, [tax.name]);
                 }));
 
                 await saveInLocalTaxes(json.data);
@@ -130,28 +130,19 @@ const Cart = ({navigation}) => {
     const saveInLocalTaxes = async (taxes) => {
         try{
             await Promise.all(taxes.map(async (tax) => {
-              await db.runAsync(`INSERT OR REPLACE INTO Sales_Taxes_and_Charges
+              await db.runAsync(`INSERT OR REPLACE INTO Tax_Categories
                 (
-                  name, owner, creation, modified, modified_by,
-                  docstatus, idx, charge_type, row_id, account_head,
-                  description, included_in_print_rate, included_in_paid_amount, cost_center, rate,
-                  account_currency, tax_amount, total, tax_amount_after_discount_amount, base_tax_amount, base_total,
-                  base_tax_amount_after_discount_amount, item_wise_tax_detail, dont_recompute_tax, parent, parentfield,
-                  parenttype
+                    name, creation, modified, modified_by, owner,
+                    docstatus, idx, title, disabled, user_tags,
+                    _comments, _assign, _liked_by
                 ) VALUES (
                   ?, ?, ?, ?, ?,
                   ?, ?, ?, ?, ?,
-                  ?, ?, ?, ?, ?,
-                  ?, ?, ?, ?, ?, ?,
-                  ?, ?, ?, ?, ?,
-                  ?)`,
+                  ?, ?, ?)`,
                 [
-                  tax.name, tax.owner, tax.creation, tax.modified, tax.modified_by,
-                  tax.docstatus, tax.idx, tax.charge_type, tax.row_id, tax.account_head,
-                  tax.description, tax.included_in_print_rate, tax.included_in_paid_amount, tax.cost_center, tax.rate,
-                  tax.account_currency, tax.tax_amount, tax.total, tax.tax_amount_after_discount_amount, tax.base_tax_amount, tax.base_total,
-                  tax.base_tax_amount_after_discount_amount, tax.item_wise_tax_detail, tax.dont_recompute_tax, tax.parent, tax.parentfield,
-                  tax.parenttype
+                  tax.name, tax.creation, tax.modified, tax.modified_by, tax.owner,
+                  tax.docstatus, tax.idx, tax.title, tax.disabled, tax.user_tags,
+                  tax._comments, tax._assign, tax._liked_by 
                 ]
               );
             }));
@@ -162,7 +153,7 @@ const Cart = ({navigation}) => {
 
     const getTaxes = async () => {
         try{
-            const allTaxes = await db.getAllAsync(`SELECT * FROM Sales_Taxes_and_Charges;`);
+            const allTaxes = await db.getAllAsync(`SELECT * FROM Tax_Categories;`);
             setCharges(allTaxes);
         }catch(e){
             console.log("error retreiving taxes", e);
@@ -191,24 +182,6 @@ const Cart = ({navigation}) => {
     };
 
     console.log(generateItemTaxDetail(selectedItems));
-
-    const saveSalesOrderItems = async () => {
-        try{
-            await db.runAsync(`INSERT INTO Sales_Order_Item(
-
-                )`); //TODO SAVE THE SELECTED ITEMS TO SALES ORDER ITEMS
-        }catch(e){
-            console.log('Error saving sales order items', e);
-        }
-    };
-
-    const saveSales_Taxes_and_Charges = async () => {
-        try{
-            //TODO SAVE THE SELECTED SALES AND CHARGES
-        }catch(e){
-            console.log('Error saving sales order taxes and charges', e);
-        }
-    };
 
     const saveSalesOrder = async() => {
         try{
@@ -273,6 +246,7 @@ const Cart = ({navigation}) => {
                     "fr", 0,
                     "DA"
                 ]);
+                console.log(salesOrderName);
 
             await Promise.all(selectedItems.map(async (item)=> {
                 const sales_order_ItemName = 'new-sales-order-item-'+generateRandomName();
@@ -282,26 +256,25 @@ const Cart = ({navigation}) => {
                         item_code, item_name, description, qty, stock_uom,
                         rate, amount, base_rate, base_amount, warehouse,
                         delivered_qty, billed_amt, pending_qty,
-                        delivered_by_supplier, conversion_factor, pricing_rule, discount_percentage, gross_profit,
-                        against_blanket_order
+                        delivered_by_supplier, conversion_factor, pricing_rule, discount_percentage, gross_profit
                     ) VALUES (
                         ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?,
                         ?, ?, ?,
-                        ?, ?, ?, ?, ?,
-                        ?
+                        ?, ?, ?, ?, ?
                     )`,
                     [
                         sales_order_ItemName, salesOrderName, "items", "Sales Order", 1,
                         item.item_code, item.item_name, item.description, quantities[item.name], item.stock_uom,
                         item.standard_rate, calculateTotalPricePerItem(item), item.standard_rate, calculateTotalPricePerItem(item), "Entropot 1  - TH",
                         0, 0, 0,
-                        0, 1, "", 0, 0,
-                        null
+                        0, 1, "", 0, 0
                     ]);
                 }));
-            
+                
+            console.log(salesOrderName);
+               
             const sales_Taxes_and_ChargesName= 'new-sales-taxes-and-charges'+generateRandomName();
             await db.runAsync(`INSERT INTO Sales_Taxes_and_Charges(
                     name, owner,
