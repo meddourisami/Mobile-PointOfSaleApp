@@ -8,7 +8,7 @@ const ItemGroupScreen = ({navigation}) => {
   const db = useSQLiteContext();
   const isFocused = useIsFocused();
   const route = useRoute();
-  const {customerName} = route.params;
+  const {customer} = route.params;
 
   const Content = () => {
     const [item_groups, setItem_groups] = useState([]);
@@ -139,7 +139,7 @@ const ItemGroupScreen = ({navigation}) => {
           keyExtractor={(item, index) => index.toString()}
           numColumns={2}
           renderItem={({item, index}) => (
-            <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ArticleScreen', {ItemGroup : item.name, customerName})}>
+            <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ArticleScreen', {ItemGroup : item.name, customer : customer})}>
               <View>
                 {/* <Text style={{fontWeight:'bold'}}>Group Name</Text> */}
                 <Text style={{fontWeight:'bold'}}>{item.name}</Text>

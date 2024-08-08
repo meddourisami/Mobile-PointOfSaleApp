@@ -4,6 +4,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import * as CryptoJS from 'crypto-js';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { FontAwesome5 } from '@expo/vector-icons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AntDesign } from '@expo/vector-icons';
 
@@ -139,63 +140,63 @@ const CommandeScreen = () => {
             }
         };
 
-        const syncDataWithServer = async (saleOrder) => {
-            try {
-                const {
-                    name,
-                    customer_name,
-                    customer_type,
-                    customer_group,
-                    territory,
-                    custom_code,
-                    custom_address,
-                    custom_phone
-                } = saleOrder;
+        // const syncDataWithServer = async (saleOrder) => {
+        //     try {
+        //         const {
+        //             name,
+        //             customer_name,
+        //             customer_type,
+        //             customer_group,
+        //             territory,
+        //             custom_code,
+        //             custom_address,
+        //             custom_phone
+        //         } = saleOrder;
 
-                console.log(name);
+        //         console.log(name);
 
-                const data = {
-                    name,
-                    customer_name,
-                    customer_type,
-                    customer_group,
-                    territory,
-                    custom_code,
-                    custom_address,
-                    custom_phone,
-                    doctype: "Customer",
-                    __islocal: 1,
-                    owner: "Administrator",
-                };
+        //         const data = {
+        //             name,
+        //             customer_name,
+        //             customer_type,
+        //             customer_group,
+        //             territory,
+        //             custom_code,
+        //             custom_address,
+        //             custom_phone,
+        //             doctype: "Customer",
+        //             __islocal: 1,
+        //             owner: "Administrator",
+        //         };
 
-                console.log("data", JSON.stringify({
-                    "doc": JSON.stringify(data),  
-                    "action": "Save"
-                }));
+        //         console.log("data", JSON.stringify({
+        //             "doc": JSON.stringify(data),  
+        //             "action": "Save"
+        //         }));
 
-                const response = await fetch(
-                    'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
-                        {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
-                            },
-                            body: JSON.stringify({
-                                "doc": JSON.stringify(data),  
-                                "action": "Save"
-                            })
-                        }
-                    );
-                if(response.ok){
-                    console.log("Synced successfully");
-                }else{
-                    console.log("Error from the server", await response.text());
-                }
-            }catch(e){
-                console.log('Error saving data to server', e);
-            }
-        };
+        //         const response = await fetch(
+        //             'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
+        //                 {
+        //                     method: 'POST',
+        //                     headers: {
+        //                         'Content-Type': 'application/json',
+        //                         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
+        //                     },
+        //                     body: JSON.stringify({
+        //                         "doc": JSON.stringify(data),  
+        //                         "action": "Save"
+        //                     })
+        //                 }
+        //             );
+        //         if(response.ok){
+        //             console.log("Synced successfully");
+        //         }else{
+        //             console.log("Error from the server", await response.text());
+        //         }
+        //     }catch(e){
+        //         console.log('Error saving data to server', e);
+        //     }
+        // };
 
         const getSalesOrders = async () => {
             try{
@@ -237,15 +238,13 @@ const CommandeScreen = () => {
                                       <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>
                                           <View>
                                               <Text>{item.name}</Text>
-                                              <Text style={{fontWeight:'semibold'}}>Adresse:{item.custom_address}</Text>
-                                              <Text>Phone: {item.custom_phone}</Text>
+                                              <Text style={{fontWeight:'semibold'}}>Customer{item.customer}</Text>
+                                              <Text>Date: {item.transaction_date}</Text>
+                                              <Text>Total quantity: {item.total_qty}</Text>
+                                              <Text>Total amount: {item.grand_total}</Text>
                                           </View>
                                           <View style={{flexDirection:'column', marginEnd:20 , paddingLeft:20, marginLeft:10}}>
                                               <AntDesign name="edit" size={24} style={{paddingBottom:10}} color="black" />
-                                              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                  <FontAwesome5 name="sync" size={24} color="black" />
-                                                  <Text style={{width: 15,height: 15, borderRadius: 5, backgroundColor: item.synced === 1 ? 'green' : 'red', marginLeft: 5}} />
-                                              </View>
                                           </View>
                                       </View>
                                   </View>

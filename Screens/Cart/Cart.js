@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useIsFocused, useRoute } from '@react-navigation/native';
 import * as CryptoJS from 'crypto-js';
@@ -28,12 +28,37 @@ const Cart = ({navigation}) => {
         }));
     };
 
+    const calculateTotalQuantity = (quantities) => {
+        return Object.values(quantities).reduce((total, quantity) => total + quantity, 0);
+    }
+
     const calculateTotalPrice = () => {
         let total=cartItems.reduce((total, item) => (total + item.standard_rate) * quantities[item.name], 0);
         if (selectedTax) {
             total += total * (19 / 100);
         }
         return total.toFixed(2);
+    };
+
+    const calculateTotalPriceWithoutTax = () => {
+        let total=cartItems.reduce((total, item) => (total + item.standard_rate) * quantities[item.name], 0);
+        return total.toFixed(2);
+    };
+
+    const calculateTaxAmount = () => {
+        return (calculateTotalPrice() - calculateTotalPriceWithoutTax());
+    };
+
+    const calculateRoudingAdjustment  = (number) => {
+        if (Number.isInteger(number)) {
+            return 0;
+        }
+        const decimalPart = number - Math.round(number);
+        return -decimalPart;
+    };
+
+    const calculateRoundedTotal = (number) => {
+        return Math.round(number);
     };
 
     const handleTaxChange = (tax) => {
@@ -146,48 +171,88 @@ const Cart = ({navigation}) => {
         return result;
     }
 
-    let generatedName= generateRandomName();
-    console.log(generatedName);
-
     const saveSalesOrderItems = async () => {
         try{
-            await db.runAsync(``); //TODO SAVE THE SELECTED ITEMS TO SALES ORDER ITEMS
+            await db.runAsync(`INSERT INTO Sales_Order_Item(
+
+                )`); //TODO SAVE THE SELECTED ITEMS TO SALES ORDER ITEMS
         }catch(e){
             console.log('Error saving sales order items', e);
         }
     };
 
-    const saveSalesOrder = async => {
+    const saveSalesOrder = async() => {
         try{
-            // await db.runAsync(`INSERT INTO Sales_Order(
-            //     name, creation, modified, modified_by, owner,
-            //     docstatus, idx, title, naming_series, customer,
-            //     customer_name, tax_id, order_type, transaction_date, delivery_date,
-            //     po_no, po_date, company, skip_delivery_note, amended_from,
-            //     cost_center, project, currency, conversion_rate, selling_price_list,
-            //     price_list_currency, plc_conversion_rate, ignore_pricing_rule, scan_barcode, set_warehouse,
-            //     reserve_stock, total_qty, total_net_weight, base_total, base_net_total,
-            //     total, net_total, tax_category, taxes_and_charges, shipping_rule,
-            //     incoterm, named_place, base_total_taxes_and_charges, total_taxes_and_charges, base_grand_total,
-            //     base_rounding_adjustment, base_rounded_total, base_in_words, grand_total, rounding_adjustment,
-            //     rounded_total, in_words, advance_paid, disable_rounded_total, apply_discount_on,
-            //     base_discount_amount, coupon_code, additional_discount_percentage, discount_amount, other_charges_calculation,
-            //     customer_address, address_display, customer_group, territory, contact_person,
-            //     contact_display, contact_phone, contact_mobile, contact_email, shipping_address_name,
-            //     shipping_address, dispatch_address_name, dispatch_address, company_address, company_address_display,
-            //     payment_terms_template, tc_name, terms, status, delivery_status,
-            //     per_delivered, per_billed, per_picked, billing_status, sales_partner,
-            //     amount_eligible_for_commission, commission_rate, total_commission, loyalty_points, loyalty_amount,
-            //     from_date, to_date, auto_repeat, letter_head, group_same_items,
-            //     select_print_heading, language, is_internal_customer, represents_company, source,
-            //     inter_company_order_reference, campaign, party_account_currency, _user_tags, _comments,
-            //     _assign, _liked_by, _seen
-            // ) VALUES (?)`,
-            //     [])
+            const salesOrderName = 'new-sales-order-'+generateRandomName();
+            console.log(salesOrderName);
+            await db.runAsync(`INSERT INTO Sales_Order(
+                name, owner,
+                docstatus, title, naming_series, customer,
+                customer_name, order_type, transaction_date, delivery_date,
+                company, skip_delivery_note, currency, selling_price_list,
+                set_warehouse,
+                total_qty, total_net_weight, base_total, base_net_total,
+                total, net_total, tax_category, taxes_and_charges,
+                base_total_taxes_and_charges, total_taxes_and_charges, base_grand_total,
+                base_rounding_adjustment, base_rounded_total, base_in_words, grand_total, rounding_adjustment,
+                rounded_total, in_words, advance_paid, disable_rounded_total, apply_discount_on,
+                base_discount_amount, discount_amount,
+                customer_address, customer_group, territory,
+                status, delivery_status,
+                billing_status,
+                amount_eligible_for_commission,
+                group_same_items,
+                language, is_internal_customer,
+                party_account_currency
+            ) VALUES (
+                ?, ?,
+                ?, ?, ?, ?,
+                ?, ?, ?, ?,
+                ?, ?, ?, ?,
+                ?,
+                ?, ?, ?, ?,
+                ?, ?, ?, ?,
+                ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?,
+                ?, ?, ?,
+                ?, ?,
+                ?,
+                ?,
+                ?,
+                ?, ?,
+                ?
+            )`,
+                [
+                    salesOrderName, "Administrator",
+                    0, customer.name, "SAL-ORD-YYYY", customer.name,
+                    customer.name, "Sales Order", Date.now(), Date.now(),
+                    "Saadi", 0, "DA", "Standard Selling",
+                    "Entropot 1  - TH",
+                    calculateTotalQuantity(quantities), 0, calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(),
+                    calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), "", selectedTax.name,
+                    calculateTaxAmount(), calculateTaxAmount(), calculateTotalPrice(),
+                    calculateRoudingAdjustment(calculateTotalPrice()), calculateRoundedTotal(calculateTotalPrice()), "", calculateTotalPrice(), calculateRoudingAdjustment(calculateTotalPrice()),
+                    0, "", 0, 0, "Grand Total",
+                    0, 0,
+                    customer.custom_address, customer.custom_group, customer.territory,
+                    "Draft", "Not Delivered",
+                    "Not Billed",
+                    calculateTotalPriceWithoutTax(),
+                    0,
+                    "fr", 0,
+                    "DA"
+                ]);
         }catch(e){
             console.log('Error saving sales order', e);
         }
-    }
+    };
+
+    const handleSaveSaleOrder = () => {
+        saveSalesOrder();
+        Alert.alert('Saving sales order..');
+    };
 
     const saveQuotation = async => {
         try{
@@ -252,12 +317,12 @@ const Cart = ({navigation}) => {
                 >
                     <Picker.Item label="Selected Tax" value={null} />
                     {charges.map((tax) => (
-                        <Picker.Item key={tax.name} label={`${tax.name} - ${tax.rate}%`} value={tax} />
+                        <Picker.Item key={tax.name} label={`${tax.name}`} value={tax} />
                     ))}
                 </Picker>
                 <Text style={{ fontSize: 18 }}>Total: DA {calculateTotalPrice()}</Text>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 20 }}>
-                    <TouchableOpacity style={styles.button} onPress={()=>{navigation.navigate('CommandeScreen',cartItems, taxes, quantities)}}>
+                    <TouchableOpacity style={styles.button} onPress={handleSaveSaleOrder}>
                         <Text style={styles.buttonText}>Passer Commande</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.button}>

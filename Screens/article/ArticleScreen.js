@@ -262,7 +262,7 @@ const ArticleScreen = () => {
                             keyExtractor= {(item) => item.name}
                             renderItem={({item}) => (
                                 <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10, backgroundColor: "#FFF", borderRadius:15, margin:5}}>
-                                    <TouchableOpacity style={{borderRadius:15, margin:5}}>
+                                    <TouchableOpacity >
                                         <Text>
                                             {item.item_name} - {item.item_group}
                                         </Text>
@@ -323,7 +323,7 @@ const ArticleScreen = () => {
                     borderRadius: 5,
                     alignItems: 'center',
                 }}
-                onPress={() => navigation.navigate('Cart', { selectedItems : selecteditems , customer })}
+                onPress={() => navigation.navigate('Cart', { selectedItems : selecteditems , customer: customer })}
                 >
                     <Text style={{ color: '#FFF', fontSize: 18 }}>
                         {`Items: ${selecteditems.length}, Total: $${calculateTotalPrice().toFixed(2)}`}
