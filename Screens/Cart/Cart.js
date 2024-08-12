@@ -175,11 +175,8 @@ const Cart = ({navigation}) => {
     function generateItemTaxDetail(items) {
         const itemWiseTaxDetail = {};
         items.forEach((item, index) => {
-            // Assuming taxRates is an array of arrays like [[rate1, calcTax1], [rate2, calcTax2], ...]
             itemWiseTaxDetail[item.name] = [19, calculateTaxAmountPerItem(item)];
         });
-    
-        // Convert the object to a JSON string
         return JSON.stringify(itemWiseTaxDetail);
     };
 
@@ -187,8 +184,11 @@ const Cart = ({navigation}) => {
 
     const saveSalesOrder = async() => {
         try{
+            let currentCustomer = customer;
+            if(!currentCustomer){
+                currentCustomer = selectedClient;
+            }
             const salesOrderName = 'new-sales-order-'+generateRandomName();
-            console.log(salesOrderName);
             await db.runAsync(`INSERT INTO Sales_Order(
                 name, owner,
                 docstatus, title, naming_series, customer,
@@ -230,8 +230,8 @@ const Cart = ({navigation}) => {
             )`,
                 [
                     salesOrderName, "Administrator",
-                    0, customer.name, "SAL-ORD-YYYY", customer.name,
-                    customer.name, "Sales Order", Date(), Date(),
+                    0, currentCustomer.name, "SAL-ORD-YYYY", currentCustomer.name,
+                    currentCustomer.name, "Sales Order", Date(), Date(),
                     "Saadi", 0, "DA", "Standard Selling",
                     "Entropot 1  - TH",
                     calculateTotalQuantity(quantities), 0, calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(),
@@ -240,7 +240,7 @@ const Cart = ({navigation}) => {
                     calculateRoudingAdjustment(calculateTotalPrice()), calculateRoundedTotal(calculateTotalPrice()), "", calculateTotalPrice(), calculateRoudingAdjustment(calculateTotalPrice()),
                     0, "", 0, 0, "Grand Total",
                     0, 0,
-                    customer.custom_address, customer.custom_group, customer.territory,
+                    currentCustomer.custom_address, currentCustomer.custom_group, currentCustomer.territory,
                     "Draft", "Not Delivered",
                     "Not Billed",
                     calculateTotalPriceWithoutTax(),
@@ -251,7 +251,6 @@ const Cart = ({navigation}) => {
 
             await Promise.all(selectedItems.map(async (item)=> {
                 const sales_order_ItemName = 'new-sales-order-item-'+generateRandomName();
-                console.log(sales_order_ItemName);
                 await db.runAsync(`INSERT INTO Sales_Order_Item(
                         name, parent, parentfield, parenttype, idx,
                         item_code, item_name, description, qty, stock_uom,
@@ -400,14 +399,14 @@ const Cart = ({navigation}) => {
         Alert.alert('Saving quotation..');
     };
 
-    // const getClients = async () => {
-    //     try{
-    //         const allClients = await db.runAsync(`SELECT * FROM Customers;`);
-    //         setClients(allClients);
-    //     }catch(e){
-    //         console.log('Error retreiving clients', e);
-    //     }
-    // };
+    const getClients = async () => {
+        try{
+            const allClients = await db.getAllAsync(`SELECT * FROM Customers;`);
+            setClients(allClients);
+        }catch(e){
+            console.log('Error retreiving clients', e);
+        }
+    };
 
     useEffect(() => {   
         if(isFocused){

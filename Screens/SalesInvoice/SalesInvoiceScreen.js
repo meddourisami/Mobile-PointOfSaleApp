@@ -101,7 +101,9 @@ const SalesInvoiceScreen = ({navigation}) => {
                     ?, ?
                 )`,
                 [
-                    invoiceName, 
+                    invoiceName,
+
+                    commande.customer_name,
                 ]
             )
         }catch(e){
@@ -122,12 +124,21 @@ const SalesInvoiceScreen = ({navigation}) => {
 
   return (
     <View style={{alignItems:'center', flex:1}}>
-        {commande ? (
+        {commande && salesOrderItems && salesOrderTaxes ? (
             <>
-                <Text>Select Invoice Date: </Text>
-                <Text>Customer: {commande.customer}</Text>
-                <Text>Amount To Pay: {commande.grand_total} DA</Text>
-                <TextInput placeholder='Amount paid'></TextInput>
+                <TouchableOpacity style={{ borderRadius: 10, backgroundColor:"#FFF", padding: 20, justifyContent:'center'}}>
+                    <Text>Select Invoice Date: </Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{borderRadius: 10, backgroundColor:"#FFF", padding: 20, justifyContent:'center'}}>
+                    <Text>Customer: {commande.customer}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{borderRadius: 10, backgroundColor:"#FFF", padding: 40, justifyContent:'center'}}>
+                    <Text style={{margin:10}}>Amount To Pay: {commande.grand_total} DA</Text>
+                    <TextInput style={{padding:10}} placeholder='Amount paid'></TextInput>
+                </TouchableOpacity>
+                <TouchableOpacity style={{ borderRadius: 10, backgroundColor:"#FFF", padding: 20, justifyContent:'center'}}>
+                    <Text>Payment Method: </Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={{height:50 ,margin: 10, width:200, justifyContent:'center', backgroundColor:"#E59135", alignItems:'center', borderRadius:15}}>
                     <Text style={{color:"#FFF"}}>Complete Sale</Text>
                 </TouchableOpacity>
