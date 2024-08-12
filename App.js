@@ -676,6 +676,151 @@ async function initDatabase(db) {
           _assign TEXT,
           _liked_by TEXT
         );
+
+        CREATE TABLE IF NOT EXISTS Sales_Invoice (
+          name TEXT PRIMARY KEY UNIQUE NOT NULL, -- Unique identifier for the sales invoice
+          creation DATETIME, -- Creation timestamp
+          modified DATETIME, -- Last modified timestamp
+          modified_by TEXT, -- Last modified by
+          owner TEXT, -- Owner
+          docstatus INTEGER DEFAULT 0 NOT NULL, -- Document status
+          idx INTEGER DEFAULT 0 NOT NULL, -- Index
+          title TEXT, -- Title defaultcustomername ---------
+          naming_series TEXT, -- Naming series
+          customer TEXT, -- Reference to the customer
+          customer_name TEXT, -- Customer name
+          tax_id TEXT, -- Customer's tax ID
+          company_tax_id TEXT, -- Company's tax ID
+          posting_date DATE, -- Posting date
+          posting_time TIME, -- Posting time
+          set_posting_time INTEGER DEFAULT 0 NOT NULL, -- Set posting time
+          due_date DATE, -- Due date
+          is_pos INTEGER DEFAULT 0 NOT NULL, -- Is POS
+          is_consolidated INTEGER DEFAULT 0 NOT NULL, -- Is consolidated
+          is_return INTEGER DEFAULT 0 NOT NULL, -- Is return
+          return_against TEXT, -- Return against
+          update_outstanding_for_self INTEGER DEFAULT 1 NOT NULL, -- Update outstanding for self
+          update_billed_amount_in_sales_order INTEGER DEFAULT 0 NOT NULL, -- Update billed amount in sales order
+          update_billed_amount_in_delivery_note INTEGER DEFAULT 1 NOT NULL, -- Update billed amount in delivery note
+          is_debit_note INTEGER DEFAULT 0 NOT NULL, -- Is debit note
+          amended_from TEXT, -- Amended from
+          cost_center TEXT, -- Cost center
+          project TEXT, -- Project
+          currency TEXT, -- Currency
+          conversion_rate DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Conversion rate
+          selling_price_list VARCHAR(140), -- Selling price list
+          price_list_currency VARCHAR(140), -- Price list currency
+          plc_conversion_rate DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Price list conversion rate
+          ignore_pricing_rule INTEGER DEFAULT 0 NOT NULL, -- Ignore pricing rule
+          scan_barcode VARCHAR(140), -- Scan barcode
+          update_stock INTEGER DEFAULT 0 NOT NULL, -- Update stock
+          set_warehouse VARCHAR(140), -- Set warehouse
+          set_target_warehouse VARCHAR(140), -- Set target warehouse
+          total_qty DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Total quantity
+          total_net_weight DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Total net weight
+          base_total DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Base total
+          base_net_total DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Base net total
+          total DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Total
+          net_total DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Net total
+          tax_category VARCHAR(140), -- Tax category
+          taxes_and_charges VARCHAR(140), -- Taxes and charges
+          shipping_rule VARCHAR(140), -- Shipping rule
+          incoterm VARCHAR(140), -- Incoterm
+          named_place VARCHAR(140), -- Named place
+          base_total_taxes_and_charges DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Base total taxes and charges
+          total_taxes_and_charges DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Total taxes and charges
+          base_grand_total DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Base grand total
+          base_rounding_adjustment DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Base rounding adjustment
+          base_rounded_total DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Base rounded total
+          base_in_words TEXT, -- Base in words
+          grand_total DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Grand total
+          rounding_adjustment DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Rounding adjustment
+          use_company_roundoff_cost_center INTEGER DEFAULT 0 NOT NULL, -- Use company roundoff cost center
+          rounded_total DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Rounded total
+          in_words TEXT, -- In words
+          total_advance DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Total advance
+          outstanding_amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Outstanding amount
+          disable_rounded_total INT(1) DEFAULT 0 NOT NULL, -- Disable rounded total
+          apply_discount_on VARCHAR(15) DEFAULT 'Grand Total', -- Apply discount on
+          base_discount_amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Base discount amount
+          is_cash_or_non_trade_discount INTEGER DEFAULT 0 NOT NULL, -- Is cash or non-trade discount
+          additional_discount_account VARCHAR(140), -- Additional discount account
+          additional_discount_percentage DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Additional discount percentage
+          discount_amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Discount amount
+          other_charges_calculation TEXT, -- Other charges calculation
+          total_billing_hours DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Total billing hours
+          total_billing_amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Total billing amount
+          cash_bank_account VARCHAR(140), -- Cash bank account
+          base_paid_amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Base paid amount
+          paid_amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Paid amount
+          base_change_amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Base change amount
+          change_amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Change amount
+          account_for_change_amount VARCHAR(140), -- Account for change amount
+          allocate_advances_automatically INTEGER DEFAULT 0 NOT NULL, -- Allocate advances automatically
+          only_include_allocated_payments INTEGER DEFAULT 0 NOT NULL, -- Only include allocated payments
+          write_off_amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Write off amount
+          base_write_off_amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Base write off amount
+          write_off_outstanding_amount_automatically INTEGER DEFAULT 0 NOT NULL, -- Write off outstanding amount automatically
+          write_off_account VARCHAR(140), -- Write off account
+          write_off_cost_center VARCHAR(140), -- Write off cost center
+          redeem_loyalty_points INTEGER DEFAULT 0 NOT NULL, -- Redeem loyalty points
+          loyalty_points INTEGR DEFAULT 0 NOT NULL, -- Loyalty points
+          loyalty_amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Loyalty amount
+          loyalty_program VARCHAR(140), -- Loyalty program
+          loyalty_redemption_account VARCHAR(140), -- Loyalty redemption account
+          loyalty_redemption_cost_center VARCHAR(140), -- Loyalty redemption cost center
+          customer_address VARCHAR(140), -- Customer address
+          address_display TEXT, -- Address display
+          contact_person VARCHAR(140), -- Contact person
+          contact_display TEXT, -- Contact display
+          contact_mobile TEXT, -- Contact mobile
+          contact_email VARCHAR(140), -- Contact email
+          territory VARCHAR(140), -- Territory
+          shipping_address_name VARCHAR(140), -- Shipping address name
+          shipping_address TEXT, -- Shipping address
+          dispatch_address_name VARCHAR(140), -- Dispatch address name
+          dispatch_address TEXT, -- Dispatch address
+          company_address VARCHAR(140), -- Company address
+          company_address_display TEXT, -- Company address display
+          ignore_default_payment_terms_template INTEGER DEFAULT 0 NOT NULL, -- Ignore default payment terms template
+          payment_terms_template VARCHAR(140), -- Payment terms template
+          tc_name VARCHAR(140), -- Terms and conditions name
+          terms TEXT, -- Terms
+          po_no VARCHAR(140), -- Purchase order number
+          po_date DATE, -- Purchase order date
+          debit_to VARCHAR(140), -- Debit to
+          party_account_currency VARCHAR(140), -- Party account currency
+          is_opening VARCHAR(4) DEFAULT 'No', -- Is opening
+          unrealized_profit_loss_account VARCHAR(140), -- Unrealized profit/loss account
+          against_income_account TEXT, -- Against income account
+          sales_partner VARCHAR(140), -- Sales partner
+          amount_eligible_for_commission DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Amount eligible for commission
+          commission_rate DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Commission rate
+          total_commission DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL, -- Total commission
+          letter_head VARCHAR(140), -- Letter head
+          group_same_items INTEGER DEFAULT 0 NOT NULL, -- Group same items
+          select_print_heading VARCHAR(140), -- Select print heading
+          language VARCHAR(6), -- Language
+          subscription VARCHAR(140), -- Subscription
+          from_date DATE, -- From date
+          auto_repeat VARCHAR(140), -- Auto repeat
+          to_date DATE, -- To date
+          status VARCHAR(30) DEFAULT 'Draft', -- Status
+          inter_company_invoice_reference VARCHAR(140), -- Inter-company invoice reference
+          campaign VARCHAR(140), -- Campaign
+          represents_company VARCHAR(140), -- Represents company
+          source VARCHAR(140), -- Source
+          customer_group VARCHAR(140), -- Customer group
+          is_internal_customer INTEGER DEFAULT 0 NOT NULL, -- Is internal customer
+          is_discounted INTEGR DEFAULT 0 NOT NULL, -- Is discounted
+          remarks TEXT, -- Remarks
+          repost_required INTEGER DEFAULT 0 NOT NULL, -- Repost required
+          _user_tags TEXT, -- User tags
+          _comments TEXT, -- Comments
+          _assign TEXT, -- Assign
+          _liked_by TEXT, -- Liked_by
+          _seen TEXT -- Seen
+        );
     `);
     console.log('Database initialized');
   }catch(error){

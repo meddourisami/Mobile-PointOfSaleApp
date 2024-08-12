@@ -786,8 +786,7 @@ const HomeScreen = () => {
           item_tax_rate TEXT,
           additional_notes TEXT,
           page_break INTEGER DEFAULT 0 NOT NULL,
-          parent TEXT,
-          
+          parent TEXT,         
           parentfield TEXT,
           parenttype TEXT,
           FOREIGN KEY (parent) REFERENCES Quotation(name) ON DELETE CASCADE ON UPDATE CASCADE

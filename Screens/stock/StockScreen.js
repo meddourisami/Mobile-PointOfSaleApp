@@ -209,7 +209,7 @@ const StockScreen = ({navigation}) => {
                   ) : (
                       <FlatList 
                           data ={stocks}
-                          keyExtractor={(item) => item.name}
+                          keyExtractor={(item, index) => item.name}
                           renderItem={({item}) => (
                               <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10}}>
                                   <View style={{marginBottom:10, marginStart:10}}>
@@ -217,8 +217,8 @@ const StockScreen = ({navigation}) => {
                                       <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>
                                           <View>
                                               <Text>{item.name}</Text>
-                                              <Text style={{fontWeight:'semibold'}}>Adresse:{item.company}</Text>
-                                              <Text>Phone: {item.warehouse_type}</Text>
+                                              <Text style={{fontWeight:'semibold'}}>Company:{item.company}</Text>
+                                              <Text>Type: {item.warehouse_type}</Text>
                                           </View>
                                       </View>
                                   </View>
@@ -242,6 +242,7 @@ const StockScreen = ({navigation}) => {
               size={35} 
               color="#284979" 
               style={styles.iconAdd} 
+              onPress={() => navigation.navigate('AddStockScreen')}
           />
       </View>
   );

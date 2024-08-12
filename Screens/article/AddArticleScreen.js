@@ -8,7 +8,7 @@ const AddArticleScreen = ({navigation}) => {
     const [item, setItem] = useState({
         name:'',
         item_name:'',
-        custom_invoicing_unit_price:'',
+        standard_rate:'',
         item_group:'',
         country_of_origin:'',
         item_code:'',
@@ -40,14 +40,14 @@ const AddArticleScreen = ({navigation}) => {
           newItem.item_code === '' || 
           newItem.opening_stock === '' || 
           newItem.description === '' ||
-          newItem.custom_invoicing_unit_price === ''
+          newItem.standard_rate === ''
         ) {
           Alert.alert('Entrer toutes les données');
           return;
         }
         try {
-            await db.runAsync('INSERT INTO Item (name, item_name, item_group, country_of_origin, item_code, opening_stock, description, custom_invoicing_unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [newItem.name, newItem.item_name, newItem.item_group, newItem.country_of_origin, newItem.item_code, newItem.opening_stock, newItem.description, newItem.custom_invoicing_unit_price]
+            await db.runAsync('INSERT INTO Item (name, item_name, item_group, country_of_origin, item_code, opening_stock, description, standard_rate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                [newItem.name, newItem.item_name, newItem.item_group, newItem.country_of_origin, newItem.item_code, newItem.opening_stock, newItem.description, newItem.standard_rate]
             );
             await getItems();
             Alert.alert('Item added successfully');
@@ -107,8 +107,8 @@ const AddArticleScreen = ({navigation}) => {
             />
             <TextInput
             placeholder="Item Price"
-            value={item.custom_invoicing_unit_price}
-            onChangeText={(text) => setItem({ ...item, custom_invoicing_unit_price: text })}
+            value={item.standard_rate}
+            onChangeText={(text) => setItem({ ...item, standard_rate: text })}
             style={styles.input}
             />
             <View style={{marginBottom:50}}>

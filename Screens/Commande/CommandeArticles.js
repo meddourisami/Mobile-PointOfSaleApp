@@ -53,7 +53,7 @@ const CommandeArticles = ({navigation}) => {
                                     <Text style={{fontWeight:'bold'}}>{item.name}</Text>
                                     <View style={{flexDirection:'column', justifyContent:'space-between', marginBottom:10}}>
                                         <Text>Item Name:{item.item_name}</Text>
-                                        <Text style={{fontWeight:'semibold'}}>Price Per One:{item.rate}</Text>
+                                        <Text style={{fontWeight:'semibold'}}>Item Price:{item.rate}</Text>
                                         <Text>Quantity:{item.qty}</Text>
                                         <Text>Total Price:{item.amount}</Text>
                                     </View>
@@ -69,7 +69,7 @@ const CommandeArticles = ({navigation}) => {
 
   return (
     <View>
-      <Text>Liste des articles Commandées</Text>
+      <Text style={{fontSize: 24}}>Liste des articles Commandées</Text>
       <Content />
     </View>
   )

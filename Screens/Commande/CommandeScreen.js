@@ -3,10 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import * as CryptoJS from 'crypto-js';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { FontAwesome5 } from '@expo/vector-icons';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { AntDesign } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 const CommandeScreen = () => {
     const db = useSQLiteContext();
@@ -86,7 +84,7 @@ const CommandeScreen = () => {
         const saveInLocalSalesOrders = async (salesOrders) => {
           try{
             await Promise.all(salesOrders.map(async (saleOrder) => {
-              await db.runAsync(`INSERT OR REPLACE INTO SalesOrder 
+              await db.runAsync(`INSERT OR REPLACE INTO Sales_Order 
                 (
                   name, creation, modified, modified_by, owner,
                   docstatus, idx, title, naming_series, customer,
@@ -115,22 +113,48 @@ const CommandeScreen = () => {
                   ?, ?, ?, ?, ?,
                   ?, ?, ?, ?, ?,
                   ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?, ?, ?,
+                  ?, ?, ?
                   )`,
                             [
-                                customer.name, customer.creation, customer.modified, customer.modified_by, customer.owner,
-                                customer.docstatus, customer.idx, customer.naming_series, customer.salutation, customer.customer_name, customer.customer_type,
-                                customer.customer_group, customer.territory, customer.gender, customer.lead_name, customer.opportunity_name,
-                                customer.account_manager, customer.image, customer.default_price_list, customer.default_bank_account, customer.default_currency,
-                                customer.is_internal_customer, customer.represents_company, customer.market_segment, customer.industry, customer.customer_pos_id,
-                                customer.website, customer.language, customer.customer_details, customer.customer_primary_contact, customer.mobile_no,
-                                customer.email_id, customer.customer_primary_address, customer.primary_address, customer.tax_id, customer.tax_category,
-                                customer.tax_withholding_category, customer.payment_terms, customer.loyalty_program, customer.loyalty_program_tier, customer.default_sales_partner,
-                                customer.default_commission_rate, customer.so_required, customer.dn_required, customer.is_frozen, customer.disabled,
-                                customer._user_tags, customer._comments, customer._assign, customer._liked_by, customer.custom_nrc,
-                                customer.custom_nic, customer.custom_nai, customer.custom_code, customer.custom_address, customer.custom_phone,
-                                customer.custom_nif, customer.custom_stateprovince, customer.custom_fax, customer.custom_activity, customer.custom_email_address,
-                                customer.custom_credit_limit, customer.custom_register, customer.custom_deadlines_to_max_in_nb_day, customer.custom_total_unpaid, customer.custom_capital_stock,
-                                customer.custom_item, customer_synced
+                                saleOrder.name, saleOrder.creation, saleOrder.modified, saleOrder.modified_by, saleOrder.owner,
+                                saleOrder.docstatus, saleOrder.idx, saleOrder.title, saleOrder.naming_series, saleOrder.customer,
+                                saleOrder.customer_name, saleOrder.tax_id, saleOrder.order_type, saleOrder.transaction_date, saleOrder.delivery_date,
+                                saleOrder.po_no, saleOrder.po_date, saleOrder.company, saleOrder.skip_delivery_note, saleOrder.amended_from,
+                                saleOrder.cost_center, saleOrder.project, saleOrder.currency, saleOrder.conversion_rate, saleOrder.selling_price_list,
+                                saleOrder.price_list_currency, saleOrder.plc_conversion_rate, saleOrder.ignore_pricing_rule, saleOrder.scan_barcode, saleOrder.set_warehouse,
+                                saleOrder.reserve_stock, saleOrder.total_qty, saleOrder.total_net_weight, saleOrder.base_total, saleOrder.base_net_total,
+                                saleOrder.total, saleOrder.net_total, saleOrder.tax_category, saleOrder.taxes_and_charges, saleOrder.shipping_rule,
+                                saleOrder.incoterm, saleOrder.named_place, saleOrder.base_total_taxes_and_charges, saleOrder.total_taxes_and_charges, saleOrder.base_grand_total,
+                                saleOrder.base_rounding_adjustment, saleOrder.base_rounded_total, saleOrder.base_in_words, saleOrder.grand_total, saleOrder.rounding_adjustment,
+                                saleOrder.rounded_total, saleOrder.in_words, saleOrder.advance_paid, saleOrder.disable_rounded_total, saleOrder.apply_discount_on,
+                                saleOrder.base_discount_amount, saleOrder.coupon_code, saleOrder.additional_discount_percentage, saleOrder.discount_amount, saleOrder.other_charges_calculation,
+                                saleOrder.customer_address, saleOrder.address_display, saleOrder.customer_group, saleOrder.territory, saleOrder.contact_person,
+                                saleOrder.contact_display, saleOrder.contact_phone, saleOrder.contact_mobile, saleOrder.contact_email, saleOrder.shipping_address_name,
+                                saleOrder.shipping_address, saleOrder.dispatch_address_name, saleOrder.dispatch_address, saleOrder.company_address, saleOrder.company_address_display,
+                                saleOrder.payment_terms_template, saleOrder.tc_name, saleOrder.terms, saleOrder.status, saleOrder.delivery_status,
+                                saleOrder.per_delivered, saleOrder.per_billed, saleOrder.per_picked, saleOrder.billing_status, saleOrder.sales_partner,
+                                saleOrder.amount_eligible_for_commission, saleOrder.commission_rate, saleOrder.total_commission, saleOrder.loyalty_points, saleOrder.loyalty_amount,
+                                saleOrder.from_date, saleOrder.to_date, saleOrder.auto_repeat, saleOrder.letter_head, saleOrder.group_same_items,
+                                saleOrder.select_print_heading, saleOrder.language, saleOrder.is_internal_customer, saleOrder.represents_company, saleOrder.source,
+                                saleOrder.inter_company_order_reference, saleOrder.campaign, saleOrder.party_account_currency, saleOrder._user_tags, saleOrder._comments,
+                                saleOrder._assign, saleOrder._liked_by, saleOrder._seen
                             ]
                         );
                 }));
@@ -139,63 +163,50 @@ const CommandeScreen = () => {
             }
         };
 
-        // const syncDataWithServer = async (saleOrder) => {
-        //     try {
-        //         const {
-        //             name,
-        //             customer_name,
-        //             customer_type,
-        //             customer_group,
-        //             territory,
-        //             custom_code,
-        //             custom_address,
-        //             custom_phone
-        //         } = saleOrder;
+        const syncDataWithServer = async (saleOrder) => {
+            try {
+                const {
+                    name,
+                } = saleOrder;
 
-        //         console.log(name);
+                console.log(name);
 
-        //         const data = {
-        //             name,
-        //             customer_name,
-        //             customer_type,
-        //             customer_group,
-        //             territory,
-        //             custom_code,
-        //             custom_address,
-        //             custom_phone,
-        //             doctype: "Customer",
-        //             __islocal: 1,
-        //             owner: "Administrator",
-        //         };
+                const data = {
+                    name,
+                    customer_name,
+                    doctype: "Sale Order",
+                    __islocal: 1,
+                    owner: "Administrator",
+                };
 
-        //         console.log("data", JSON.stringify({
-        //             "doc": JSON.stringify(data),  
-        //             "action": "Save"
-        //         }));
+                console.log("data", JSON.stringify({
+                    "doc": JSON.stringify(data),  
+                    "action": "Save"
+                }));
 
-        //         const response = await fetch(
-        //             'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
-        //                 {
-        //                     method: 'POST',
-        //                     headers: {
-        //                         'Content-Type': 'application/json',
-        //                         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
-        //                     },
-        //                     body: JSON.stringify({
-        //                         "doc": JSON.stringify(data),  
-        //                         "action": "Save"
-        //                     })
-        //                 }
-        //             );
-        //         if(response.ok){
-        //             console.log("Synced successfully");
-        //         }else{
-        //             console.log("Error from the server", await response.text());
-        //         }
-        //     }catch(e){
-        //         console.log('Error saving data to server', e);
-        //     }
-        // };
+                const response = await fetch(
+                    'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
+                            },
+                            body: JSON.stringify({
+                                "doc": JSON.stringify(data),  
+                                "action": "Save"
+                            })
+                        }
+                    );
+                if(response.ok){
+                    console.log("Synced successfully");
+                }else{
+                    console.log("Error from the server", await response.text());
+                }
+            }catch(e){
+                console.log('Error saving sale order to the server', e);
+            }
+        };
 
         const getSalesOrders = async () => {
             try{
@@ -209,7 +220,8 @@ const CommandeScreen = () => {
         useEffect(() => {   
             if(isFocused){
                 const initialize = async () => {
-                    getSalesOrdersfromAPI();
+                    createMetadataTable();
+                    // getSalesOrderfromAPI();
                     getSalesOrders();
                 };
                 initialize();
@@ -231,22 +243,25 @@ const CommandeScreen = () => {
                           data ={salesOrders}
                           keyExtractor={(item) => item.name}
                           renderItem={({item}) => (
-                              <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10}}>
+                              <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, marginRight:5}} onPress={() => navigation.navigate('SalesInvoiceScreen',{commandeName: item.name})}>
                                   <View style={{marginBottom:10, marginStart:10}}>
                                       <Text style={{fontWeight:'bold'}}>{item.name}</Text>
                                       <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>
-                                          <View>
+                                          <View style={{}}>
                                               <Text>{item.name}</Text>
                                               <Text style={{fontWeight:'semibold'}}>Customer{item.customer}</Text>
                                               <Text>Date: {item.transaction_date}</Text>
                                               <Text>Total quantity: {item.total_qty}</Text>
                                               <Text>Total amount: {item.grand_total}</Text>
                                           </View>
-                                          <View style={{flexDirection:'column', marginEnd:20 , paddingLeft:20, marginLeft:10}}>
-                                              <AntDesign name="edit" size={24} style={{paddingBottom:10}} color="black" />
-                                              <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center', backgroundColor:"#E59135", height:20, marginRight:10}}>
+                                          <View style={{flexDirection:'column', marginEnd:20 , marginLeft:10}}>
+                                              <AntDesign name="edit" size={24} style={{paddingBottom:10, marginLeft:18}} color="black" />
+                                              <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center', backgroundColor:"#E59135", height:20, marginRight:20}}>
                                                 <Text style={{color:"#FFF"}} onPress={() => navigation.navigate('CommandeArticles', {CommandeName : item.name})}>View items</Text>
                                               </TouchableOpacity>
+                                              <View style={{ flexDirection: 'row', alignItems: 'center' , paddingTop:10}}>
+                                                 <FontAwesome5 name="sync" size={24} color="black" style={{marginLeft:18}} />
+                                              </View>
                                           </View>
                                       </View>
                                   </View>
@@ -260,20 +275,8 @@ const CommandeScreen = () => {
   };
   return (
     <View>
-      <Text>Liste des commandes</Text>
-      <Content />
-            <FontAwesome 
-            name="edit"
-            size={35} 
-            color="#284979" 
-            style={styles.iconEdit}
-            />
-            <MaterialIcons 
-            name="delete"
-            size={35} 
-            color="#284979" 
-            style={styles.iconDelete}
-            />
+      <Text style={{fontSize:24}}>Liste des commandes</Text>
+      <Content />     
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useIsFocused, useRoute } from '@react-navigation/native';
 import * as CryptoJS from 'crypto-js';
@@ -7,7 +7,7 @@ import { Picker } from '@react-native-picker/picker';
 
 const Cart = ({navigation}) => {
     const route = useRoute();
-    const { selectedItems, customer } = route.params;
+    const { selectedItems, customer } = route.params || {};
     const isFocused = useIsFocused();
     const db = useSQLiteContext();
 
@@ -16,6 +16,8 @@ const Cart = ({navigation}) => {
     const [taxes, setTaxes] = useState([]);
     const [charges, setCharges] = useState([]);
     const [selectedTax, setSelectedTax] = useState(null);
+    const [selectedClient, setSelectedClient] = useState(null);
+    const [clients, setClients] = useState([]);
 
     const handleRemoveItem = (itemToRemove) => {
         setCartItems(cartItems.filter(item => item.name !== itemToRemove.name));
@@ -33,7 +35,7 @@ const Cart = ({navigation}) => {
     }
 
     const calculateTotalPrice = () => {
-        let total=cartItems.reduce((total, item) => (total + item.standard_rate) * quantities[item.name], 0);
+        let total=cartItems.reduce((total, item) => (total + (item.standard_rate * quantities[item.name])),0);
         if (selectedTax) {
             total += total * (19 / 100);
         }
@@ -41,7 +43,7 @@ const Cart = ({navigation}) => {
     };
 
     const calculateTotalPriceWithoutTax = () => {
-        let total=cartItems.reduce((total, item) => (total + item.standard_rate) * quantities[item.name], 0);
+        let total=cartItems.reduce((total, item) => (total + (item.standard_rate * quantities[item.name])), 0);
         return total.toFixed(2);
     };
 
@@ -246,7 +248,6 @@ const Cart = ({navigation}) => {
                     "fr", 0,
                     "DA"
                 ]);
-                console.log(salesOrderName);
 
             await Promise.all(selectedItems.map(async (item)=> {
                 const sales_order_ItemName = 'new-sales-order-item-'+generateRandomName();
@@ -272,8 +273,6 @@ const Cart = ({navigation}) => {
                         0, 1, "", 0, 0
                     ]);
                 }));
-                
-            console.log(salesOrderName);
                
             const sales_Taxes_and_ChargesName= 'new-sales-taxes-and-charges'+generateRandomName();
             await db.runAsync(`INSERT INTO Sales_Taxes_and_Charges(
@@ -401,12 +400,22 @@ const Cart = ({navigation}) => {
         Alert.alert('Saving quotation..');
     };
 
+    // const getClients = async () => {
+    //     try{
+    //         const allClients = await db.runAsync(`SELECT * FROM Customers;`);
+    //         setClients(allClients);
+    //     }catch(e){
+    //         console.log('Error retreiving clients', e);
+    //     }
+    // };
+
     useEffect(() => {   
         if(isFocused){
             const initialize = async () => {
                 createMetadataTable();
                 getTaxesfromAPI();
                 getTaxes();
+                getClients();
             };
             initialize();
         }
@@ -447,6 +456,22 @@ const Cart = ({navigation}) => {
                 )}
             />
             <View style={{ padding: 10 }}>
+            {!customer && (
+                    <View style={{ marginBottom: 20 }}>
+                        <Text style={{ fontSize: 18 }}>Select Customer:</Text>
+                        <Picker
+                        selectedValue={selectedClient}
+                        onValueChange={(itemValue, itemIndex) => {
+                        setSelectedClient(itemValue)
+                            }}
+                        >
+                            <Picker.Item label="Selected Customer" value={null} />
+                            {clients.map((client) => (
+                                <Picker.Item key={client.name} label={`${client.name}`} value={client} />
+                            ))}
+                        </Picker>
+                    </View>
+                )}
             <Text style={{ fontSize: 18 }}>Select Tax:</Text>
                 <Picker
                 selectedValue={selectedTax}

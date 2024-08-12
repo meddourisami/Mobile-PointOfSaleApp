@@ -267,7 +267,7 @@ const ArticleScreen = () => {
                                             {item.item_name} - {item.item_group}
                                         </Text>
                                         <Text>On Stock {item.opening_stock}</Text>
-                                        <Text>Prix de vente : {item.custom_invoicing_unit_price}</Text>
+                                        <Text>Prix de vente : {item.standard_rate}</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center', backgroundColor:"#E59135", height:20, marginRight:10}} onPress={() => handleAddItemToCart(item)}>
                                         <Text style={{color:"#FFF"}}>Add to cart</Text>

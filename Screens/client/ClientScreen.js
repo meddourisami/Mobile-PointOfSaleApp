@@ -5,9 +5,6 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { AntDesign } from '@expo/vector-icons';
 import * as CryptoJS from 'crypto-js';
 import { FontAwesome5 } from '@expo/vector-icons';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-
 
 const ClientScreen = () => {
     const db = useSQLiteContext();
