@@ -24,6 +24,9 @@ async function initDatabase(db) {
     //   DROP TABLE IF EXISTS Quotation;
     //   DROP TABLE IF EXISTS Quotation_Item;
     //   DROP TABLE IF EXISTS Tax_Categories;
+    //   DROP TABLE IF EXISTS Sales_Invoice;
+    //   DROP TABLE IF EXISTS Sales_Invoice_Item;
+    //   DROP TABLE IF EXISTS Sales_Invoice_Payment;
     //  `
     // );
     await db.execAsync(`
@@ -820,6 +823,115 @@ async function initDatabase(db) {
           _assign TEXT, -- Assign
           _liked_by TEXT, -- Liked_by
           _seen TEXT -- Seen
+        );
+
+        CREATE TABLE IF NOT EXISTS Sales_Invoice_Item (
+          name TEXT PRIMARY KEY NOT NULL UNIQUE, -- Unique identifier for the sales invoice item
+          creation DATETIME, -- Creation timestamp
+          modified DATETIME, -- Last modified timestamp
+          modified_by TEXT, -- Last modified by
+          owner TEXT, -- Owner
+          docstatus INTEGER DEFAULT 0 NOT NULL, -- Document status
+          idx INTEGER DEFAULT 0 NOT NULL, -- Index
+          barcode TEXT, -- Barcode
+          has_item_scanned INTEGER DEFAULT 0 NOT NULL, -- Has item scanned
+          item_code TEXT, -- Item code
+          item_name TEXT, -- Item name
+          customer_item_code TEXT, -- Customer item code
+          description TEXT, -- Description
+          item_group TEXT, -- Item group
+          brand TEXT, -- Brand
+          image TEXT, -- Image
+          qty REAL DEFAULT 0.000000000 NOT NULL, -- Quantity
+          stock_uom TEXT, -- Stock unit of measurement
+          uom TEXT, -- Unit of measurement
+          conversion_factor REAL DEFAULT 0.000000000 NOT NULL, -- Conversion factor
+          stock_qty REAL DEFAULT 0.000000000 NOT NULL, -- Stock quantity
+          price_list_rate REAL DEFAULT 0.000000000 NOT NULL, -- Price list rate
+          base_price_list_rate REAL DEFAULT 0.000000000 NOT NULL, -- Base price list rate
+          margin_type TEXT, -- Margin type
+          margin_rate_or_amount REAL DEFAULT 0.000000000 NOT NULL, -- Margin rate or amount
+          rate_with_margin REAL DEFAULT 0.000000000 NOT NULL, -- Rate with margin
+          discount_percentage REAL DEFAULT 0.000000000 NOT NULL, -- Discount percentage
+          discount_amount REAL DEFAULT 0.000000000 NOT NULL, -- Discount amount
+          base_rate_with_margin REAL DEFAULT 0.000000000 NOT NULL, -- Base rate with margin
+          rate REAL DEFAULT 0.000000000 NOT NULL, -- Rate
+          amount REAL DEFAULT 0.000000000 NOT NULL, -- Amount
+          item_tax_template TEXT, -- Item tax template
+          base_rate REAL DEFAULT 0.000000000 NOT NULL, -- Base rate
+          base_amount REAL DEFAULT 0.000000000 NOT NULL, -- Base amount
+          pricing_rules TEXT, -- Pricing rules
+          stock_uom_rate REAL DEFAULT 0.000000000 NOT NULL, -- Stock UOM rate
+          is_free_item INTEGER DEFAULT 0 NOT NULL, -- Is free item
+          grant_commission INTEGER DEFAULT 0 NOT NULL, -- Grant commission
+          net_rate REAL DEFAULT 0.000000000 NOT NULL, -- Net rate
+          net_amount REAL DEFAULT 0.000000000 NOT NULL, -- Net amount
+          base_net_rate REAL DEFAULT 0.000000000 NOT NULL, -- Base net rate
+          base_net_amount REAL DEFAULT 0.000000000 NOT NULL, -- Base net amount
+          delivered_by_supplier INTEGER DEFAULT 0 NOT NULL, -- Delivered by supplier
+          income_account TEXT, -- Income account
+          is_fixed_asset INTEGER DEFAULT 0 NOT NULL, -- Is fixed asset
+          asset TEXT, -- Asset
+          finance_book TEXT, -- Finance book
+          expense_account TEXT, -- Expense account
+          discount_account TEXT, -- Discount account
+          deferred_revenue_account TEXT, -- Deferred revenue account
+          service_stop_date DATE, -- Service stop date
+          enable_deferred_revenue INTEGER DEFAULT 0 NOT NULL, -- Enable deferred revenue
+          service_start_date DATE, -- Service start date
+          service_end_date DATE, -- Service end date
+          weight_per_unit REAL DEFAULT 0.000000000 NOT NULL, -- Weight per unit
+          total_weight REAL DEFAULT 0.000000000 NOT NULL, -- Total weight
+          weight_uom TEXT, -- Weight unit of measurement
+          warehouse TEXT, -- Warehouse
+          target_warehouse TEXT, -- Target warehouse
+          quality_inspection TEXT, -- Quality inspection
+          serial_and_batch_bundle TEXT, -- Serial and batch bundle
+          use_serial_batch_fields INTEGER DEFAULT 0 NOT NULL, -- Use serial batch fields
+          allow_zero_valuation_rate INTEGER DEFAULT 0 NOT NULL, -- Allow zero valuation rate
+          incoming_rate REAL DEFAULT 0.000000000 NOT NULL, -- Incoming rate
+          item_tax_rate TEXT, -- Item tax rate
+          actual_batch_qty REAL DEFAULT 0.000000000 NOT NULL, -- Actual batch quantity
+          actual_qty REAL DEFAULT 0.000000000 NOT NULL, -- Actual quantity
+          serial_no TEXT, -- Serial number
+          batch_no TEXT, -- Batch number
+          sales_order TEXT, -- Sales order
+          so_detail TEXT, -- Sales order detail
+          sales_invoice_item TEXT, -- Sales invoice item
+          delivery_note TEXT, -- Delivery note
+          dn_detail TEXT, -- Delivery note detail
+          delivered_qty REAL DEFAULT 0.000000000 NOT NULL, -- Delivered quantity
+          purchase_order TEXT, -- Purchase order
+          purchase_order_item TEXT, -- Purchase order item
+          cost_center TEXT, -- Cost center
+          project TEXT, -- Project
+          page_break INTEGER DEFAULT 0 NOT NULL, -- Page break
+          parent TEXT, -- Parent
+          parentfield TEXT, -- Parent field
+          parenttype TEXT, -- Parent type
+          FOREIGN KEY (parent) REFERENCES Sales_Invoice(name)
+        );
+
+        CREATE TABLE IF NOT EXISTS Sales_Invoice_Payment (
+          name TEXT PRIMARY KEY UNIQUE NOT NULL, 
+          creation DATETIME,
+          modified DATETIME,
+          modified_by TEXT,
+          owner TEXT,
+          docstatus INTEGER DEFAULT 0 NOT NULL,
+          idx INTEGER DEFAULT 0 NOT NULL,
+          "default" INTEGER DEFAULT 0 NOT NULL,
+          mode_of_payment TEXT,
+          amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL,
+          reference_no TEXT,
+          account TEXT,
+          type TEXT,
+          base_amount DECIMAL(21, 9) DEFAULT 0.000000000 NOT NULL,
+          clearance_date DATE,
+          parent TEXT,
+          parentfield TEXT,
+          parenttype TEXT,
+          FOREIGN KEY (parent) REFERENCES Sales_Invoice(name)
         );
     `);
     console.log('Database initialized');

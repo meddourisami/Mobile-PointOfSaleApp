@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import React, { useState , useEffect } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -15,6 +15,8 @@ const ClientScreen = () => {
     const Content =  () => {
         const [clients , setClients] = useState([]);
         const [customers , setCustomers] = useState([]);
+        const [filteredClients, setFilteredClients] = useState(clients);
+        const [searchQuery, setSearchQuery] = useState('');
         //const [displayData , setDisplayData] = useState([]);
 
         const getHash = (data) => {
@@ -54,10 +56,10 @@ const ClientScreen = () => {
                 //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
                 //     },
                 // });
-                const response = await fetch('http://195.201.138.202:8006/api/resource/Customer?fields=["*"]', {
+                const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
                     method: 'GET',
                     headers: {
-                        'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
+                        'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
                     },
                 });
                 const json = await response.json();
@@ -215,6 +217,16 @@ const ClientScreen = () => {
             }
         };
 
+        const handleSearch = (query) => {
+            setSearchQuery(query);
+            if (query === '') {
+                setFilteredClients(clients);
+            } else {
+                const filtered = clients.filter(client => client.name.toLowerCase().includes(query.toLowerCase()));
+                setFilteredClients(filtered);
+            }
+        };
+
         useEffect(() => {   
             if(isFocused){
                 const initialize = async () => {
@@ -242,19 +254,32 @@ const ClientScreen = () => {
 
         return (
             <View>
-                    {clients.length=== 0 ? (
+                <TextInput
+                    placeholder="Search Clients"
+                    value={searchQuery}
+                    onChangeText={handleSearch}
+                    style={{
+                        height: 40,
+                        borderColor: '#ccc',
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        marginBottom: 10,
+                        paddingHorizontal: 10
+                    }}
+                />
+                    {clients.length === 0 ? (
                         <Text>No data yet.</Text>
                     ) : (
                         <FlatList 
                             data ={clients}
                             keyExtractor={(item) => item.name}
                             renderItem={({item}) => (
-                                <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, margin:5}} onPress={() => navigation.navigate('ItemGroupScreen', { customer: item })}>
+                                <TouchableOpacity key={item.name} style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, margin:5}} onPress={() => navigation.navigate('ItemGroupScreen', { customer: item })}>
                                     <View style={{marginBottom:10, marginStart:10}}>
-                                        <Text style={{fontWeight:'bold'}}>{item.name}</Text>
+                                        <Text key={item.name} style={{fontWeight:'bold'}}>{item.name}</Text>
                                         <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>
                                             <View>
-                                                <Text>{item.name}</Text>
+                                                <Text key={item.name}>{item.name}</Text>
                                                 <Text style={{fontWeight:'semibold'}}>Adresse:{item.custom_address}</Text>
                                                 <Text>Phone: {item.custom_phone}</Text>
                                             </View>

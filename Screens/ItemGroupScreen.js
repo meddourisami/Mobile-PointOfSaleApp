@@ -33,12 +33,14 @@ const ItemGroupScreen = ({navigation}) => {
 
     const getItemGroupsFromApi = async () => {
       try{
-        const response = await fetch('http://195.201.138.202:8006/api/method/frappe.desk.reportview.get', 
+        //const response = await fetch('http://195.201.138.202:8006/api/method/frappe.desk.reportview.get', 
+        const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
+              // 'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
+              'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
             },
             body: JSON.stringify({
               "doctype": "Item Group",

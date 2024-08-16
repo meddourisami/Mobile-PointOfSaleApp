@@ -15,9 +15,11 @@ const Cart = ({navigation}) => {
     const [quantities, setQuantities] = useState({});
     const [taxes, setTaxes] = useState([]);
     const [charges, setCharges] = useState([]);
-    const [selectedTax, setSelectedTax] = useState(null);
+    const [selectedTax, setSelectedTax] = useState({"_assign": null, "_comments": null, "_liked_by": null, "creation": "2024-07-05 11:14:01.617601", "disabled": 0, "docstatus": 0, "idx": 76, "modified": "2024-07-05 11:14:01.617601", "modified_by": "seif@gmail.com", 
+        "name": "Tunisia VAT 18% - ICD", "owner": "seif@gmail.com", "title": "Tunisia VAT 18%", "user_tags": null});
     const [selectedClient, setSelectedClient] = useState(null);
     const [clients, setClients] = useState([]);
+    const [updatedTaxes, setUpdatedTaxes] = useState([]);
 
     const handleRemoveItem = (itemToRemove) => {
         setCartItems(cartItems.filter(item => item.name !== itemToRemove.name));
@@ -37,10 +39,10 @@ const Cart = ({navigation}) => {
     const calculateTotalPrice = () => {
         let total=cartItems.reduce((total, item) => (total + (item.standard_rate * quantities[item.name])),0);
         if (selectedTax) {
-            total += total * (19 / 100);
+            total += total * (getTaxRate(selectedTax) / 100);
         }
         return total.toFixed(2);
-    };
+    };  
 
     const calculateTotalPriceWithoutTax = () => {
         let total=cartItems.reduce((total, item) => (total + (item.standard_rate * quantities[item.name])), 0);
@@ -52,7 +54,7 @@ const Cart = ({navigation}) => {
     };
 
     const calculateTaxAmountPerItem = (item) => {
-        return (calculateTotalPricePerItem(item) * (19/100));
+        return (calculateTotalPricePerItem(item) * (getTaxRate(selectedTax)/100));
     }
 
     const calculateRoudingAdjustment  = (number) => {
@@ -71,9 +73,10 @@ const Cart = ({navigation}) => {
         return (item.standard_rate * quantities[item.name]);
     }
 
-    const handleTaxChange = (tax) => {
-        setSelectedTax(tax);
-    };
+    const getTaxRate = (tax) => {
+        const match = tax.title.match(/\d+/);
+        return match ? parseInt(match[0], 10) : null;
+    }
 
     useEffect(() => {
         const initialQuantities = {};
@@ -100,15 +103,69 @@ const Cart = ({navigation}) => {
         }
     };
 
+    function transformJson(data) { const keys = data.message.keys; const values = data.message.values; return values.map(entry => { let obj = {}; keys.forEach((key, index) => { obj[key] = entry[index]; }); return obj; }); }
+
     const getTaxesfromAPI = async () => {
+        // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+        //     },
+        //     body: {
+        //         "doctype": "Sales Taxes and Charges Template",
+        //         "fields": ["*"],
+        //         "filters": [],
+        //         "order_by": "`tabSales Taxes and Charges Template`.`modified` asc",
+        //         "start": 0,
+        //         "page_length": 20,
+        //         "view": "List",
+        //         "group_by": null,
+        //         "with_comment_count": 1
+        //     }
+        // });
+
+        // const json = await response.json();
+        // console.log(transformJson(json));
+        //console.log("jkù",json);
         try{
-            const response = await fetch('http://195.201.138.202:8006/api/resource/Tax Category?fields=["*"]', {
+            // const response = await fetch('http://195.201.138.202:8006/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
+            //     method: 'GET',
+            //     headers: {
+            //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
+            //     },
+            // });
+            const response = await fetch('http://192.168.100.6:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
                 method: 'GET',
                 headers: {
-                    'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
+                    'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
                 },
             });
+
+            // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+            //     },
+            //     body:
+            //         {
+            //             "doctype": "Sales Taxes and Charges Template",
+            //             "fields": [
+            //               "*"
+            //             ],
+            //               "filters": [
+                          
+            //             ],
+            //             "order_by": "`tabSales Taxes and Charges Template`.`modified` asc",
+            //             "start": 0,
+            //             "page_length": 20,
+            //             "view": "List",
+            //             "group_by": null,
+            //             "with_comment_count": 1
+            //         }
+                
+            // });
             const json = await response.json();
+            console.log(json);
             
             const newHash = getHash(json.data);
 
@@ -131,20 +188,24 @@ const Cart = ({navigation}) => {
 
     const saveInLocalTaxes = async (taxes) => {
         try{
+
             await Promise.all(taxes.map(async (tax) => {
               await db.runAsync(`INSERT OR REPLACE INTO Tax_Categories
                 (
                     name, creation, modified, modified_by, owner,
-                    docstatus, idx, title, disabled, user_tags,
-                    _comments, _assign, _liked_by
+                    docstatus, idx, title, is_default, disabled,
+                    company, tax_category, user_tags, _comments, _assign,
+                    _liked_by
                 ) VALUES (
                   ?, ?, ?, ?, ?,
                   ?, ?, ?, ?, ?,
-                  ?, ?, ?)`,
+                  ?, ?, ?, ?, ?,
+                  ?)`,
                 [
-                  tax.name, tax.creation, tax.modified, tax.modified_by, tax.owner,
-                  tax.docstatus, tax.idx, tax.title, tax.disabled, tax.user_tags,
-                  tax._comments, tax._assign, tax._liked_by 
+                    tax.name, tax.creation, tax.modified, tax.modified_by, tax.owner,
+                    tax.docstatus, tax.idx, tax.title, tax.is_default, tax.disabled,
+                    tax.company, tax.tax_category,  tax.user_tags, tax._comments, tax._assign,
+                    tax._liked_by 
                 ]
               );
             }));
@@ -155,7 +216,8 @@ const Cart = ({navigation}) => {
 
     const getTaxes = async () => {
         try{
-            const allTaxes = await db.getAllAsync(`SELECT * FROM Tax_Categories;`);
+            const allTaxes = await db.getAllAsync(`SELECT * FROM Tax_Categories WHERE company= ?`,["Ites Company (Demo)"]);
+            console.log(allTaxes);
             setCharges(allTaxes);
         }catch(e){
             console.log("error retreiving taxes", e);
@@ -175,12 +237,17 @@ const Cart = ({navigation}) => {
     function generateItemTaxDetail(items) {
         const itemWiseTaxDetail = {};
         items.forEach((item, index) => {
-            itemWiseTaxDetail[item.name] = [19, calculateTaxAmountPerItem(item)];
+            itemWiseTaxDetail[item.name] = [getTaxRate(selectedTax), calculateTaxAmountPerItem(item)];
         });
         return JSON.stringify(itemWiseTaxDetail);
     };
 
-    console.log(generateItemTaxDetail(selectedItems));
+    function formatAccountHead(input) {
+        // Regular expression to match the pattern "VAT 18% - ICD"
+        const regex = /VAT \d+% - ICD/;
+        const match = input.match(regex);
+        return match ? match[0] : null;
+    };
 
     const saveSalesOrder = async() => {
         try{
@@ -188,6 +255,7 @@ const Cart = ({navigation}) => {
             if(!currentCustomer){
                 currentCustomer = selectedClient;
             }
+            const currentDate = new Date();
             const salesOrderName = 'new-sales-order-'+generateRandomName();
             await db.runAsync(`INSERT INTO Sales_Order(
                 name, owner,
@@ -230,10 +298,10 @@ const Cart = ({navigation}) => {
             )`,
                 [
                     salesOrderName, "Administrator",
-                    0, currentCustomer.name, "SAL-ORD-YYYY", currentCustomer.name,
-                    currentCustomer.name, "Sales Order", Date(), Date(),
-                    "Saadi", 0, "DA", "Standard Selling",
-                    "Entropot 1  - TH",
+                    0, currentCustomer.name, "SAL-ORD-"+currentDate.getFullYear()+"-", currentCustomer.name,
+                    currentCustomer.name, "Sales", currentDate.toISOString().split('T')[0], currentDate.toISOString().split('T')[0],
+                    "Ites Company (Demo)", 0, "TND", "Standard Selling", ///TODO API COMPANY --------------------- "Saadi", 0, "DA", "Standard Selling" 
+                    "Magasin Fille 1 - ICD", //TODO API WAREHOUSE -------------------- "Entropot 1  - TH"
                     calculateTotalQuantity(quantities), 0, calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(),
                     calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), "", selectedTax.name,
                     calculateTaxAmount(), calculateTaxAmount(), calculateTotalPrice(),
@@ -245,8 +313,8 @@ const Cart = ({navigation}) => {
                     "Not Billed",
                     calculateTotalPriceWithoutTax(),
                     0,
-                    "fr", 0,
-                    "DA"
+                    "en", 0, // TODO API LANGUANGE --------------- "fr"
+                    "TND" // TODO API CURRENCY GET ALL ------------ "DA"
                 ]);
 
             await Promise.all(selectedItems.map(async (item)=> {
@@ -267,7 +335,7 @@ const Cart = ({navigation}) => {
                     [
                         sales_order_ItemName, salesOrderName, "items", "Sales Order", 1,
                         item.item_code, item.item_name, item.description, quantities[item.name], item.stock_uom,
-                        item.standard_rate, calculateTotalPricePerItem(item), item.standard_rate, calculateTotalPricePerItem(item), "Entropot 1  - TH",
+                        item.standard_rate, calculateTotalPricePerItem(item), item.standard_rate, calculateTotalPricePerItem(item), "Magasin Fille 1 - ICD", ///TODO API WAREHOUSE ------------ Entropot 1  - TH
                         0, 0, 0,
                         0, 1, "", 0, 0
                     ]);
@@ -291,106 +359,97 @@ const Cart = ({navigation}) => {
                 )`,
                 [
                     sales_Taxes_and_ChargesName, "Administrator",
-                    0, 1, "On Net Total", null, selectedTax.name,
-                    selectedTax.name, 0, 0, "", 19,
+                    0, 1, "On Net Total", null, formatAccountHead(selectedTax.name),
+                    selectedTax.name, 0, 0, "", getTaxRate(selectedTax),
                     null, calculateTaxAmount(), calculateTotalPrice(), calculateTaxAmount(), calculateTaxAmount(),
                     calculateTotalPrice(), calculateRoundedTotal(), generateItemTaxDetail(selectedItems, selectedTax), 0, salesOrderName,
                     "taxes", "Sales Order"
-                ])
+                ]);
         }catch(e){
             console.log('Error saving sales order', e);
         }
     };
 
     const handleSaveSaleOrder = () => {
-        saveSalesOrder();
-        Alert.alert('Saving sales order..');
-    };
-
-    const saveQuotation = async () => {
         try{
-            const quotationName = 'new-sales-order-'+generateRandomName();
-            console.log(salesOrderName);
-            await db.runAsync(`INSERT INTO Sales_Order(
-                name, owner,
-                docstatus, title, naming_series, customer,
-                customer_name, order_type, transaction_date, delivery_date,
-                company, skip_delivery_note, currency, selling_price_list,
-                set_warehouse,
-                total_qty, total_net_weight, base_total, base_net_total,
-                total, net_total, tax_category, taxes_and_charges,
-                base_total_taxes_and_charges, total_taxes_and_charges, base_grand_total,
-                base_rounding_adjustment, base_rounded_total, base_in_words, grand_total, rounding_adjustment,
-                rounded_total, in_words, advance_paid, disable_rounded_total, apply_discount_on,
-                base_discount_amount, discount_amount,
-                customer_address, customer_group, territory,
-                status, delivery_status,
-                billing_status,
-                amount_eligible_for_commission,
-                group_same_items,
-                language, is_internal_customer,
-                party_account_currency
-            ) VALUES (
-                ?, ?,
-                ?, ?, ?, ?,
-                ?, ?, ?, ?,
-                ?, ?, ?, ?,
-                ?,
-                ?, ?, ?, ?,
-                ?, ?, ?, ?,
-                ?, ?, ?,
-                ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?,
-                ?, ?,
-                ?, ?, ?,
-                ?, ?,
-                ?,
-                ?,
-                ?,
-                ?, ?,
-                ?
-            )`,
-                [
-                    quotationName, "Administrator",
-                    0, customer.name, "SAL-ORD-YYYY", customer.name,
-                    customer.name, "Sales Order", Date(), Date(),
-                    "Saadi", 0, "DA", "Standard Selling",
-                    "Entropot 1  - TH",
-                    calculateTotalQuantity(quantities), 0, calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(),
-                    calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), "", selectedTax.name,
-                    calculateTaxAmount(), calculateTaxAmount(), calculateTotalPrice(),
-                    calculateRoudingAdjustment(calculateTotalPrice()), calculateRoundedTotal(calculateTotalPrice()), "", calculateTotalPrice(), calculateRoudingAdjustment(calculateTotalPrice()),
-                    0, "", 0, 0, "Grand Total",
-                    0, 0,
-                    customer.custom_address, customer.custom_group, customer.territory,
-                    "Draft", "Not Delivered",
-                    "Not Billed",
-                    calculateTotalPriceWithoutTax(),
-                    0,
-                    "fr", 0,
-                    "DA"
-                ]);
-
+            saveSalesOrder();
+            navigation.navigate('CommandeScreen');
+            Alert.alert('Saving sales order..');
         }catch(e){
-            console.log('Error saving quotation', e);
+            Alert.alert('Error saving sales order..');
+            console.log('Error saving sales order', e);
         }
     };
 
-    const saveQuotationItems = async () => {
-        try{
+    // const saveQuotation = async () => {
+    //     try{
+    //         const quotationName = 'new-sales-order-'+generateRandomName();
+    //         console.log(salesOrderName);
+    //         await db.runAsync(`INSERT INTO Sales_Order(
+    //             name, owner,
+    //             docstatus, title, naming_series, customer,
+    //             customer_name, order_type, transaction_date, delivery_date, 
+    //             company, skip_delivery_note, currency, selling_price_list,
+    //             set_warehouse,
+    //             total_qty, total_net_weight, base_total, base_net_total,
+    //             total, net_total, tax_category, taxes_and_charges,
+    //             base_total_taxes_and_charges, total_taxes_and_charges, base_grand_total,
+    //             base_rounding_adjustment, base_rounded_total, base_in_words, grand_total, rounding_adjustment,
+    //             rounded_total, in_words, advance_paid, disable_rounded_total, apply_discount_on,
+    //             base_discount_amount, discount_amount,
+    //             customer_address, customer_group, territory,
+    //             status, delivery_status,
+    //             billing_status,
+    //             amount_eligible_for_commission,
+    //             group_same_items,
+    //             language, is_internal_customer,
+    //             party_account_currency
+    //         ) VALUES (
+    //             ?, ?,
+    //             ?, ?, ?, ?,
+    //             ?, ?, ?, ?,
+    //             ?, ?, ?, ?,
+    //             ?,
+    //             ?, ?, ?, ?,
+    //             ?, ?, ?, ?,
+    //             ?, ?, ?,
+    //             ?, ?, ?, ?, ?,
+    //             ?, ?, ?, ?, ?,
+    //             ?, ?,
+    //             ?, ?, ?,
+    //             ?, ?,
+    //             ?,
+    //             ?,
+    //             ?,
+    //             ?, ?,
+    //             ?
+    //         )`,
+    //             [
+    //                 quotationName, "Administrator",
+    //                 0, customer.name, "SAL-ORD-YYYY", customer.name,
+    //                 customer.name, "Sales Order", Date(), Date(),
+    //                 "Saadi", 0, "DA", "Standard Selling",
+    //                 "Entropot 1  - TH",
+    //                 calculateTotalQuantity(quantities), 0, calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(),
+    //                 calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), "", selectedTax.name,
+    //                 calculateTaxAmount(), calculateTaxAmount(), calculateTotalPrice(),
+    //                 calculateRoudingAdjustment(calculateTotalPrice()), calculateRoundedTotal(calculateTotalPrice()), "", calculateTotalPrice(), calculateRoudingAdjustment(calculateTotalPrice()),
+    //                 0, "", 0, 0, "Grand Total",
+    //                 0, 0,
+    //                 customer.custom_address, customer.custom_group, customer.territory,
+    //                 "Draft", "Not Delivered",
+    //                 "Not Billed",
+    //                 calculateTotalPriceWithoutTax(),
+    //                 0,
+    //                 "fr", 0,
+    //                 "DA"
+    //             ]);
 
-        }catch(e){
-            console.log("Error saving quotation items", e);
-        }
-    };
+    //     }catch(e){
+    //         console.log('Error saving quotation', e);
+    //     }
+    // };
 
-    const saveQuotation_Taxes_and_Charges = async () => {
-        try{
-
-        }catch(e){
-            console.log("Error saving quotation taxes and charges", e);
-        }
-    };
 
     const handleSaveQuotation = () => {
         saveQuotation();
@@ -408,12 +467,60 @@ const Cart = ({navigation}) => {
         }
     };
 
+    const getUpdatedTaxes = () => {
+        setUpdatedTaxes([
+            {
+                "name": "Tunisia VAT 12% - ICD",
+                "owner": "seif@gmail.com",
+                "creation": "2024-07-05 11:14:01.904282",
+                "modified": "2024-07-05 11:14:01.904282",
+                "modified_by": "seif@gmail.com",
+                "docstatus": 0,
+                "idx": 0,
+                "title": "Tunisia VAT 12%",
+                "is_default": 0,
+                "disabled": 0,
+                "company": "Ites Company (Demo)",
+                "tax_category": null
+            },
+            {
+                "name": "Tunisia VAT 18% - ICD",
+                "owner": "seif@gmail.com",
+                "creation": "2024-07-05 11:14:01.617601",
+                "modified": "2024-07-05 11:14:01.617601",
+                "modified_by": "seif@gmail.com",
+                "docstatus": 0,
+                "idx": 76,
+                "title": "Tunisia VAT 18%",
+                "is_default": 1,
+                "disabled": 0,
+                "company": "Ites Company (Demo)",
+                "tax_category": null
+            },
+            {
+                "name": "Tunisia VAT 6% - ICD",
+                "owner": "seif@gmail.com",
+                "creation": "2024-07-05 11:14:02.091507",
+                "modified": "2024-07-05 11:14:02.091507",
+                "modified_by": "seif@gmail.com",
+                "docstatus": 0,
+                "idx": 0,
+                "title": "Tunisia VAT 6%",
+                "is_default": 0,
+                "disabled": 0,
+                "company": "Ites Company (Demo)",
+                "tax_category": null
+            }
+        ]);
+    };
+
     useEffect(() => {   
         if(isFocused){
             const initialize = async () => {
                 createMetadataTable();
-                getTaxesfromAPI();
-                getTaxes();
+                //getTaxesfromAPI();
+                //getTaxes();
+                getUpdatedTaxes();
                 getClients();
             };
             initialize();
@@ -475,7 +582,7 @@ const Cart = ({navigation}) => {
                 <Picker
                 selectedValue={selectedTax}
                 onValueChange={(itemValue, itemIndex) => {
-                    setSelectedTax(itemValue)
+                    setSelectedTax(itemValue);
                 }}
                 >
                     <Picker.Item label="Selected Tax" value={null} />

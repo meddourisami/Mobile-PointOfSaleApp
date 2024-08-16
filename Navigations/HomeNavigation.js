@@ -18,6 +18,7 @@ import Quotation from '../Screens/Quotation/Quotation';
 import CommandeArticles from '../Screens/Commande/CommandeArticles';
 import AddStockScreen from '../Screens/stock/AddStockScreen';
 import SalesInvoiceScreen from '../Screens/SalesInvoice/SalesInvoiceScreen';
+import PaymentDetails from '../Screens/paiment/PaymentDetails';
 
 
 const Stack = createNativeStackNavigator();
@@ -42,6 +43,7 @@ const HomeNavigation = () => {
             <Stack.Screen name="CommandeArticles" component={CommandeArticles} />
             <Stack.Screen name="AddStockScreen" component={AddStockScreen} />
             <Stack.Screen name="SalesInvoiceScreen" component={SalesInvoiceScreen} />
+            <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
         </Stack.Navigator>
     );
 }

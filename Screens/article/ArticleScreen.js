@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -16,6 +16,7 @@ const ArticleScreen = () => {
     const Content = () => {
         const [items, setItems] = useState([]);
         const [articles, setArticles] = useState([]);
+        const [searchQuery, setSearchQuery] = useState('');
 
         const getHash = (data) => {
             return CryptoJS.MD5(JSON.stringify(data)).toString();
@@ -36,12 +37,18 @@ const ArticleScreen = () => {
 
         const getItemsFromApi = async () =>{
             try{
-                const response = await fetch('http://195.201.138.202:8006/api/resource/Item?fields=["*"]', {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
-                        },
-                    });
+                // const response = await fetch('http://195.201.138.202:8006/api/resource/Item?fields=["*"]', {
+                //         method: 'GET',
+                //         headers: {
+                //             'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
+                //         },
+                //     });
+                const response = await fetch('http://192.168.100.6:8002/api/resource/Item?fields=["*"]', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                    },
+                });
 
                 const json = await response.json();
                 //console.log(json.data);
@@ -212,22 +219,6 @@ const ArticleScreen = () => {
             };
         };
 
-        // const addItemToCart = async (item) => {
-        //     setSelecteditems((selecteditems) => [...selecteditems, item]);
-        // };
-
-        // const handleAddItemToCart = async (item) => {
-        //     try {
-        //         await addItemToCart(item);
-        //     } catch (e) {
-        //         console.log("error adding item to cart", e);
-        //     }
-        // };
-
-        // const calculateTotalPrice = () => {
-        //     return selectedIiems.reduce((total, item) => total + item.custom_invoicing_unit_price, 0);
-        // };
-
         useEffect(()=>{
             if(isFocused){
                 //createMetadataTable();
@@ -254,6 +245,18 @@ const ArticleScreen = () => {
 
         return(
             <View>
+                {/* <TextInput
+                    placeholder="Search Articles"
+                    value={searchQuery}
+                    style={{
+                        height: 40,
+                        borderColor: '#ccc',
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        marginBottom: 10,
+                        paddingHorizontal: 10
+                    }}
+                /> */}
                 {articles.length === 0 ? (
                         <Text>No data yet.</Text>
                     ) : (
@@ -299,22 +302,9 @@ const ArticleScreen = () => {
   return (
     <View>
         <Text style={{fontSize:24}}>Liste des articles</Text>
-            <View>
-                <Content />
-            </View>
-            <View>
-                <AntDesign 
-                name="pluscircle" 
-                size={35} 
-                color="#284979" 
-                style={styles.icon} 
-                onPress={() => navigation.navigate('AddArticleScreen')}
-                />
-            </View>
-            {selecteditems.length > 0 && (
+        {selecteditems.length > 0 && (
                 <TouchableOpacity
                 style={{
-                    position: 'absolute',
                     bottom: 20,
                     left: 20,
                     right: 20,
@@ -330,6 +320,18 @@ const ArticleScreen = () => {
                     </Text>
                 </TouchableOpacity>
             )}
+            <View>
+                <Content />
+            </View>
+            <View>
+                <AntDesign 
+                name="pluscircle" 
+                size={35} 
+                color="#284979" 
+                style={styles.icon} 
+                onPress={() => navigation.navigate('AddArticleScreen')}
+                />
+            </View>
     </View>
   );
 }
