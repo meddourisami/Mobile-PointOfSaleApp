@@ -211,7 +211,7 @@ const ClientScreen = () => {
             try{
                 const allClients = await db.getAllAsync(`SELECT * FROM Customers;`);
                 setClients(allClients);
-                //setDisplayData(allClients);
+                setFilteredClients(allClients);
             }catch(e){
                 console.log("error retreiving clients", e);
             }
@@ -225,6 +225,7 @@ const ClientScreen = () => {
                 const filtered = clients.filter(client => client.name.toLowerCase().includes(query.toLowerCase()));
                 setFilteredClients(filtered);
             }
+            ///TODO: CLEAN FILTERED CLIENTS SEARCH
         };
 
         useEffect(() => {   
@@ -246,11 +247,11 @@ const ClientScreen = () => {
             }
         }, [isFocused]);
 
-        useEffect(() => {
-            if (clients) {
-                getClients();
-            }
-        }, [clients]);
+        // useEffect(() => {
+        //     if (clients) {
+        //         getClients();
+        //     }
+        // }, [clients]);
 
         return (
             <View>
@@ -258,20 +259,13 @@ const ClientScreen = () => {
                     placeholder="Search Clients"
                     value={searchQuery}
                     onChangeText={handleSearch}
-                    style={{
-                        height: 40,
-                        borderColor: '#ccc',
-                        borderWidth: 1,
-                        borderRadius: 10,
-                        marginBottom: 10,
-                        paddingHorizontal: 10
-                    }}
+                    style={styles.searchInput}
                 />
                     {clients.length === 0 ? (
                         <Text>No data yet.</Text>
                     ) : (
                         <FlatList 
-                            data ={clients}
+                            data ={filteredClients}
                             keyExtractor={(item) => item.name}
                             renderItem={({item}) => (
                                 <TouchableOpacity key={item.name} style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, margin:5}} onPress={() => navigation.navigate('ItemGroupScreen', { customer: item })}>
@@ -345,5 +339,13 @@ const styles = StyleSheet.create({
     },
     items: {
         backgroundColor: '#fff',
+    },
+    searchInput: {
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 10,
+        marginBottom: 10,
+        paddingHorizontal: 10
     },
 })

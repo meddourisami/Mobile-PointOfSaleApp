@@ -509,9 +509,7 @@ async function initDatabase(db) {
           discount_percentage REAL DEFAULT 0.0 NOT NULL,
           gross_profit REAL DEFAULT 0.0 NOT NULL,
           gross_margin REAL DEFAULT 0.0 NOT NULL,
-          against_blanket_order TEXT,
-          FOREIGN KEY(parent) REFERENCES Sales_Order(name),
-          FOREIGN KEY(item_code) REFERENCES Item(item_code)
+          against_blanket_order TEXT      
         );
 
         CREATE TABLE IF NOT EXISTS Quotation (
@@ -660,8 +658,7 @@ async function initDatabase(db) {
           page_break INTEGER DEFAULT 0 NOT NULL,
           parent TEXT,         
           parentfield TEXT,
-          parenttype TEXT,
-          FOREIGN KEY (parent) REFERENCES Quotation(name) ON DELETE CASCADE ON UPDATE CASCADE
+          parenttype TEXT
         );
 
         CREATE TABLE IF NOT EXISTS Tax_Categories(
@@ -673,7 +670,10 @@ async function initDatabase(db) {
           docstatus INTEGER DEFAULT 0,
           idx INTEGER DEFAULT 0,
           title TEXT,
+          is_default INTEGER DEFAULT 0,
           disabled INTEGER DEFAULT 0,
+          company TEXT,
+          tax_category TEXT,
           user_tags TEXT,
           _comments TEXT,
           _assign TEXT,
@@ -908,8 +908,7 @@ async function initDatabase(db) {
           page_break INTEGER DEFAULT 0 NOT NULL, -- Page break
           parent TEXT, -- Parent
           parentfield TEXT, -- Parent field
-          parenttype TEXT, -- Parent type
-          FOREIGN KEY (parent) REFERENCES Sales_Invoice(name)
+          parenttype TEXT
         );
 
         CREATE TABLE IF NOT EXISTS Sales_Invoice_Payment (
@@ -930,8 +929,7 @@ async function initDatabase(db) {
           clearance_date DATE,
           parent TEXT,
           parentfield TEXT,
-          parenttype TEXT,
-          FOREIGN KEY (parent) REFERENCES Sales_Invoice(name)
+          parenttype TEXT
         );
     `);
     console.log('Database initialized');

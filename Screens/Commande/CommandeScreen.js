@@ -122,16 +122,6 @@ const CommandeScreen = () => {
                                 })
                             }
                         );
-                        // const response = await axios.post('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs', {
-                        //     "doc": log.data,  
-                        //     "action": "Save"
-                        // }, {
-                        //     headers: {
-                        //         'Content-Type': 'application/json',
-                        //         'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
-                        //     }
-                        //   }
-                        // )
                         
                         // const response = await fetch(
                         //     'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
@@ -148,23 +138,43 @@ const CommandeScreen = () => {
                         //     }
                         // );
                         if(response.ok){
-                            //await db.runAsync(`DELETE FROM CustomerLocalLogs WHERE id = ?`, [log.id]);
-                            response.json().then(data => {
-                                console.log(data);
-                            });
-                            await db.runAsync(`UPDATE CustomerLocalLogs SET state= ?`, ["Submitted"]);
-                            console.log("Submitted successfully");
-                            try{
-                                const response = await fetch()
-                                if(response.ok){
-                                    await db.runAsync(`DELETE FROM CustomerLocalLogs WHERE id = ?`, [log.id]);
-                                    console.log("Synced succes");
-                                }else{
-                                    console.log("Failed to sync with server", await response.text());
+                            response.json().then(async (data) => {
+                                console.log(data.docs[0]);
+                            
+
+                                await db.runAsync(`UPDATE sales_order_logs SET state= ? WHERE id = ?;`, ["Submitted", log.id]);
+                                console.log("Submitted successfully and updated log state");
+                                console.log(
+                                    {
+                                        "doc": JSON.stringify(data.docs[0]),  
+                                        "action": "Submit"
+                                    }
+                                );
+                                try{
+                                    const response = await fetch(
+                                        'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+                                    {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                                        },
+                                        body: JSON.stringify({
+                                            "doc": JSON.stringify(data.docs[0]),  
+                                            "action": "Submit"
+                                        })
+                                    })
+                                    if(response.ok){
+                                        await db.runAsync(`DELETE FROM sales_order_logs WHERE id = ?;`, [log.id]);
+                                        console.log("Synced succes and deleted from local logs");
+                                        response.json().then(data => console.log(data));
+                                    }else{
+                                        console.log("Failed to sync with server", await response.text());
+                                    }
+                                }catch(e){
+                                    console.log("Failed to submit sale order", e);
                                 }
-                            }catch(e){
-                                console.log("Failed to submit change", e);
-                            }
+                            });
                         }else{
                             console.log("Error from the server", await response.text());
                         }
@@ -305,7 +315,7 @@ const CommandeScreen = () => {
                 const initialize = async () => {
                     createMetadataTable();
                     createSalesOrderLocalLogs();
-                    saveToLocalLogs();
+                    //saveToLocalLogs();
                     syncDataWithServer();
                     // getSalesOrderfromAPI();
                     getSalesOrders();

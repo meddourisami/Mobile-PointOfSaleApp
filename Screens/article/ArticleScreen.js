@@ -302,6 +302,7 @@ const ArticleScreen = () => {
   return (
     <View>
         <Text style={{fontSize:24}}>Liste des articles</Text>
+            <View>
         {selecteditems.length > 0 && (
                 <TouchableOpacity
                 style={{
@@ -320,7 +321,8 @@ const ArticleScreen = () => {
                     </Text>
                 </TouchableOpacity>
             )}
-            <View>
+            {/* </View>
+            <View> */}
                 <Content />
             </View>
             <View>

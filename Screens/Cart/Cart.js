@@ -15,8 +15,7 @@ const Cart = ({navigation}) => {
     const [quantities, setQuantities] = useState({});
     const [taxes, setTaxes] = useState([]);
     const [charges, setCharges] = useState([]);
-    const [selectedTax, setSelectedTax] = useState({"_assign": null, "_comments": null, "_liked_by": null, "creation": "2024-07-05 11:14:01.617601", "disabled": 0, "docstatus": 0, "idx": 76, "modified": "2024-07-05 11:14:01.617601", "modified_by": "seif@gmail.com", 
-        "name": "Tunisia VAT 18% - ICD", "owner": "seif@gmail.com", "title": "Tunisia VAT 18%", "user_tags": null});
+    const [selectedTax, setSelectedTax] = useState(null);
     const [selectedClient, setSelectedClient] = useState(null);
     const [clients, setClients] = useState([]);
     const [updatedTaxes, setUpdatedTaxes] = useState([]);
@@ -141,29 +140,6 @@ const Cart = ({navigation}) => {
                 },
             });
 
-            // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
-            //     },
-            //     body:
-            //         {
-            //             "doctype": "Sales Taxes and Charges Template",
-            //             "fields": [
-            //               "*"
-            //             ],
-            //               "filters": [
-                          
-            //             ],
-            //             "order_by": "`tabSales Taxes and Charges Template`.`modified` asc",
-            //             "start": 0,
-            //             "page_length": 20,
-            //             "view": "List",
-            //             "group_by": null,
-            //             "with_comment_count": 1
-            //         }
-                
-            // });
             const json = await response.json();
             console.log(json);
             
@@ -216,7 +192,7 @@ const Cart = ({navigation}) => {
 
     const getTaxes = async () => {
         try{
-            const allTaxes = await db.getAllAsync(`SELECT * FROM Tax_Categories WHERE company= ?`,["Ites Company (Demo)"]);
+            const allTaxes = await db.getAllAsync(`SELECT * FROM Tax_Categories WHERE company="Ites Company (Demo)";`);
             console.log(allTaxes);
             setCharges(allTaxes);
         }catch(e){
@@ -518,8 +494,8 @@ const Cart = ({navigation}) => {
         if(isFocused){
             const initialize = async () => {
                 createMetadataTable();
-                //getTaxesfromAPI();
-                //getTaxes();
+                getTaxesfromAPI();
+                getTaxes();
                 getUpdatedTaxes();
                 getClients();
             };
