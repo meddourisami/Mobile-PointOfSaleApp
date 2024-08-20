@@ -80,9 +80,7 @@ const CommandeScreen = () => {
                     items: updatedItems,
                     taxes: [orderTaxesData],
                 }
-                //console.log(data);
-
-                //console.log(JSON.stringify(data));
+                
                 if (!names.includes(order.name)) {
                     await db.runAsync(
                         `INSERT INTO sales_order_logs (action, name, state, data) VALUES (?, ?, ?, ?)`,

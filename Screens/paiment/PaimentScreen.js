@@ -14,7 +14,7 @@ const PaimentScreen = () => {
         const [salesInvoices , setSalesInvoices] = useState([]);
 
         const createSalesInvoiceLocalLogs = async () => {
-          //await db.runAsync(`DELETE FROM sales_invoice_logs;`);
+          await db.runAsync(`DELETE FROM sales_invoice_logs;`);
           await db.runAsync(`CREATE TABLE IF NOT EXISTS sales_invoice_logs(
                   id INTEGER PRIMARY KEY AUTOINCREMENT,
                   action TEXT,
@@ -39,30 +39,35 @@ const PaimentScreen = () => {
               }
               const invoiceItems = await db.getAllAsync(`SELECT * FROM Sales_Invoice_Item WHERE parent =?;`, [invoice.name]);
               const invoiceItemsData = [];
-              const updatedItems= invoiceItems.map(item =>({
-                ...item,
-                __islocal: 1,
-                __unsaved: 1,
-                doctype: "Sales Invoice Item"
-              }));
+              const updatedItems= invoiceItems.map(item =>{
+                const newItem = {
+                    ...item,
+                    __islocal: 1,
+                    __unsaved: 1,
+                    doctype: "Sales Invoice Item"
+                };
+                
+                delete newItem.sales_order;
+                delete newItem.income_account;
+                return newItem;
+              });
 
-              console.log(invoice.name);
-              const invoiceTaxes = await db.getFirstAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent =?;`, [invoice.name]);
+              const invoiceTaxes = await db.getFirstAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent =?`, [invoice.name]);
               const invoiceTaxesData = {
                   ...invoiceTaxes,
                   __islocal: 1,
                   __unsaved: 1,
                   doctype: "Sales Taxes and Charges"
               }
-              console.log(invoiceTaxes);
 
-              const invoicePayment = await db.getAllAsync(`SELECT * FROM Sales_Invoice_Payment WHERE parent =?;`, [invoice.name]);
+              const invoicePayment = await db.getFirstAsync(`SELECT * FROM Sales_Invoice_Payment WHERE parent =?;`, [invoice.name]);
               const invoicePaymentData ={
                 ...invoicePayment,
                 __islocal: 1,
                 __unsaved: 1,
                 doctype: "Sales Invoice Payment"
               }
+
 
               const data = {
                   ...invoiceData,
@@ -71,12 +76,12 @@ const PaimentScreen = () => {
                   payments: [invoicePaymentData]
               }
 
-              console.log("data",JSON.stringify(data));
+              // console.log("data",JSON.stringify(data));
 
               if (!names.includes(invoice.name)) {
                   await db.runAsync(
                       `INSERT INTO sales_invoice_logs (action, name, state, data) VALUES (?, ?, ?, ?)`,
-                      ["INSERT", invoice.name, "Draft", JSON.stringify(data)]
+                      ["INSERT", invoice.name, "Local", JSON.stringify(data)]
                   );
               }
           });
@@ -91,7 +96,7 @@ const PaimentScreen = () => {
 
       const syncDataWithServer = async () => {
           try {
-            const logs = await db.getAllAsync(`SELECT * FROM sales_invoice_logs;`);
+            const logs = await db.getAllAsync(`SELECT * FROM sales_invoice_logs;`); //TODO CHECK STATE BEFORE 
               await Promise.all(
                 logs.map(async (log) => {
                   console.log(
@@ -135,7 +140,7 @@ const PaimentScreen = () => {
                                 console.log(data.docs[0]);
                             
 
-                                await db.runAsync(`UPDATE sales_invoice_logs SET state= ? WHERE id = ?;`, ["Submitted", log.id]);
+                                await db.runAsync(`UPDATE sales_invoice_logs SET state= ? WHERE id = ?;`, ["Draft", log.id]);
                                 console.log("Submitted successfully and updated log state");
                                 console.log(
                                     {
