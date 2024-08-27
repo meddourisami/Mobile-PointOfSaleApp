@@ -544,16 +544,12 @@ const HomeScreen = () => {
                                 });
 
                                 console.log("updated stringified logdata", JSON.stringify(logData));
-                                //await db.runAsync(`UPDATE sales_invoice_logs SET data=? WHERE name=?;`, [JSON.stringify(logData), log.name]);
+                                
                                 syncSaleInvoiceWithServer(JSON.stringify(logData));
                             } else {
                                 console.log("Failed to get associated sale order name");
                             }
                     })
-                        
-                        // .then(() => {
-                        //     console.log("Sale invoice synced successfully");
-                        // })
                 }
             });
         }

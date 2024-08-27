@@ -32,15 +32,41 @@ const LivraisonScreen = () => {
         if (rowCount.count === 0) {
             await db.runAsync('INSERT INTO DeliveyMetadata (id, data_hash) VALUES (1, "");');
         }
-    };
+      };
+
+      function transformJson(data) {
+        const keys = data.message.keys;
+        const values = data.message.values;
+        return values.map(entry => {
+            let obj = {};
+            keys.forEach((key, index) => { obj[key] = entry[index]; });
+            return obj; 
+        }); 
+      };    
 
       const getDeliveriesfromAPI = async () => {
           try{
-            const response = await fetch('http://192.168.100.6:8002/api/resource/Delivery Note?fields=["*"]', {
-                method: 'GET',
+            const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', {
+                method: 'POST',
                 headers: {
-                    'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                  'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                  'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({
+                  "doctype": "Delivery Note",
+                  "fields": [
+                    "*"
+                  ],
+                  "filters": [
+                    ["Delivery Note", "set_warehouse", "=", "Magasin Fille 1 - ICD"]
+                  ],
+                  "order_by": "`tabDelivery Note`.`modified` desc",
+                  "start": 0,
+                  "page_length": 20,
+                  "view": "List",
+                  "group_by": "",
+                  "with_comment_count": 1
+                }),
             });
             //   const response = await fetch('http://195.201.138.202:8006/api/resource/Delivery Note?fields=["*"]', {
             //       method: 'GET',
@@ -48,17 +74,19 @@ const LivraisonScreen = () => {
             //           'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
             //       },
             //   });
-              const json = await response.json();
-              const newHash = getHash(json.data);
+              const data = await response.json();
+              console.log(data);
+              const selectedDeliveries = transformJson(data);
+              console.log("data",selectedDeliveries);
+              const newHash = getHash(data);
 
                 const existingHash = await db.runAsync('SELECT data_hash FROM DeliveryMetadata WHERE id = 1;');
                 if (existingHash !== newHash) {
-                    setDeliveries(json.data);
-                    await saveInLocalDeliveries(json.data);
+                    setDeliveries(selectedDeliveries);
+                    await saveInLocalDeliveries(selectedDeliveries);
                     await db.runAsync('UPDATE DeliveryMetadata SET data_hash = ? WHERE id = 1;', [newHash]);
                 }
-              setDisplayData(json.data);
-              return json.data;
+              return selectedDeliveries;
           }catch (error){
             console.log('error fetching data',error);
           }
@@ -66,7 +94,6 @@ const LivraisonScreen = () => {
 
       const saveInLocalDeliveries = async (deliveries) => {
         try{
-            await db.runAsync('DELETE FROM Deliveries;');
             await Promise.all(deliveries.map(async (delivery) => {
               await db.runAsync(`INSERT OR REPLACE INTO Deliveries
                 (
@@ -184,21 +211,21 @@ const LivraisonScreen = () => {
 
       return (
           <View>
-                  {displayData.length=== 0 ? (
+                  {deliveries.length=== 0 ? (
                       <Text>No data yet.</Text>
                   ) : (
                       <FlatList 
-                          data ={displayData}
+                          data ={deliveries}
                           keyExtractor={(item) => (item.name).toString()}
                           renderItem={({item}) => (
-                              <TouchableOpacity onPress={() => navigation.navigate('EditLivraisonScreen', { deliveryId: item.name })}>
+                              <TouchableOpacity onPress={() => navigation.navigate('LivraisonStatus', { deliveryId: item.name })}>
                                   <View style={{marginBottom:10}}>
                                       <Text style={{fontWeight:'bold'}}>{item.name}</Text>
                                       <View style={{flexDirection:'row', justifyContent:'space-between'}}>
-                                          <Text>{item.customer_name}</Text>
-                                          <Text>{item.posting_date}{item.posting_time}</Text>
-                                          <Text style={{fontWeight:'semibold'}}>Adresse:{item.set_warehouse}</Text>
-                                          <Text>Phone: {item.total}</Text>
+                                          <Text>Customer: {item.customer_name}</Text>
+                                          <Text>Delivery Date: {item.posting_time}</Text>
+                                          <Text style={{fontWeight:'semibold'}}>Adresse: {item.set_warehouse}</Text>
+                                          <Text>Delivery Price: {item.total}</Text>
                                       </View>
                                   </View>
                               </TouchableOpacity>
