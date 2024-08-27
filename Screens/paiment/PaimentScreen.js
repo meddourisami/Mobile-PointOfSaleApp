@@ -14,11 +14,12 @@ const PaimentScreen = () => {
         const [salesInvoices , setSalesInvoices] = useState([]);
 
         const createSalesInvoiceLocalLogs = async () => {
-          await db.runAsync(`DELETE FROM sales_invoice_logs;`);
+          //await db.runAsync(`DELETE FROM sales_invoice_logs;`);
           await db.runAsync(`CREATE TABLE IF NOT EXISTS sales_invoice_logs(
                   id INTEGER PRIMARY KEY AUTOINCREMENT,
                   action TEXT,
                   name TEXT,
+                  associatedSaleOrder TEXT,
                   state TEXT,
                   data TEXT
               )`);
@@ -28,9 +29,12 @@ const PaimentScreen = () => {
         try{
           const logs = await db.getAllAsync(`SELECT name FROM sales_invoice_logs;`);
           const names = logs.map(log => log.name);
-
+          
           const Invoices = await db.getAllAsync(`SELECT * FROM Sales_Invoice;`);
           Invoices.map(async (invoice)=> {
+            if((invoice.name).includes("ACC-SINV-")){
+              return;
+            }else{
               const invoiceData= {
                   ...invoice,
                   doctype: "Sales Invoice",
@@ -46,11 +50,14 @@ const PaimentScreen = () => {
                     __unsaved: 1,
                     doctype: "Sales Invoice Item"
                 };
-                
-                delete newItem.sales_order;
+                if(newItem.sales_order===null){
+                  delete newItem.sales_order;
+                }
                 delete newItem.income_account;
+
                 return newItem;
               });
+              
 
               const invoiceTaxes = await db.getFirstAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent =?`, [invoice.name]);
               const invoiceTaxesData = {
@@ -68,7 +75,6 @@ const PaimentScreen = () => {
                 doctype: "Sales Invoice Payment"
               }
 
-
               const data = {
                   ...invoiceData,
                   items: updatedItems,
@@ -80,10 +86,11 @@ const PaimentScreen = () => {
 
               if (!names.includes(invoice.name)) {
                   await db.runAsync(
-                      `INSERT INTO sales_invoice_logs (action, name, state, data) VALUES (?, ?, ?, ?)`,
-                      ["INSERT", invoice.name, "Local", JSON.stringify(data)]
+                      `INSERT INTO sales_invoice_logs (action, name, associatedSaleOrder, state, data) VALUES (?, ?, ?, ?, ?)`,
+                      ["INSERT", invoice.name, ,updatedItems[0].sales_order, "Local", JSON.stringify(data)]
                   );
               }
+            }
           });
         }catch(e){
           console.log("Error saving to local logs",e);
@@ -91,7 +98,7 @@ const PaimentScreen = () => {
       };
 
       const handleSubmit = () => {
-          saveToLocalLogs();  
+        saveToLocalLogs();  
       };
 
       const syncDataWithServer = async () => {
@@ -164,6 +171,8 @@ const PaimentScreen = () => {
                                     })
                                     if(response.ok){
                                         await db.runAsync(`DELETE FROM sales_invoice_logs WHERE id = ?;`, [log.id]);
+
+                                        ////TODO CHECK FOR STATE SALES ORDER AND UPDATE LISTING VIEW --------------------------------------------*********
                                         console.log("Synced succes and deleted from local logs");
                                         response.json().then(data => console.log(data));
                                     }else{
@@ -206,8 +215,8 @@ const PaimentScreen = () => {
                 createSalesInvoiceLocalLogs();
                 getSalesInvoices();
                 getSalesPayments();
-                //saveToLocalLogs();
-                syncDataWithServer();
+                saveToLocalLogs();
+                //syncDataWithServer();
               };
               initialize();
           }

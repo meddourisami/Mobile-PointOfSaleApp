@@ -9,26 +9,30 @@ import ProfileScreen from './Screens/ProfileScreen';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
 import { FontAwesome6 } from '@expo/vector-icons';
+import { BudgetProvider } from './BudgetContext';
+import { SyncProvider } from './SyncContext';
 
 async function initDatabase(db) {
   try{
-    // await db.execAsync(`
-    //   DROP TABLE IF EXISTS Customers;
-    //   DROP TABLE IF EXISTS Deliveries;
-    //   DROP TABLE IF EXISTS GroupItem;
-    //   DROP TABLE IF EXISTS Item;
-    //   DROP TABLE IF EXISTS Warehouse;
-    //   DROP TABLE IF EXISTS Sales_Taxes_and_Charges;
-    //   DROP TABLE IF EXISTS Sales_Order;
-    //   DROP TABLE IF EXISTS Sales_Order_Item;
-    //   DROP TABLE IF EXISTS Quotation;
-    //   DROP TABLE IF EXISTS Quotation_Item;
-    //   DROP TABLE IF EXISTS Tax_Categories;
-    //   DROP TABLE IF EXISTS Sales_Invoice;
-    //   DROP TABLE IF EXISTS Sales_Invoice_Item;
-    //   DROP TABLE IF EXISTS Sales_Invoice_Payment;
-    //  `
-    // );
+    await db.execAsync(`
+      DROP TABLE IF EXISTS Customers;
+      DROP TABLE IF EXISTS Deliveries;
+      DROP TABLE IF EXISTS GroupItem;
+      DROP TABLE IF EXISTS Item;
+      DROP TABLE IF EXISTS Warehouse;
+      DROP TABLE IF EXISTS Sales_Taxes_and_Charges;
+      DROP TABLE IF EXISTS Sales_Order;
+      DROP TABLE IF EXISTS Sales_Order_Item;
+      DROP TABLE IF EXISTS Quotation;
+      DROP TABLE IF EXISTS Quotation_Item;
+      DROP TABLE IF EXISTS Tax_Categories;
+      DROP TABLE IF EXISTS Sales_Invoice;
+      DROP TABLE IF EXISTS Sales_Invoice_Item;
+      DROP TABLE IF EXISTS Sales_Invoice_Payment;
+      DROP TABLE IF EXISTS sales_invoice_logs;
+      DROP TABLE IF EXISTS sales_order_logs;
+     `
+    );
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS Customers (
         name TEXT PRIMARY KEY,
@@ -304,7 +308,9 @@ async function initDatabase(db) {
           default_item_manufacturer TEXT,
           default_manufacturer_part_no TEXT,
           total_projected_qty REAL,
-          _comment_count INTEGER
+          _comment_count INTEGER,
+          bal_qty INTEGER,
+          bal_val INTEGER
         );
 
         CREATE TABLE IF NOT EXISTS Warehouse (
@@ -941,7 +947,9 @@ async function initDatabase(db) {
 
 export default function App() {
   const Tab = createBottomTabNavigator();
-  return (  
+  return (
+    <SyncProvider>
+    <BudgetProvider>
     <SQLiteProvider databaseName='myDB.db' onInit={initDatabase}>
       <NavigationContainer>
         <Tab.Navigator screenOptions={{
@@ -982,7 +990,9 @@ export default function App() {
             }}/>
         </Tab.Navigator>
       </NavigationContainer>
-    </SQLiteProvider>  
+    </SQLiteProvider>
+    </BudgetProvider>
+    </SyncProvider>  
   );
 }
 

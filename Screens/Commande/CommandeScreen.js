@@ -46,47 +46,51 @@ const CommandeScreen = () => {
         };
 
         const saveToLocalLogs = async () => {
-
             const logs = await db.getAllAsync(`SELECT name FROM sales_order_logs;`);
             const names = logs.map(log => log.name);
 
             const Orders = await db.getAllAsync(`SELECT * FROM Sales_Order;`);
             Orders.map(async (order)=> {
-                const orderData= {
-                    ...order,
-                    doctype: "Sales Order",
-                    __islocal: 1,
-                    __unsaved: 1,
-                }
-                const orderItems = await db.getAllAsync(`SELECT * FROM Sales_Order_Item WHERE parent =?`, [order.name]);
-                const orderItemsData = [];
-                const updatedItems= orderItems.map(item =>({
-                    ...item,
-                    __islocal: 1,
-                     __unsaved: 1,
-                    doctype: "Sales Order Item"
-                }));
+                console.log(order.name);
+                if((order.name).includes("SAL-ORD-")){
+                    return;
+                }else{
+                    const orderData= {
+                        ...order,
+                        doctype: "Sales Order",
+                        __islocal: 1,
+                        __unsaved: 1,
+                    }
+                    const orderItems = await db.getAllAsync(`SELECT * FROM Sales_Order_Item WHERE parent =?`, [order.name]);
+                    const orderItemsData = [];
+                    const updatedItems= orderItems.map(item =>({
+                        ...item,
+                        __islocal: 1,
+                        __unsaved: 1,
+                        doctype: "Sales Order Item"
+                    }));
 
-                const orderTaxes = await db.getFirstAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent=?`, [order.name]);
-                const orderTaxesData = {
-                    ...orderTaxes,
-                    __islocal: 1,
-                    __unsaved: 1,
-                    doctype: "Sales Taxes and Charges"
-                }
+                    const orderTaxes = await db.getFirstAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent=?`, [order.name]);
+                    const orderTaxesData = {
+                        ...orderTaxes,
+                        __islocal: 1,
+                        __unsaved: 1,
+                        doctype: "Sales Taxes and Charges"
+                    }
 
-                const data = {
-                    ...orderData,
-                    items: updatedItems,
-                    taxes: [orderTaxesData],
-                }
-                
-                if (!names.includes(order.name)) {
-                    await db.runAsync(
-                        `INSERT INTO sales_order_logs (action, name, state, data) VALUES (?, ?, ?, ?)`,
-                        ["INSERT", order.name, "Draft", JSON.stringify(data)]
-                    );
-                }
+                    const data = {
+                        ...orderData,
+                        items: updatedItems,
+                        taxes: [orderTaxesData],
+                    }
+
+                    if (!names.includes(order.name)) {
+                        await db.runAsync(
+                            `INSERT INTO sales_order_logs (action, name, state, data) VALUES (?, ?, ?, ?)`,
+                            ["INSERT", order.name, "local", JSON.stringify(data)]
+                        );
+                    }
+                };
             });
         };
 
@@ -140,7 +144,7 @@ const CommandeScreen = () => {
                                 console.log(data.docs[0]);
                             
 
-                                await db.runAsync(`UPDATE sales_order_logs SET state= ? WHERE id = ?;`, ["Submitted", log.id]);
+                                await db.runAsync(`UPDATE sales_order_logs SET state= ? WHERE id = ?;`, ["Draft", log.id]);
                                 console.log("Submitted successfully and updated log state");
                                 console.log(
                                     {
@@ -163,9 +167,82 @@ const CommandeScreen = () => {
                                         })
                                     })
                                     if(response.ok){
-                                        await db.runAsync(`DELETE FROM sales_order_logs WHERE id = ?;`, [log.id]);
+                                        //await db.runAsync(`DELETE FROM sales_order_logs WHERE id = ?;`, [log.id]);
+                                        //TODO CHECK FOR STATE SALES ORDER AND UPDATE LISTING VIEW *********************************
                                         console.log("Synced succes and deleted from local logs");
-                                        response.json().then(data => console.log(data));
+                                        response.json().then(async (data) => {
+                                            console.log(data.docs[0].name);
+                                            orderTosync= await db.getFirstAsync(`SELECT * FROM Sales_Order WHERE name= ?`,[log.name]);
+                                            await db.runAsync(`INSERT INTO Sales_Order(
+                                                name, owner,
+                                                docstatus, title, naming_series, customer,
+                                                customer_name, order_type, transaction_date, delivery_date,
+                                                company, skip_delivery_note, currency, selling_price_list,
+                                                set_warehouse,
+                                                total_qty, total_net_weight, base_total, base_net_total,
+                                                total, net_total, tax_category, taxes_and_charges,
+                                                base_total_taxes_and_charges, total_taxes_and_charges, base_grand_total,
+                                                base_rounding_adjustment, base_rounded_total, base_in_words, grand_total, rounding_adjustment,
+                                                rounded_total, in_words, advance_paid, disable_rounded_total, apply_discount_on,
+                                                base_discount_amount, discount_amount,
+                                                customer_address, customer_group, territory,
+                                                status, delivery_status,
+                                                billing_status,
+                                                amount_eligible_for_commission,
+                                                group_same_items,
+                                                language, is_internal_customer,
+                                                party_account_currency
+                                            ) VALUES (
+                                                ?, ?,
+                                                ?, ?, ?, ?,
+                                                ?, ?, ?, ?,
+                                                ?, ?, ?, ?,
+                                                ?,
+                                                ?, ?, ?, ?,
+                                                ?, ?, ?, ?,
+                                                ?, ?, ?,
+                                                ?, ?, ?, ?, ?,
+                                                ?, ?, ?, ?, ?,
+                                                ?, ?,
+                                                ?, ?, ?,
+                                                ?, ?,
+                                                ?,
+                                                ?,
+                                                ?,
+                                                ?, ?,
+                                                ?
+                                            )`,
+                                                [
+                                                    data.docs[0].name, orderTosync.owner,
+                                                    orderTosync.docstatus, orderTosync.title, orderTosync.naming_series, orderTosync.customer,
+                                                    orderTosync.customer_name, orderTosync.order_type, orderTosync.transaction_date, orderTosync.delivery_date,
+                                                    orderTosync.company, orderTosync.skip_delivery_note, orderTosync.currency, orderTosync.selling_price_list,
+                                                    orderTosync.set_warehouse,
+                                                    orderTosync.total_qty, orderTosync.total_net_weight, orderTosync.base_total, orderTosync.base_net_total,
+                                                    orderTosync.total, orderTosync.net_total, orderTosync.tax_category, orderTosync.taxes_and_charges,
+                                                    orderTosync.base_total_taxes_and_charges, orderTosync.total_taxes_and_charges, orderTosync.base_grand_total,
+                                                    orderTosync.base_rounding_adjustment, orderTosync.base_rounded_total, orderTosync.base_in_words, orderTosync.grand_total, orderTosync.rounding_adjustment,
+                                                    orderTosync.rounded_total, orderTosync.in_words, orderTosync.advance_paid, orderTosync.disable_rounded_total, orderTosync.apply_discount_on,
+                                                    orderTosync.base_discount_amount, orderTosync.discount_amount,
+                                                    orderTosync.customer_address, orderTosync.customer_group, orderTosync.territory,
+                                                    orderTosync.status, orderTosync.delivery_status,
+                                                    orderTosync.billing_status,
+                                                    orderTosync.amount_eligible_for_commission,
+                                                    orderTosync.group_same_items,
+                                                    orderTosync.language, orderTosync.is_internal_customer,
+                                                    orderTosync.party_account_currency
+                                                ]
+                                            );
+                                            const updatedOrder = await db.getFirstAsync(`SELECT * FROM Sales_Order WHERE name= ?`, [data.docs[0].name]);
+                                            console.log(updatedOrder);
+                                            await db.runAsync(`DELETE FROM Sales_order WHERE name = ?`, [log.name]);
+                                            await db.runAsync(`UPDATE Sales_Order_Item SET parent=? WHERE parent=?`,[data.docs[0].name, log.name]);
+                                            const updatedItems = await db.getAllAsync(`SELECT * FROM Sales_Order_Item WHERE parent=?`,[data.docs[0].name]);
+                                            console.log(updatedItems);
+                                            await db.runAsync(`UPDATE Sales_Taxes_and_Charges SET parent=? WHERE parent=?`,[data.docs[0].name, log.name]);
+                                            await db.runAsync(`DELETE FROM sales_order_logs WHERE id = ?;`, [log.id]);
+                                        });
+
                                     }else{
                                         console.log("Failed to sync with server", await response.text());
                                     }
@@ -182,123 +259,6 @@ const CommandeScreen = () => {
             }
         };
 
-        // const getSalesOrderfromAPI = async () => {
-        //     try{
-        //         // const response = await fetch('http://195.201.138.202:8006/api/resource/Customer?fields=["*"]', {
-        //         //     method: 'GET',
-        //         //     headers: {
-        //         //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
-        //         //     },
-        //         // });
-        //         const response = await fetch('http://195.201.138.202:8006/api/resource/Customer?fields=["*"]', {
-        //             method: 'GET',
-        //             headers: {
-        //                 'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
-        //             },
-        //         });
-        //         const json = await response.json();
-                
-        //         const newHash = getHash(json.data);
-
-        //         const existingHash = await db.runAsync('SELECT data_hash FROM SalesOrderMetadata WHERE id = 1;');
-        //         if (existingHash !== newHash) {
-
-        //             await Promise.all(salesOrders.map(async (salesOrder) => {
-        //                 await db.runAsync(`DELETE FROM Sales_Order WHERE name = ?;`, [salesOrder.name]);
-        //             }));
-
-        //             await saveInLocalSalesOrders(json.data);
-        //             await db.runAsync('UPDATE SalesOrderMetadata SET data_hash = ? WHERE id = 1;', [newHash]);
-        //             setSaleOrders(json.data);
-        //         }
-        //         return json.data;
-        //     } catch (error){
-        //         console.log('error fetching salesOrder',error);
-        //     }
-        // };
-
-        // const saveInLocalSalesOrders = async (salesOrders) => {
-        //   try{
-        //     await Promise.all(salesOrders.map(async (saleOrder) => {
-        //       await db.runAsync(`INSERT OR REPLACE INTO Sales_Order 
-        //         (
-        //           name, creation, modified, modified_by, owner,
-        //           docstatus, idx, title, naming_series, customer,
-        //           customer_name, tax_id, order_type, transaction_date, delivery_date,
-        //           po_no, po_date, company, skip_delivery_note, amended_from,
-        //           cost_center, project, currency, conversion_rate, selling_price_list,
-        //           price_list_currency, plc_conversion_rate, ignore_pricing_rule, scan_barcode, set_warehouse,
-        //           reserve_stock, total_qty, total_net_weight, base_total, base_net_total,
-        //           total, net_total, tax_category, taxes_and_charges, shipping_rule,
-        //           incoterm, named_place, base_total_taxes_and_charges, total_taxes_and_charges, base_grand_total,
-        //           base_rounding_adjustment, base_rounded_total, base_in_words, grand_total, rounding_adjustment,
-        //           rounded_total, in_words, advance_paid, disable_rounded_total, apply_discount_on,
-        //           base_discount_amount, coupon_code, additional_discount_percentage, discount_amount, other_charges_calculation,
-        //           customer_address, address_display, customer_group, territory, contact_person,
-        //           contact_display, contact_phone, contact_mobile, contact_email, shipping_address_name,
-        //           shipping_address, dispatch_address_name, dispatch_address, company_address, company_address_display,
-        //           payment_terms_template, tc_name, terms, status, delivery_status,
-        //           per_delivered, per_billed, per_picked, billing_status, sales_partner,
-        //           amount_eligible_for_commission, commission_rate, total_commission, loyalty_points, loyalty_amount,
-        //           from_date, to_date, auto_repeat, letter_head, group_same_items,
-        //           select_print_heading, language, is_internal_customer, represents_company, source,
-        //           inter_company_order_reference, campaign, party_account_currency, _user_tags, _comments,
-        //           _assign, _liked_by, _seen
-        //         ) VALUES (
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?, ?, ?,
-        //           ?, ?, ?
-        //           )`,
-        //                     [
-        //                         saleOrder.name, saleOrder.creation, saleOrder.modified, saleOrder.modified_by, saleOrder.owner,
-        //                         saleOrder.docstatus, saleOrder.idx, saleOrder.title, saleOrder.naming_series, saleOrder.customer,
-        //                         saleOrder.customer_name, saleOrder.tax_id, saleOrder.order_type, saleOrder.transaction_date, saleOrder.delivery_date,
-        //                         saleOrder.po_no, saleOrder.po_date, saleOrder.company, saleOrder.skip_delivery_note, saleOrder.amended_from,
-        //                         saleOrder.cost_center, saleOrder.project, saleOrder.currency, saleOrder.conversion_rate, saleOrder.selling_price_list,
-        //                         saleOrder.price_list_currency, saleOrder.plc_conversion_rate, saleOrder.ignore_pricing_rule, saleOrder.scan_barcode, saleOrder.set_warehouse,
-        //                         saleOrder.reserve_stock, saleOrder.total_qty, saleOrder.total_net_weight, saleOrder.base_total, saleOrder.base_net_total,
-        //                         saleOrder.total, saleOrder.net_total, saleOrder.tax_category, saleOrder.taxes_and_charges, saleOrder.shipping_rule,
-        //                         saleOrder.incoterm, saleOrder.named_place, saleOrder.base_total_taxes_and_charges, saleOrder.total_taxes_and_charges, saleOrder.base_grand_total,
-        //                         saleOrder.base_rounding_adjustment, saleOrder.base_rounded_total, saleOrder.base_in_words, saleOrder.grand_total, saleOrder.rounding_adjustment,
-        //                         saleOrder.rounded_total, saleOrder.in_words, saleOrder.advance_paid, saleOrder.disable_rounded_total, saleOrder.apply_discount_on,
-        //                         saleOrder.base_discount_amount, saleOrder.coupon_code, saleOrder.additional_discount_percentage, saleOrder.discount_amount, saleOrder.other_charges_calculation,
-        //                         saleOrder.customer_address, saleOrder.address_display, saleOrder.customer_group, saleOrder.territory, saleOrder.contact_person,
-        //                         saleOrder.contact_display, saleOrder.contact_phone, saleOrder.contact_mobile, saleOrder.contact_email, saleOrder.shipping_address_name,
-        //                         saleOrder.shipping_address, saleOrder.dispatch_address_name, saleOrder.dispatch_address, saleOrder.company_address, saleOrder.company_address_display,
-        //                         saleOrder.payment_terms_template, saleOrder.tc_name, saleOrder.terms, saleOrder.status, saleOrder.delivery_status,
-        //                         saleOrder.per_delivered, saleOrder.per_billed, saleOrder.per_picked, saleOrder.billing_status, saleOrder.sales_partner,
-        //                         saleOrder.amount_eligible_for_commission, saleOrder.commission_rate, saleOrder.total_commission, saleOrder.loyalty_points, saleOrder.loyalty_amount,
-        //                         saleOrder.from_date, saleOrder.to_date, saleOrder.auto_repeat, saleOrder.letter_head, saleOrder.group_same_items,
-        //                         saleOrder.select_print_heading, saleOrder.language, saleOrder.is_internal_customer, saleOrder.represents_company, saleOrder.source,
-        //                         saleOrder.inter_company_order_reference, saleOrder.campaign, saleOrder.party_account_currency, saleOrder._user_tags, saleOrder._comments,
-        //                         saleOrder._assign, saleOrder._liked_by, saleOrder._seen
-        //                     ]
-        //                 );
-        //         }));
-        //     }catch(e){
-        //         console.log('Error saving sales orders to local database', e);
-        //     }
-        // };
-
         const getSalesOrders = async () => {
             try{
                 const allSalesOrders = await db.getAllAsync(`SELECT * FROM Sales_Order;`);
@@ -313,9 +273,9 @@ const CommandeScreen = () => {
                 const initialize = async () => {
                     createMetadataTable();
                     createSalesOrderLocalLogs();
-                    //saveToLocalLogs();
-                    syncDataWithServer();
-                    // getSalesOrderfromAPI();
+                    saveToLocalLogs();
+                    //syncDataWithServer();
+                    //getSalesOrderfromAPI();
                     getSalesOrders();
                 };
                 initialize();
@@ -335,7 +295,9 @@ const CommandeScreen = () => {
                   ) : (
                     <>
                     <View style={{ flexDirection: 'row', alignItems: 'center' , paddingTop:10}}>
-                        <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', right: 30}} onPress={handleSubmit} />
+                        
+                            <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', right: 30}} onPress={handleSubmit} />
+                        
                     </View> 
                       <FlatList 
                           data ={salesOrders}
@@ -349,8 +311,7 @@ const CommandeScreen = () => {
                                       <Text style={{fontWeight:'bold'}}>{item.name}</Text>
                                       <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>
                                           <View style={{}}>
-                                              <Text>{item.name}</Text>
-                                              <Text style={{fontWeight:'semibold'}}>Customer{item.customer}</Text>
+                                              <Text style={{fontWeight:'semibold'}}>Customer: {item.customer}</Text>
                                               <Text>Date: {item.transaction_date}</Text>
                                               <Text>Total quantity: {item.total_qty}</Text>
                                               <Text>Total amount: {item.grand_total}</Text>

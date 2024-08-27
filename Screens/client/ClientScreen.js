@@ -56,7 +56,8 @@ const ClientScreen = () => {
                 //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
                 //     },
                 // });
-                const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
+                // const response = await fetch('http://192.168.1.12:8002/api/resource/Customer?fields=["*"]', {
+                    const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
                     method: 'GET',
                     headers: {
                         'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
@@ -266,7 +267,7 @@ const ClientScreen = () => {
                     ) : (
                         <FlatList 
                             data ={filteredClients}
-                            keyExtractor={(item) => item.name}
+                            keyExtractor={(item) => (item.name).toString()}
                             renderItem={({item}) => (
                                 <TouchableOpacity key={item.name} style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, margin:5}} onPress={() => navigation.navigate('ItemGroupScreen', { customer: item })}>
                                     <View style={{marginBottom:10, marginStart:10}}>

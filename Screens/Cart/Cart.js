@@ -1,9 +1,10 @@
-import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useIsFocused, useRoute } from '@react-navigation/native';
 import * as CryptoJS from 'crypto-js';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Picker } from '@react-native-picker/picker';
+
 
 const Cart = ({navigation}) => {
     const route = useRoute();
@@ -18,7 +19,8 @@ const Cart = ({navigation}) => {
     const [selectedTax, setSelectedTax] = useState(null);
     const [selectedClient, setSelectedClient] = useState(null);
     const [clients, setClients] = useState([]);
-    const [updatedTaxes, setUpdatedTaxes] = useState([]);
+    const [showCustomerPicker, setShowCustomerPicker] = useState(false);
+    const [showTaxPicker, setShowTaxPicker] = useState(false);
 
     const handleRemoveItem = (itemToRemove) => {
         setCartItems(cartItems.filter(item => item.name !== itemToRemove.name));
@@ -105,27 +107,6 @@ const Cart = ({navigation}) => {
     function transformJson(data) { const keys = data.message.keys; const values = data.message.values; return values.map(entry => { let obj = {}; keys.forEach((key, index) => { obj[key] = entry[index]; }); return obj; }); }
 
     const getTaxesfromAPI = async () => {
-        // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
-        //     },
-        //     body: {
-        //         "doctype": "Sales Taxes and Charges Template",
-        //         "fields": ["*"],
-        //         "filters": [],
-        //         "order_by": "`tabSales Taxes and Charges Template`.`modified` asc",
-        //         "start": 0,
-        //         "page_length": 20,
-        //         "view": "List",
-        //         "group_by": null,
-        //         "with_comment_count": 1
-        //     }
-        // });
-
-        // const json = await response.json();
-        // console.log(transformJson(json));
-        //console.log("jkù",json);
         try{
             // const response = await fetch('http://195.201.138.202:8006/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
             //     method: 'GET',
@@ -133,6 +114,7 @@ const Cart = ({navigation}) => {
             //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
             //     },
             // });
+            // const response = await fetch('http://192.168.1.12:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
             const response = await fetch('http://192.168.100.6:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
                 method: 'GET',
                 headers: {
@@ -141,7 +123,6 @@ const Cart = ({navigation}) => {
             });
 
             const json = await response.json();
-            console.log(json);
             
             const newHash = getHash(json.data);
 
@@ -180,7 +161,7 @@ const Cart = ({navigation}) => {
                 [
                     tax.name, tax.creation, tax.modified, tax.modified_by, tax.owner,
                     tax.docstatus, tax.idx, tax.title, tax.is_default, tax.disabled,
-                    tax.company, tax.tax_category,  tax.user_tags, tax._comments, tax._assign,
+                    tax.company, tax.tax_category, tax.user_tags, tax._comments, tax._assign,
                     tax._liked_by 
                 ]
               );
@@ -193,7 +174,6 @@ const Cart = ({navigation}) => {
     const getTaxes = async () => {
         try{
             const allTaxes = await db.getAllAsync(`SELECT * FROM Tax_Categories WHERE company="Ites Company (Demo)";`);
-            console.log(allTaxes);
             setCharges(allTaxes);
         }catch(e){
             console.log("error retreiving taxes", e);
@@ -220,6 +200,7 @@ const Cart = ({navigation}) => {
 
     function formatAccountHead(input) {
         // Regular expression to match the pattern "VAT 18% - ICD"
+
         const regex = /VAT \d+% - ICD/;
         const match = input.match(regex);
         return match ? match[0] : null;
@@ -282,7 +263,7 @@ const Cart = ({navigation}) => {
                     calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), "", selectedTax.name,
                     calculateTaxAmount(), calculateTaxAmount(), calculateTotalPrice(),
                     calculateRoudingAdjustment(calculateTotalPrice()), calculateRoundedTotal(calculateTotalPrice()), "", calculateTotalPrice(), calculateRoudingAdjustment(calculateTotalPrice()),
-                    0, "", 0, 0, "Grand Total",
+                    calculateRoundedTotal(calculateTotalPrice()), "", 0, 1, "Grand Total",
                     0, 0,
                     currentCustomer.custom_address, currentCustomer.custom_group, currentCustomer.territory,
                     "Draft", "Not Delivered",
@@ -340,7 +321,8 @@ const Cart = ({navigation}) => {
                     null, calculateTaxAmount(), calculateTotalPrice(), calculateTaxAmount(), calculateTaxAmount(),
                     calculateTotalPrice(), calculateRoundedTotal(), generateItemTaxDetail(selectedItems, selectedTax), 0, salesOrderName,
                     "taxes", "Sales Order"
-                ]);
+                ]
+            );
         }catch(e){
             console.log('Error saving sales order', e);
         }
@@ -348,12 +330,234 @@ const Cart = ({navigation}) => {
 
     const handleSaveSaleOrder = () => {
         try{
-            saveSalesOrder();
-            navigation.navigate('CommandeScreen');
-            Alert.alert('Saving sales order..');
+            if (!selectedTax ||  !selectedClient){
+                Alert.alert(
+                    'Missing Information',
+                    'Please ensure you have selected both a tax and a client before proceeding.',
+                    [{ text: 'OK' }]
+                  );
+            }else{
+                saveSalesOrder();
+                navigation.navigate('CommandeScreen');
+                Alert.alert(
+                    'Success',
+                    'The sales order is being saved and you will be redirected to the Commande screen.',
+                    [{ text: 'OK' }]
+                  );
+            }
         }catch(e){
-            Alert.alert('Error saving sales order..');
+            Alert.alert(
+                'Error',
+                'There was an issue saving the sales order. Please try again later.',
+                [{ text: 'OK' }]
+              );
             console.log('Error saving sales order', e);
+        }
+    };
+
+    const saveSalesInvoice = async() => {
+        let invoiceName = '';
+        try{
+            let currentCustomer = customer;
+            if(!currentCustomer){
+                currentCustomer = selectedClient;
+            }
+            const currentDate = new Date();
+            const invoiceName = 'new-sales-Invoice-'+generateRandomName();
+            await db.runAsync(`INSERT INTO Sales_Invoice(
+                    name, owner,
+                    docstatus, idx, naming_series, customer,
+                    customer_name, posting_date, posting_time,
+                    set_posting_time, due_date, is_pos, is_consolidated, is_return,
+                    update_outstanding_for_self, update_billed_amount_in_sales_order, update_billed_amount_in_delivery_note, is_debit_note,
+                    currency, conversion_rate,
+                    selling_price_list, price_list_currency, plc_conversion_rate, ignore_pricing_rule,
+                    update_stock, set_warehouse, total_qty, total_net_weight,
+                    base_total, base_net_total, total, net_total, tax_category,
+                    taxes_and_charges, base_total_taxes_and_charges,
+                    total_taxes_and_charges, base_grand_total, base_rounding_adjustment, base_rounded_total, base_in_words,
+                    grand_total, rounding_adjustment, use_company_roundoff_cost_center, rounded_total, in_words,
+                    total_advance, outstanding_amount, disable_rounded_total, apply_discount_on, base_discount_amount,
+                    is_cash_or_non_trade_discount, additional_discount_percentage, discount_amount, other_charges_calculation,
+                    total_billing_hours, total_billing_amount, base_paid_amount, paid_amount,
+                    base_change_amount, change_amount, account_for_change_amount, allocate_advances_automatically, only_include_allocated_payments,
+                    write_off_amount, base_write_off_amount, write_off_outstanding_amount_automatically, write_off_account, write_off_cost_center,
+                    redeem_loyalty_points, loyalty_points, loyalty_amount,
+                    customer_address,
+                    territory,
+                    ignore_default_payment_terms_template,
+                    debit_to, party_account_currency, is_opening,
+                    amount_eligible_for_commission, commission_rate, total_commission,
+                    group_same_items, language,
+                    status,
+                    customer_group, is_internal_customer, is_discounted,
+                    repost_required
+                ) VALUES (
+                    ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?, ?, ?,
+                    ?, ?, ?,
+                    ?, ?,
+                    ?,
+                    ?, ?, ?,
+                    ?
+                )`,
+                [
+                    invoiceName, "Administrator",
+                    0, 0, "ACC-SINV-"+currentDate.getFullYear()+"-", currentCustomer.customer_name,
+                    currentCustomer.customer_name, currentDate.toISOString().split('T')[0], currentDate.toISOString().split('T')[0],
+                    0, currentDate.toISOString().split('T')[0], 1, 0, 0,
+                    1, 0, 1, 0,
+                    "TND", 1,  // "DA"
+                    "Standard Selling", "TND", 1, 0, // currency settings ------------ "DA"
+                    1, "Magasin Fille 1 - ICD", calculateTotalQuantity(quantities), 0,
+                    calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), "",
+                    selectedTax.name, calculateTaxAmount(),
+                    calculateTaxAmount(), calculateTotalPrice(), calculateRoudingAdjustment(calculateTotalPrice()), calculateRoundedTotal(calculateTotalPrice()), "",
+                    calculateTotalPrice(), calculateRoudingAdjustment(calculateTotalPrice()), 0, calculateRoundedTotal(calculateTotalPrice()), "",
+                    0, calculateRoundedTotal(calculateTotalPrice()), 1, "Grand Total", 0,
+                    0, 0, 0, "",
+                    0, 0, 0, 0, 
+                    0, 0, "", 0, 0,
+                    0, 0, 0 , "", "",
+                    0, 0, 0,
+                    currentCustomer.custom_address,
+                    currentCustomer.territory,
+                    0,
+                    "", "TND", "No", // currency settings --------------- "DA"
+                    calculateTotalPriceWithoutTax(), 0, 0,
+                    0, "en",  // language settings --------------- "
+                    "Draft",
+                    currentCustomer.customer_group, 0, 0,
+                    0
+                ]
+            );
+
+            console.log(selectedItems);
+            await Promise.all(selectedItems.map(async (salesInvoiceItem)=> {
+                console.log(salesInvoiceItem);
+                const salesInvoiceItemName = 'new-sales-Invoice-Item-'+generateRandomName();
+                await db.runAsync(`INSERT INTO Sales_Invoice_item(
+                    name, owner,
+                    docstatus, idx, has_item_scanned, item_code,
+                    item_name, description, item_group,
+                    qty, stock_uom, uom, conversion_factor,
+                    stock_qty, price_list_rate, base_price_list_rate, margin_type, margin_rate_or_amount,
+                    rate_with_margin, discount_percentage, discount_amount, base_rate_with_margin, rate,
+                    amount, base_rate, base_amount,
+                    stock_uom_rate, is_free_item, grant_commission, net_rate, net_amount,
+                    base_net_rate, base_net_amount, delivered_by_supplier, income_account, is_fixed_asset,
+                    expense_account,
+                    enable_deferred_revenue,
+                    warehouse,
+                    use_serial_batch_fields, allow_zero_valuation_rate, incoming_rate, item_tax_rate,
+                    actual_batch_qty,
+                    delivered_qty,
+                    page_break,
+                    parent, parentfield, parenttype
+                ) VALUES (
+                    ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?, ?, ?, ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?, ?, ?
+                )`,
+                [
+                    salesInvoiceItemName, "Administrator",
+                    0, 1, 0, salesInvoiceItem.item_code,
+                    salesInvoiceItem.item_name, salesInvoiceItem.description, salesInvoiceItem.item_group,
+                    quantities[salesInvoiceItem.name], salesInvoiceItem.stock_uom, salesInvoiceItem.stock_uom, 1,
+                    quantities[salesInvoiceItem.name], salesInvoiceItem.standard_rate, salesInvoiceItem.standard_rate, "", 0,
+                    0, 0, 0, 0, salesInvoiceItem.standard_rate,
+                    calculateTotalPricePerItem(salesInvoiceItem), salesInvoiceItem.standard_rate, calculateTotalPricePerItem(salesInvoiceItem),
+                    0, 0, 1, salesInvoiceItem.standard_rate, calculateTotalPricePerItem(salesInvoiceItem),
+                    salesInvoiceItem.standard_rate, calculateTotalPricePerItem(salesInvoiceItem), 0, "4110 - Sales - ICD", 0,
+                    "4110 - Sales - ICD",
+                    0,
+                    "Magasin Fille 1 - ICD",
+                    1, 0, 0, "{}",
+                    0,
+                    0,
+                    0,
+                    invoiceName, "items", "Sales Invoice"
+                ]
+                );
+            }));
+
+            const salesTaxes_and_ChargesName = 'new-sales-taxes-and-charges-'+generateRandomName();
+            await db.runAsync(`INSERT INTO Sales_Taxes_and_Charges(
+                    name, owner,
+                    docstatus, idx, charge_type, account_head,
+                    description, included_in_print_rate, included_in_paid_amount, cost_center, rate,
+                    account_currency, tax_amount, total, tax_amount_after_discount_amount, base_tax_amount,
+                    base_total, base_tax_amount_after_discount_amount, item_wise_tax_detail, dont_recompute_tax, parent,
+                    parentfield, parenttype
+                ) VALUES (
+                    ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?
+                )`, 
+                [
+                    salesTaxes_and_ChargesName, "Administrator",
+                    0, 1, "On Net Total", formatAccountHead(selectedTax.name),
+                    selectedTax.name, 0, 0, "", getTaxRate(selectedTax),
+                    null, calculateTaxAmount(), calculateTotalPrice(), calculateTaxAmount(), calculateTaxAmount(),
+                    calculateTotalPrice(), calculateTaxAmount(), generateItemTaxDetail(selectedItems,selectedTax), 0, invoiceName,
+                    "taxes", "Sales Invoice"
+                ]
+            );
+            return invoiceName;
+        }catch(e) {
+            console.log("Error saving sales invoice",e);
+        }
+    };
+
+    const handleSaveSalesInvoice = async () => {
+        try{
+            if (!selectedTax ||  !selectedClient){
+                Alert.alert("Make sure you have selected a tax and a client");
+            }else{
+                const invoice = await saveSalesInvoice();
+                navigation.navigate('SalesInvoiceScreen',{invoice});
+                Alert.alert('Saving sales invoice');
+            }
+        }catch(e){
+            Alert.alert('Error saving sales invoice');
+            console.log('Error saving sales invoice', e);
         }
     };
 
@@ -427,13 +631,6 @@ const Cart = ({navigation}) => {
     // };
 
 
-    const handleSaveQuotation = () => {
-        saveQuotation();
-        saveQuotationItems();
-        saveQuotation_Taxes_and_Charges();
-        Alert.alert('Saving quotation..');
-    };
-
     const getClients = async () => {
         try{
             const allClients = await db.getAllAsync(`SELECT * FROM Customers;`);
@@ -443,60 +640,12 @@ const Cart = ({navigation}) => {
         }
     };
 
-    const getUpdatedTaxes = () => {
-        setUpdatedTaxes([
-            {
-                "name": "Tunisia VAT 12% - ICD",
-                "owner": "seif@gmail.com",
-                "creation": "2024-07-05 11:14:01.904282",
-                "modified": "2024-07-05 11:14:01.904282",
-                "modified_by": "seif@gmail.com",
-                "docstatus": 0,
-                "idx": 0,
-                "title": "Tunisia VAT 12%",
-                "is_default": 0,
-                "disabled": 0,
-                "company": "Ites Company (Demo)",
-                "tax_category": null
-            },
-            {
-                "name": "Tunisia VAT 18% - ICD",
-                "owner": "seif@gmail.com",
-                "creation": "2024-07-05 11:14:01.617601",
-                "modified": "2024-07-05 11:14:01.617601",
-                "modified_by": "seif@gmail.com",
-                "docstatus": 0,
-                "idx": 76,
-                "title": "Tunisia VAT 18%",
-                "is_default": 1,
-                "disabled": 0,
-                "company": "Ites Company (Demo)",
-                "tax_category": null
-            },
-            {
-                "name": "Tunisia VAT 6% - ICD",
-                "owner": "seif@gmail.com",
-                "creation": "2024-07-05 11:14:02.091507",
-                "modified": "2024-07-05 11:14:02.091507",
-                "modified_by": "seif@gmail.com",
-                "docstatus": 0,
-                "idx": 0,
-                "title": "Tunisia VAT 6%",
-                "is_default": 0,
-                "disabled": 0,
-                "company": "Ites Company (Demo)",
-                "tax_category": null
-            }
-        ]);
-    };
-
     useEffect(() => {   
         if(isFocused){
             const initialize = async () => {
                 createMetadataTable();
                 getTaxesfromAPI();
                 getTaxes();
-                getUpdatedTaxes();
                 getClients();
             };
             initialize();
@@ -505,27 +654,48 @@ const Cart = ({navigation}) => {
 
     const CartItem = ({ item, onRemove, onQuantityChange }) => {
       return (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 10, borderBottomWidth: 1 }}>
-                <Text>{item.item_name}</Text>
+            <View style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                padding: 10,
+                borderBottomWidth: 1,
+                borderColor: '#ccc',
+                alignItems: 'center',
+                backgroundColor: '#fff',
+                marginVertical: 5,
+                borderRadius: 10,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+                elevation: 3,
+              }}>
+                <Image
+                source={{ uri: item.image }}
+                style={{ width: 50, height: 50, borderRadius: 5, marginRight: 10 }}
+                />
+                <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{item.item_name}</Text>
+                </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <TouchableOpacity onPress={() => onQuantityChange(item, -1)}>
-                        <Text style={{ fontSize: 20 }}>-</Text>
+                        <Text style={{ fontSize: 20, paddingHorizontal: 10 }}>-</Text>
                     </TouchableOpacity>
-                    <Text style={{ marginHorizontal: 10 }}>{quantities[item.name]}</Text>
+                    <Text style={{ marginHorizontal: 10, fontSize: 16 }}>{quantities[item.name]}</Text>
                     <TouchableOpacity onPress={() => onQuantityChange(item, 1)}>
-                        <Text style={{ fontSize: 20 }}>+</Text>
-                    </TouchableOpacity>
+                        <Text style={{ fontSize: 20, paddingHorizontal: 10 }}>+</Text>
+                     </TouchableOpacity>
                 </View>
-                <Text>DA {item.standard_rate * quantities[item.name]}</Text>
-                <TouchableOpacity onPress={() => onRemove(item)}>
-                    <Text style={{ color: 'red' }}>Remove</Text>
+                <Text style={{ fontSize: 16, fontWeight: 'bold' }}>DA {item.standard_rate * quantities[item.name]}</Text>
+                <TouchableOpacity onPress={() => onRemove(item)} style={{ marginLeft: 10 }}>
+                    <Text style={{ color: 'red', fontWeight: 'bold' }}>Remove</Text>
                 </TouchableOpacity>
             </View>
-      );
+        );
     };
 
     return (
-        <View style={{ flex: 1, padding: 10 }}>
+        <View style={{ flex: 1, padding: 10, backgroundColor: '#f5f5f5' }}>
             <FlatList
                 data={cartItems}
                 keyExtractor={item => item.name}
@@ -539,40 +709,38 @@ const Cart = ({navigation}) => {
             />
             <View style={{ padding: 10 }}>
             {!customer && (
-                    <View style={{ marginBottom: 20 }}>
-                        <Text style={{ fontSize: 18 }}>Select Customer:</Text>
-                        <Picker
-                        selectedValue={selectedClient}
-                        onValueChange={(itemValue, itemIndex) => {
-                        setSelectedClient(itemValue)
-                            }}
-                        >
-                            <Picker.Item label="Selected Customer" value={null} />
-                            {clients.map((client) => (
-                                <Picker.Item key={client.name} label={`${client.name}`} value={client} />
-                            ))}
-                        </Picker>
-                    </View>
-                )}
-            <Text style={{ fontSize: 18 }}>Select Tax:</Text>
+            <View style={{ marginBottom: 20 }}>
                 <Picker
-                selectedValue={selectedTax}
-                onValueChange={(itemValue, itemIndex) => {
-                    setSelectedTax(itemValue);
-                }}
+                selectedValue={selectedClient}
+                onValueChange={(itemValue) => setSelectedClient(itemValue)}
+                style={{ height: 40, backgroundColor: '#f0f0f0', borderRadius: 5 }}
                 >
-                    <Picker.Item label="Selected Tax" value={null} />
-                    {charges.map((tax) => (
-                        <Picker.Item key={tax.name} label={`${tax.name}`} value={tax} />
+                    <Picker.Item label="Select Customer" value={null} />
+                    {clients.map((client) => (
+                        <Picker.Item key={client.name} label={client.name} value={client} />
                     ))}
                 </Picker>
-                <Text style={{ fontSize: 18 }}>Total: DA {calculateTotalPrice()}</Text>
+            </View>
+            )}
+            <Picker
+            selectedValue={selectedTax}
+            onValueChange={(itemValue) => setSelectedTax(itemValue)}
+            style={{ height: 40, backgroundColor: '#f0f0f0', borderRadius: 5 }}
+            >
+                <Picker.Item label="Select Tax" value={null} />
+                {charges.map((tax) => (
+                    <Picker.Item key={tax.name} label={tax.name} value={tax} />
+                ))}
+            </Picker>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', marginVertical: 3 }}>Net Total: DA {calculateTotalPriceWithoutTax()}</Text>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', marginVertical: 3 }}>Total Tax: DA {calculateTaxAmount()}</Text>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', marginVertical: 3 }}>Grand Total: DA {calculateTotalPrice()}</Text>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 20 }}>
                     <TouchableOpacity style={styles.button} onPress={handleSaveSaleOrder}>
-                        <Text style={styles.buttonText}>Passer Commande</Text>
+                        <Text style={styles.buttonText}>Passer à la Commande</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.button} onPress={handleSaveQuotation}>
-                        <Text style={styles.buttonText}>Demander Devis</Text>
+                    <TouchableOpacity style={styles.button} onPress={handleSaveSalesInvoice}>
+                        <Text style={styles.buttonText}>Passer au Paiment</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -584,15 +752,21 @@ export default Cart;
 
 const styles = StyleSheet.create({
     button: {
-    backgroundColor: '#E59135',
-    borderRadius: 10,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 100,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
+        backgroundColor: '#E59135',
+        padding: 10,
+        borderRadius: 10,
+        alignItems: 'center',
+        flex: 1,
+        marginRight: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    buttonText: {
+        color: '#FFF', 
+        fontSize: 16, 
+        fontWeight: 'bold' 
+    },
 })

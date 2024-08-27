@@ -36,12 +36,18 @@ const LivraisonScreen = () => {
 
       const getDeliveriesfromAPI = async () => {
           try{
-              const response = await fetch('http://195.201.138.202:8006/api/resource/Delivery Note?fields=["*"]', {
-                  method: 'GET',
-                  headers: {
-                      'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
-                  },
-              });
+            const response = await fetch('http://192.168.100.6:8002/api/resource/Delivery Note?fields=["*"]', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                },
+            });
+            //   const response = await fetch('http://195.201.138.202:8006/api/resource/Delivery Note?fields=["*"]', {
+            //       method: 'GET',
+            //       headers: {
+            //           'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
+            //       },
+            //   });
               const json = await response.json();
               const newHash = getHash(json.data);
 
@@ -183,7 +189,7 @@ const LivraisonScreen = () => {
                   ) : (
                       <FlatList 
                           data ={displayData}
-                          keyExtractor={(item) => item.name}
+                          keyExtractor={(item) => (item.name).toString()}
                           renderItem={({item}) => (
                               <TouchableOpacity onPress={() => navigation.navigate('EditLivraisonScreen', { deliveryId: item.name })}>
                                   <View style={{marginBottom:10}}>

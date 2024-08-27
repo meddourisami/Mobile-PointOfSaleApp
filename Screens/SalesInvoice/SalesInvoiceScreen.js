@@ -4,12 +4,15 @@ import { useIsFocused, useRoute } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
+import { useBudget } from '../../BudgetContext';
 
 const SalesInvoiceScreen = ({navigation}) => {
     const route = useRoute();
-    const {commandeName} = route.params;
+    const {commandeName, invoice} = route.params;
     const isFocused = useIsFocused();
     const db = useSQLiteContext();
+    const { updateBudget } = useBudget();
+
 
     const [commande, setCommande] = useState(null);
     const [salesOrderItems, setSalesOrderItems] = useState([]);
@@ -31,12 +34,21 @@ const SalesInvoiceScreen = ({navigation}) => {
 
     const getCommandeDetails = async () => {
         try {
-            const selectedCommande = await db.getFirstAsync(`SELECT * FROM Sales_Order WHERE name= ?;`, [commandeName]);
-            setCommande(selectedCommande);
-            const salesOrderItems = await db.getAllAsync(`SELECT * FROM Sales_Order_Item WHERE parent= ?;`, [commandeName]);
-            setSalesOrderItems(salesOrderItems);
-            const salesOrderTaxes_and_Charges = await db.getAllAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent= ?;`, [commandeName]); ///TODO CHECK FOR RETURN TYPE
-            setSalesOrderTaxes(salesOrderTaxes_and_Charges);
+            if(commandeName){
+                const selectedCommande = await db.getFirstAsync(`SELECT * FROM Sales_Order WHERE name= ?;`, [commandeName]);
+                setCommande(selectedCommande);
+                const salesOrderItems = await db.getAllAsync(`SELECT * FROM Sales_Order_Item WHERE parent= ?;`, [commandeName]);
+                setSalesOrderItems(salesOrderItems);
+                const salesOrderTaxes_and_Charges = await db.getAllAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent= ?;`, [commandeName]); ///TODO CHECK FOR RETURN TYPE
+                setSalesOrderTaxes(salesOrderTaxes_and_Charges);
+            }else{
+                const selectedInvoice = await db.getFirstAsync(`SELECT * FROM Sales_Invoice WHERE name= ?;`, [invoice]);
+                setCommande(selectedInvoice);
+                const salesInvoiceItems = await db.getAllAsync(`SELECT * FROM Sales_Invoice_Item WHERE parent= ?;`, [invoice]);
+                setSalesOrderItems(salesInvoiceItems);
+                const salesInvoiceTaxes_and_Charges = await db.getAllAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent=?;`, [invoice]);
+                setSalesOrderTaxes(salesInvoiceTaxes_and_Charges);
+            }
         }catch(e){
             console.log("Error getting the sale order from local database",e );
         }
@@ -57,8 +69,6 @@ const SalesInvoiceScreen = ({navigation}) => {
         try{
             const currentDate = new Date();
             const invoiceName = 'new-sales-Invoice-'+generateRandomName();
-            console.log(invoiceName);
-            console.log(commande);
             await db.runAsync(`INSERT INTO Sales_Invoice(
                     name, owner,
                     docstatus, idx, naming_series, customer,
@@ -207,9 +217,9 @@ const SalesInvoiceScreen = ({navigation}) => {
                 ]
                 );
             }));
+            
 
             const salesTaxes_and_ChargesName = 'new-sales-taxes-and-charges-'+generateRandomName();
-            console.log(salesOrderTaxes);
             await db.runAsync(`INSERT INTO Sales_Taxes_and_Charges(
                     name, owner,
                     docstatus, idx, charge_type, account_head,
@@ -234,7 +244,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                     "taxes", "Sales Invoice"
                 ]
             );
-            
+             
             const salesInvoicePaymentName = 'new-sales-Invoice-Payment-'+generateRandomName();
             await db.runAsync(`INSERT INTO Sales_Invoice_Payment(
                     name,
@@ -259,16 +269,52 @@ const SalesInvoiceScreen = ({navigation}) => {
         }
     };
 
+    const completeSalesInvoiceSaving = async () => {
+        try{
+            await db.runAsync(`UPDATE Sales_Invoice SET base_paid_amount = ?, paid_amount = ? WHERE name = ?`, [paidAmount, paidAmount, invoice]);
+            const salesInvoicePaymentName = 'new-sales-Invoice-Payment-'+generateRandomName();
+            await db.runAsync(`INSERT INTO Sales_Invoice_Payment(
+                    name,
+                    docstatus, idx, "default", mode_of_payment, amount,
+                    account, type, base_amount, clearance_date,
+                    parent, parentfield, parenttype
+                ) VALUES (
+                    ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?
+                )`, 
+                [
+                    salesInvoicePaymentName,
+                    0, 1, 1, paymentMode, paidAmount,
+                    "1110 - Cash - ICD", paymentMode, paidAmount, invoiceDate.toISOString().split('T')[0],
+                    invoice, "payments", "Sales Invoice"
+                ]
+            );
+        }catch(e){
+            console.log("Error completing the sales invoice payment" ,e);
+        }
+    }
+
     const handleSaveSalesInvoice = () => {
         try{
-            saveSalesInvoice();
-            navigation.navigate('PaimentScreen');
-            Alert.alert("Sales Invoice saved successfully..");
+            if (!paidAmount ||  !invoiceDate){
+                Alert.alert("Make sure you have entered the amount paid");
+            }else{
+                if(commandeName && !invoice){
+                    saveSalesInvoice();
+                }else if(invoice && !commandeName) {
+                    completeSalesInvoiceSaving();
+                }
+                updateBudget(paidAmount);
+                navigation.navigate('PaimentScreen');
+                Alert.alert("Sales Invoice saved successfully..");
+            }
         }catch(e){
             Alert.alert("Sales Invoice failed to be saved");
             console.log("Error saving the Sales Invoice, please try again" ,e);
         }
-    }
+    };
 
     useEffect(() => { 
         if (isFocused){
@@ -278,16 +324,26 @@ const SalesInvoiceScreen = ({navigation}) => {
     },[isFocused]);
 
   return (
-    <View style={{alignItems:'center', flex:1}}>
+    <View style={{flex: 1, padding: 20, backgroundColor: '#f5f5f5'}}>
         {commande && salesOrderItems && salesOrderTaxes ? (
             <>
                 <ScrollView style={{flex:1}} >
                     <View>
                         <TouchableOpacity 
-                        style={{ borderRadius: 10, backgroundColor: "#FFF", margin: 5, padding: 20, justifyContent: 'center' }}
+                        style={{ borderRadius: 10,
+                        backgroundColor: '#FFF',
+                        marginVertical: 10,
+                        padding: 20,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 4,
+                        elevation: 5, }}
                         onPress={showDatepicker}
                         >
-                            <Text>Select Invoice Date: {invoiceDate.toLocaleDateString()}</Text>
+                            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
+                                Select Invoice Date: {invoiceDate.toLocaleDateString()}
+                            </Text>
                         </TouchableOpacity>
                         {show && (
                             <DateTimePicker
@@ -299,38 +355,77 @@ const SalesInvoiceScreen = ({navigation}) => {
                             />
                         )}
                     </View>
-                    <TouchableOpacity style={{borderRadius: 10, backgroundColor:"#FFF",  margin: 5, padding:20, justifyContent:'center'}}>
-                        <Text>Customer: {commande.customer}</Text>
+                    <TouchableOpacity style={{
+                        borderRadius: 10,
+                        backgroundColor: '#FFF',
+                        marginVertical: 10,
+                        padding: 20,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 4,
+                        elevation: 5,}}>
+                        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Customer: {commande.customer}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={{borderRadius: 10, backgroundColor:"#FFF",  margin: 5, padding:20, justifyContent:'center'}}>
-                        <Text style={{margin:10}}>Amount To Pay: {commande.grand_total} DA</Text>
+                        <Text style={{ fontSize: 14, color: '#555' }}>Amount To Pay: {commande.grand_total} DA</Text>
                         <TextInput
-                        style={{ padding: 10, backgroundColor: '#f0f0f0', borderRadius: 5 }}
-                        placeholder='Amount paid'
+                        style={{
+                        padding: 15,
+                        backgroundColor: '#f0f0f0',
+                        borderRadius: 10,
+                        marginBottom: 15,
+                        fontSize: 16,
+                        borderColor: '#ccc',
+                        borderWidth: 1,
+                        }}
+                        placeholder={`${commande.grand_total} DA`}
                         keyboardType='numeric'
                         value={paidAmount}
-                        onChangeText={text => setPaidAmount(text)}
+                        onChangeText={text => setPaidAmount(Number(text))}
                         />
                     </TouchableOpacity>
                     <TouchableOpacity style={{ borderRadius: 10, backgroundColor:"#FFF", margin: 5, padding:20, justifyContent:'center'}}>
-                        <Text>Payment Method: </Text>
-                        <View style={{ borderWidth: 1, borderRadius: 5, marginTop: 10 }}>
+                        <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>Payment Method: </Text>
+                        <View style={{ borderWidth: 1, borderRadius: 5, borderColor: '#ccc' }}>
                             <Picker
                             selectedValue={paymentMode}
                             onValueChange={(itemValue) => setPaymentMode(itemValue)}
                             style={{ height: 50, width: '100%' }}
                             >
                                 <Picker.Item label="Cash" value="Cash" />
-                                <Picker.Item label="Card" value="Card" />
+                                <Picker.Item label="Cart Card" value="Cart Card" />
                             </Picker>
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity style={{ borderRadius: 10, backgroundColor:"#FFF", margin: 5, padding:20, justifyContent:'center'}}>
-                        <Text>Print Recipe </Text>
+                    <TouchableOpacity style={{
+                        borderRadius: 10,
+                        backgroundColor: '#FFF',
+                        marginVertical: 10,
+                        padding: 20,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 4,
+                        elevation: 5,
+                        alignItems: 'center',
+                    }}>
+                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#E59135' }}>Print Recipe </Text>
                     </TouchableOpacity>
                 </ScrollView>
-                <TouchableOpacity style={{height:50 ,margin: 10, width:200, justifyContent:'center', backgroundColor:"#E59135", alignItems:'center', borderRadius:15}}>
-                    <Text style={{color:"#FFF"}} onPress={handleSaveSalesInvoice}>Complete Sale</Text>
+                <TouchableOpacity  style={{
+                    height: 50,
+                    marginVertical: 20,
+                    width: '100%',
+                    justifyContent: 'center',
+                    backgroundColor: '#E59135',
+                    alignItems: 'center',
+                    borderRadius: 15,
+                    }}
+                >
+                    <Text style={{ fontSize: 18, color: '#FFF', textAlign: 'center'}} onPress={handleSaveSalesInvoice}>Complete Sale</Text>
                 </TouchableOpacity>
             </>
         ) : (

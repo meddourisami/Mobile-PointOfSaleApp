@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -35,6 +35,16 @@ const ArticleScreen = () => {
             }
         };
 
+        function transformJson(data) {
+            const keys = data.message.keys;
+            const values = data.message.values;
+            return values.map(entry => {
+                let obj = {};
+                keys.forEach((key, index) => { obj[key] = entry[index]; });
+                return obj; 
+            }); 
+        };    
+
         const getItemsFromApi = async () =>{
             try{
                 // const response = await fetch('http://195.201.138.202:8006/api/resource/Item?fields=["*"]', {
@@ -43,17 +53,84 @@ const ArticleScreen = () => {
                 //             'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
                 //         },
                 //     });
-                const response = await fetch('http://192.168.100.6:8002/api/resource/Item?fields=["*"]', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
-                    },
+                // const response = await fetch('http://192.168.100.6:8002/api/resource/Item?fields=["*"]', {
+                //     method: 'GET',
+                //     headers: {
+                //         'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                //     },
+                // });
+
+                // const json = await response.json();
+
+                response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
+                // response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.query_report.run',
+                    {
+                        method: 'POST',
+                        headers: {
+                            Authorization: 'token 94c0faa6066a7c0:982654458dc9011',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            "report_name": "Stock Balance",
+                            "filters": {
+                              "company": "Ites Company (Demo)",
+                              "from_date": "2024-07-22",
+                              "to_date": "2024-08-22",
+                              "warehouse": "Magasin Fille 1 - ICD",
+                              "valuation_field_type": "Currency"
+                            },
+                            "ignore_prepared_report": false,
+                            "are_default_filters": false,
+                            "_": 1724320483743
+                          }),
+                    }
+                );
+                const json = await response.json();
+                quantities = json.message.result;
+                const filteredQuantities = quantities.filter(item => !Array.isArray(item));
+    
+                names= [];
+                filteredQuantities.map((quantity) => {
+                    names.push(quantity.item_code);
                 });
 
-                const json = await response.json();
-                //console.log(json.data);
-
-                const newHash = getHash(json.data);
+                // stockDetails= [];
+                // filteredQuantities.map((quantity) => {
+                //     stockDetails.push(quantity.bal_qty, quantity.bal_val);
+                // });
+                // console.log(stockDetails);
+                response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
+                // response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.reportview.get', 
+                    {
+                        method: 'POST',
+                        headers: {
+                            Authorization: 'token 94c0faa6066a7c0:982654458dc9011',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            "doctype": "Item",
+                            "fields": [
+                            "*"
+                            ],
+                            "filters": [
+                                ["Item", "name", "in", names]
+                            ],
+                            "order_by": "`tabItem`.`modified` desc",
+                            "start": 0,
+                            "page_length": 20,
+                            "view": "List",
+                            "group_by": "",
+                            "with_comment_count": 1
+                              
+                        }),
+                    }
+                );
+                const data = await response.json();
+                const selectedItems = transformJson(data);
+                
+                // itemsInStock = [...selectedItems, ...stockDetails];
+                // console.log("selecteditemsinstock",itemsInStock);  TODO ADD QUANTITY TO ITEMS VIEW
+                const newHash = getHash(selectedItems);
 
                 const existingHash = await db.runAsync('SELECT data_hash FROM CustomerMetadata WHERE id = 1;');
 
@@ -63,10 +140,10 @@ const ArticleScreen = () => {
                         await db.runAsync(`DELETE FROM Item WHERE name = ?;`, [item.name]);
                     }));
 
-                    await saveInLocalItems(json.data);
-                    setItems(json.data);
+                    await saveInLocalItems(selectedItems);
+                    setItems(selectedItems);
                 }
-                return json.data;
+                return selectedItems;
             } catch(e){
                 console.log("error getting items", e);
             }
@@ -91,7 +168,7 @@ const ArticleScreen = () => {
                         delivered_by_supplier, country_of_origin, customs_tariff_number, sales_uom, grant_commission,
                         is_sales_item, max_discount, inspection_required_before_purchase, quality_inspection_template, inspection_required_before_delivery,
                         include_item_in_manufacturing, is_sub_contracted_item, default_bom, customer_code, default_item_manufacturer,
-                        default_manufacturer_part_no, total_projected_qty, _comment_count
+                        default_manufacturer_part_no, total_projected_qty, _comment_count, bal_qty, bal_val
                     ) VALUES (
                         ?, ?, ?, ?,
                         ?, ?, ?, ?, ?,
@@ -108,7 +185,7 @@ const ArticleScreen = () => {
                         ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?,
-                        ?, ?, ?
+                        ?, ?, ?, ?, ?
                     )`,
                         [
                             item.name, item.owner, item.creation, item.modified,
@@ -126,7 +203,7 @@ const ArticleScreen = () => {
                             item.delivered_by_supplier, item.country_of_origin, item.customs_tariff_number, item.sales_uom, item.grant_commission,
                             item.is_sales_item, item.max_discount, item.inspection_required_before_purchase, item.quality_inspection_template, item.inspection_required_before_delivery,
                             item.include_item_in_manufacturing, item.is_sub_contracted_item, item.default_bom, item.customer_code, item.default_item_manufacturer,
-                            item.default_manufacturer_part_no, item.total_projected_qty, item._comment_count
+                            item.default_manufacturer_part_no, item.total_projected_qty, item._comment_count, item.bal_qty, item.bal_val
                         ]
                     )
                 }));
@@ -135,73 +212,9 @@ const ArticleScreen = () => {
             }
         };
 
-        // const syncDataWithServer = async (item) => {
-        //     try {
-        //         const {
-        //             name,
-        //             customer_name,
-        //             customer_type,
-        //             customer_group,
-        //             territory,
-        //             custom_code,
-        //             custom_address,
-        //             custom_phone
-        //         } = client;
-
-        //         console.log(name);
-
-        //         const data = {
-        //             name,
-        //             customer_name,
-        //             customer_type,
-        //             customer_group,
-        //             territory,
-        //             custom_code,
-        //             custom_address,
-        //             custom_phone,
-        //             doctype: "Customer",
-        //             __islocal: 1,
-        //             owner: "Administrator",
-        //         };
-
-        //         console.log("data", JSON.stringify({
-        //             "doc": JSON.stringify(data),  
-        //             "action": "Save"
-        //         }));
-
-        //         const response = await fetch(
-        //             'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
-        //                 {
-        //                     method: 'POST',
-        //                     headers: {
-        //                         'Content-Type': 'application/json',
-        //                         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
-        //                     },
-        //                     body: JSON.stringify({
-        //                         "doc": JSON.stringify(data),  
-        //                         "action": "Save"
-        //                     })
-        //                 }
-        //             );
-        //         if(response.ok){
-        //             console.log("Synced successfully");
-        //             let customer_synced = 1;
-        //             await db.runAsync(`UPDATE Customers SET synced = 1 WHERE name = ?`, [name]);
-        //         }else{
-        //             console.log("Error from the server", await response.text());
-        //         }
-
-        //     }catch(e){
-        //         console.log('Error saving data to server', e);
-        //     }
-        // };
-
-        
-
         const getItems = async () => {
             try{
                 const allArticles = await db.getAllAsync(`SELECT * FROM Item;`);
-                //console.log(allArticles);
                 setArticles(allArticles);
             }catch(e){
                 console.log("error getting items from database", e);
@@ -211,7 +224,6 @@ const ArticleScreen = () => {
         const getItemsByGroup = async (item_group) => {
             try{
                 const articlesByGroup = await db.getAllAsync(`SELECT * FROM Item WHERE item_group = ?`,[item_group]);
-                //console.log(articlesByGroup);
                 setArticles(articlesByGroup);
             }
             catch(e){
@@ -223,12 +235,12 @@ const ArticleScreen = () => {
             if(isFocused){
                 //createMetadataTable();
                 getItemsFromApi();
-                    if(ItemGroup){
-                        getItemsByGroup(ItemGroup);
-                    }else{
-                        getItems();
-                    }
+                if(ItemGroup){
+                    getItemsByGroup(ItemGroup);
+                }else{
+                    getItems();
                 }
+            }
         }, [isFocused, ItemGroup]);
 
         useEffect(() => {
@@ -262,29 +274,47 @@ const ArticleScreen = () => {
                     ) : (
                         <FlatList
                             data={articles}
-                            keyExtractor= {(item) => item.name}
-                            renderItem={({item}) => (
-                                <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10, backgroundColor: "#FFF", borderRadius:15, margin:5}}>
-                                    <TouchableOpacity >
-                                        <Text>
-                                            {item.item_name} - {item.item_group}
-                                        </Text>
-                                        <Text>On Stock {item.opening_stock}</Text>
-                                        <Text>Prix de vente : {item.standard_rate}</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center', backgroundColor:"#E59135", height:20, marginRight:10}} onPress={() => handleAddItemToCart(item)}>
-                                        <Text style={{color:"#FFF"}}>Add to cart</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            )}
+                            keyExtractor= {(item) => (item.name).toString()}
+                            renderItem={({item}) => {
+                                const defaultImage = "https://t3.ftcdn.net/jpg/04/84/88/76/360_F_484887682_Mx57wpHG4lKrPAG0y7Q8Q7bJ952J3TTO.jpg";
+                                const imageUrl = item.image ? item.image : defaultImage;
+                                    return (   
+                                        <View style={{flexDirection:'row', height:100 , justifyContent:'space-between', marginBottom:10, backgroundColor: "#FFF", borderRadius:15, margin:5}}>
+                                            <TouchableOpacity>
+                                                <View style={{flexDirection: 'row', alignItems:'center', justifyContent:'center'}}>
+                                                    <Image
+                                                        source={{ uri: imageUrl }} 
+                                                        style={{ width: 80, height: 80, borderRadius: 10, marginRight: 10,  }} 
+                                                    />
+                                                    <View style={{justifyContent: 'center' }}>
+                                                        <Text>
+                                                            {item.item_name} - {item.item_group}
+                                                        </Text>
+                                                        <Text>On Stock {item.bal_qty}</Text>
+                                                        <Text>Prix de vente : {item.standard_rate}</Text>
+                                                    </View>
+                                                </View>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center', backgroundColor:"#E59135", height:20, marginRight:10}} onPress={() => handleAddItemToCart(item)}>
+                                                <Text style={{color:"#FFF"}}>Add to cart</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    );
+                                }}
                         />
-                    )}
+                )}
             </View>
         );
     };
 
     const addItemToCart = async (item) => {
-        setSelecteditems((selecteditems) => [...selecteditems, item]);
+        const isItemInCart = selecteditems.some(existingItem => existingItem.name === item.name);
+
+        if (isItemInCart) {
+            Alert.alert("Article already in cart", "This article is already in the cart.");
+            return;
+        }
+        setSelecteditems((prevSelectedItems) => [...prevSelectedItems, item]);
     };
 
     const handleAddItemToCart = async (item) => {
@@ -300,29 +330,21 @@ const ArticleScreen = () => {
     };
 
   return (
-    <View>
+    <View style={styles.container}>
         <Text style={{fontSize:24}}>Liste des articles</Text>
             <View>
-        {selecteditems.length > 0 && (
+            {selecteditems.length > 0 && (
                 <TouchableOpacity
-                style={{
-                    bottom: 20,
-                    left: 20,
-                    right: 20,
-                    backgroundColor: '#284979',
-                    padding: 15,
-                    borderRadius: 5,
-                    alignItems: 'center',
-                }}
+                style={styles.cartButton}
                 onPress={() => navigation.navigate('Cart', { selectedItems : selecteditems , customer: customer })}
                 >
                     <Text style={{ color: '#FFF', fontSize: 18 }}>
-                        {`Items: ${selecteditems.length}, Total: $${calculateTotalPrice().toFixed(2)}`}
+                        {`Items: ${selecteditems.length}, Total: DA ${calculateTotalPrice().toFixed(2)}`}
                     </Text>
                 </TouchableOpacity>
             )}
-            {/* </View>
-            <View> */}
+            </View>
+            <View style={styles.contentContainer}>
                 <Content />
             </View>
             <View>
@@ -344,14 +366,39 @@ const styles = StyleSheet.create({
     icon: {
         position: 'absolute',
         justifyContent:'flex-end',
-        bottom: 30,
-        right: 30,
-        marginBottom:30,
+        bottom: 10,
+        right: 10,
+        marginBottom:10,
+        zIndex:10,
     },
     iconCart: {
         position: 'absolute',
         bottom: 30,
         left: 30,
         marginBottom:30,
+    },
+    container: {
+        flex: 1,
+        padding: 0,
+        position: 'relative',
+    },
+    headerText: {
+        fontSize: 24,
+        marginBottom: 10,
+    },
+    cartButton: {
+        backgroundColor: '#284979',
+        padding: 15,
+        borderRadius: 5,
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    cartButtonText: {
+        color: '#FFF',
+        fontSize: 18,
+    },
+    contentContainer: {
+        flex: 1,
+        marginBottom: 60, // Make space for the icon
     },
 })
