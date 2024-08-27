@@ -32,7 +32,7 @@ const PaimentScreen = () => {
           
           const Invoices = await db.getAllAsync(`SELECT * FROM Sales_Invoice;`);
           Invoices.map(async (invoice)=> {
-            if((invoice.name).includes("ACC-SINV-")){
+            if(invoice.name.includes("ACC-SINV-")){
               return;
             }else{
               const invoiceData= {
@@ -58,7 +58,6 @@ const PaimentScreen = () => {
                 return newItem;
               });
               
-
               const invoiceTaxes = await db.getFirstAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent =?`, [invoice.name]);
               const invoiceTaxesData = {
                   ...invoiceTaxes,
@@ -86,8 +85,8 @@ const PaimentScreen = () => {
 
               if (!names.includes(invoice.name)) {
                   await db.runAsync(
-                      `INSERT INTO sales_invoice_logs (action, name, associatedSaleOrder, state, data) VALUES (?, ?, ?, ?, ?)`,
-                      ["INSERT", invoice.name, ,updatedItems[0].sales_order, "Local", JSON.stringify(data)]
+                      `INSERT INTO sales_invoice_logs(action, name, associatedSaleOrder, state, data) VALUES (?, ?, ?, ?, ?)`,
+                      ["INSERT", invoice.name, updatedItems[0].sales_order, "Local", JSON.stringify(data)]
                   );
               }
             }

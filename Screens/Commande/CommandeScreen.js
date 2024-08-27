@@ -52,7 +52,8 @@ const CommandeScreen = () => {
             const Orders = await db.getAllAsync(`SELECT * FROM Sales_Order;`);
             Orders.map(async (order)=> {
                 console.log(order.name);
-                if((order.name).includes("SAL-ORD-")){
+                
+                if(order.name.includes("SAL-ORD-")){
                     return;
                 }else{
                     const orderData= {
@@ -90,7 +91,7 @@ const CommandeScreen = () => {
                             ["INSERT", order.name, "local", JSON.stringify(data)]
                         );
                     }
-                };
+                }
             });
         };
 

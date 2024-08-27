@@ -14,25 +14,25 @@ import { SyncProvider } from './SyncContext';
 
 async function initDatabase(db) {
   try{
-    await db.execAsync(`
-      DROP TABLE IF EXISTS Customers;
-      DROP TABLE IF EXISTS Deliveries;
-      DROP TABLE IF EXISTS GroupItem;
-      DROP TABLE IF EXISTS Item;
-      DROP TABLE IF EXISTS Warehouse;
-      DROP TABLE IF EXISTS Sales_Taxes_and_Charges;
-      DROP TABLE IF EXISTS Sales_Order;
-      DROP TABLE IF EXISTS Sales_Order_Item;
-      DROP TABLE IF EXISTS Quotation;
-      DROP TABLE IF EXISTS Quotation_Item;
-      DROP TABLE IF EXISTS Tax_Categories;
-      DROP TABLE IF EXISTS Sales_Invoice;
-      DROP TABLE IF EXISTS Sales_Invoice_Item;
-      DROP TABLE IF EXISTS Sales_Invoice_Payment;
-      DROP TABLE IF EXISTS sales_invoice_logs;
-      DROP TABLE IF EXISTS sales_order_logs;
-     `
-    );
+    // await db.execAsync(`
+    //   DROP TABLE IF EXISTS Customers;
+    //   DROP TABLE IF EXISTS Deliveries;
+    //   DROP TABLE IF EXISTS GroupItem;
+    //   DROP TABLE IF EXISTS Item;
+    //   DROP TABLE IF EXISTS Warehouse;
+    //   DROP TABLE IF EXISTS Sales_Taxes_and_Charges;
+    //   DROP TABLE IF EXISTS Sales_Order;
+    //   DROP TABLE IF EXISTS Sales_Order_Item;
+    //   DROP TABLE IF EXISTS Quotation;
+    //   DROP TABLE IF EXISTS Quotation_Item;
+    //   DROP TABLE IF EXISTS Tax_Categories;
+    //   DROP TABLE IF EXISTS Sales_Invoice;
+    //   DROP TABLE IF EXISTS Sales_Invoice_Item;
+    //   DROP TABLE IF EXISTS Sales_Invoice_Payment;
+    //   DROP TABLE IF EXISTS sales_invoice_logs;
+    //   DROP TABLE IF EXISTS sales_order_logs;
+    //  `
+    // );
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS Customers (
         name TEXT PRIMARY KEY,

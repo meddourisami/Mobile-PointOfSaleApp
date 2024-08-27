@@ -355,13 +355,13 @@ const HomeScreen = () => {
                 'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
             },
             body: JSON.stringify({
-                "doc": log.data,  
+                "doc": log,  
                 "action": "Save"
             })
         }
       );
       console.log(JSON.stringify({
-        "doc": log.data,  
+        "doc": log,  
         "action": "Save"
       }));
     
@@ -525,9 +525,9 @@ const HomeScreen = () => {
   const syncState = async() => {
     try{
       setIsSyncing(true);
-
         if (saleInvoiceLogs) {
-            for (const log of saleInvoiceLogs) {
+            saleInvoiceLogs.map(async(log) => {
+              console.log(log.data);
                 const logData = JSON.parse(log.data);
                 const saleOrderName = logData.items[0].sales_order;
 
@@ -535,16 +535,17 @@ const HomeScreen = () => {
                     const sale_order_log_to_sync = await db.getFirstAsync(`SELECT * FROM sales_order_logs WHERE name = ?;`, [saleOrderName]);
 
                     await syncSaleOrderWithServer(sale_order_log_to_sync).then(async() =>{
-                      associatedSaleOrderName= await db.getFirstAsync(`SELECT associatedSaleOrder FROM sales_invoice_logs WHERE name= ?`,[log.name]);
+                      associatedSaleOrderName= await db.getFirstAsync(`SELECT associatedSaleOrder FROM sales_invoice_logs WHERE name=?;`,[log.name]);
                             if (associatedSaleOrderName) {
                                 console.log("name", associatedSaleOrderName);
 
                                 logData.items.forEach(item => {
-                                    item.sales_order = associatedSaleOrderName;
+                                  item.sales_order = associatedSaleOrderName.associatedSaleOrder;
                                 });
 
-                                console.log("updated logdata", logData);
-                                return syncSaleInvoiceWithServer(JSON.stringify(logData));
+                                console.log("updated stringified logdata", JSON.stringify(logData));
+                                //await db.runAsync(`UPDATE sales_invoice_logs SET data=? WHERE name=?;`, [JSON.stringify(logData), log.name]);
+                                syncSaleInvoiceWithServer(JSON.stringify(logData));
                             } else {
                                 console.log("Failed to get associated sale order name");
                             }
@@ -554,7 +555,7 @@ const HomeScreen = () => {
                         //     console.log("Sale invoice synced successfully");
                         // })
                 }
-            }
+            });
         }
           // else{
           //   syncSaleInvoiceWithServer(log);
