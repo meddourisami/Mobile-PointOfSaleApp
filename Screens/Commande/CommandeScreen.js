@@ -28,7 +28,7 @@ const CommandeScreen = () => {
                     data_hash TEXT
                 );
             `);
-            const rowCount = await db.runAsync('SELECT COUNT(*) as count FROM SalesOrderMetadata;');
+            const rowCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM SalesOrderMetadata;');
             if (rowCount.count === 0) {
                 await db.runAsync('INSERT INTO SalesOrderMetadata (id, data_hash) VALUES (1, "");');
             }
@@ -51,10 +51,9 @@ const CommandeScreen = () => {
 
             const Orders = await db.getAllAsync(`SELECT * FROM Sales_Order;`);
             Orders.map(async (order)=> {
-                console.log(order.name);
-                
+
                 if(order.name.includes("SAL-ORD-")){
-                    return;
+                    console.log("already synced");
                 }else{
                     const orderData= {
                         ...order,
@@ -90,6 +89,9 @@ const CommandeScreen = () => {
                             `INSERT INTO sales_order_logs (action, name, state, data) VALUES (?, ?, ?, ?)`,
                             ["INSERT", order.name, "local", JSON.stringify(data)]
                         );
+                        console.log("saved to sales order local logs", order.name);
+                    }else{
+                        console.log("already in log");
                     }
                 }
             });

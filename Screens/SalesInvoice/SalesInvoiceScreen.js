@@ -296,23 +296,102 @@ const SalesInvoiceScreen = ({navigation}) => {
         }
     }
 
+    const completeSalesOrderPayment = async () => {
+        try{
+            const currentDate = new Date();
+            const paymentName = 'new-payment-entry-'+generateRandomName();
+            await db.runAsync(`INSERT INTO Payment_Entry(
+                    name, owner,
+                    docstatus, idx, naming_series, payment_type, payment_order_status,
+                    posting_date, company, mode_of_payment, party_type, party,
+                    party_name, book_advance_payments_in_separate_party_account, reconcile_on_advance_payment_date,
+                    paid_from,
+                    paid_from_account_currency, paid_from_account_balance, paid_to, paid_to_account_type, paid_to_account_currency,
+                    paid_amount, paid_amount_after_tax, source_exchange_rate, base_paid_amount,
+                    base_paid_amount_after_tax, received_amount, received_amount_after_tax, target_exchange_rate, base_received_amount,
+                    base_received_amount_after_tax, total_allocated_amount, base_total_allocated_amount, unallocated_amount, difference_amount,
+                    apply_tax_withholding_amount, base_total_taxes_and_charges,
+                    total_taxes_and_charges, reference_date,
+                    status, custom_remarks,
+                    is_opening
+                ) VALUES (
+                    ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?,
+                    ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?,
+                    ?, ?,
+                    ?, ?,
+                    ?
+                )`,
+                [
+                    paymentName, "Administrator",
+                    0, 0, "ACC-PAY-"+currentDate.getFullYear()+"-", "Receive", "Initiated",
+                    invoiceDate.toISOString().split('T')[0], "Ites Company (Demo)", paymentMode, "Customer", commande.customer,
+                    commande.customer_name, 0, 0,
+                    "1310 - Debtors - ICD",
+                    "TND", 0, "1110 - Cash - ICD", paymentMode, "TND",
+                    paidAmount, 0, 1, paidAmount,
+                    0, paidAmount, 0, 1, paidAmount,
+                    0, paidAmount, paidAmount, 0, 0, 
+                    0, 0,
+                    0, invoiceDate.toISOString().split('T')[0],
+                    "Draft", 0,
+                    "No"
+                ] 
+
+            );
+            const paymentReferenceName = 'new-payment-entry-reference-'+generateRandomName();
+            await db.runAsync(`INSERT INTO Payment_Reference_Entry(
+                    name, modified_by,
+                    docstatus, idx, reference_doctype, reference_name,
+                    total_amount,
+                    outstanding_amount, allocated_amount, exchange_rate, exchange_gain_loss, account,
+                    parent, parentfield, parenttype
+                ) VALUES (
+                    ?, ?,
+                    ?, ?, ?, ?,
+                    ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?
+                )`,
+                [
+                    paymentReferenceName, "Administrator",
+                    0, 1, "Sales Order", commande.name,
+                    commande.grand_total,
+                    commande.grand_total, commande.grand_total, 1, 0, "1310 - Debtors - ICD",
+                    paymentName, "references", "Payment Entry"
+                ]
+            )
+        }catch(e){
+            console.log("Error saving sale order paymment",e);
+        }
+    }
+
     const handleSaveSalesInvoice = () => {
         try{
             if (!paidAmount ||  !invoiceDate){
                 Alert.alert("Make sure you have entered the amount paid");
             }else{
                 if(commandeName && !invoice){
-                    saveSalesInvoice();
-                }else if(invoice && !commandeName) {
-                    completeSalesInvoiceSaving();
+                    // saveSalesInvoice();
+                    completeSalesOrderPayment();
                 }
+                // else if(invoice && !commandeName) {
+                //     completeSalesInvoiceSaving();
+                // }
                 updateBudget(paidAmount);
                 navigation.navigate('PaimentScreen');
-                Alert.alert("Sales Invoice saved successfully..");
+                Alert.alert("Payment procedeed successfully..");
             }
         }catch(e){
-            Alert.alert("Sales Invoice failed to be saved");
-            console.log("Error saving the Sales Invoice, please try again" ,e);
+            Alert.alert("Payment failed to proceed");
+            console.log("Error saving the payment, please try again" ,e);
         }
     };
 

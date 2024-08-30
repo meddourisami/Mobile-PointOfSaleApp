@@ -21,6 +21,8 @@ const HomeScreen = () => {
   const [customers , setCustomers] = useState([]);
   const [saleOrderLogs, setSaleOrderLogs] = useState([]);
   const [saleInvoiceLogs, setSaleInvoiceLogs] = useState([]);
+  const [paymentEntryLogs, setPaymentEntryLogs] = useState([]);
+
 
   const getHash = (data) => {
     return CryptoJS.MD5(JSON.stringify(data)).toString();
@@ -190,6 +192,8 @@ const HomeScreen = () => {
     }
   };
 
+
+
   const syncSaleOrderWithServer = async(log) => {
     try{
       // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
@@ -224,9 +228,8 @@ const HomeScreen = () => {
     // );
       if(response.ok){
         response.json().then(async (data) => {
-            console.log(data.docs[0]);
+            console.log("saved to draft sale order", data.docs[0].name);
             await db.runAsync(`UPDATE sales_order_logs SET state= ? WHERE id = ?;`, ["Draft", log.id]);
-            console.log("Submitted sale order successfully and updated log state");
             console.log(
                 {
                     "doc": JSON.stringify(data.docs[0]),  
@@ -248,17 +251,16 @@ const HomeScreen = () => {
                         "action": "Submit"
                     })
                 })
+                console.log("Submitting sale order...", data.docs[0].name);
                 if(response.ok){
                     //await db.runAsync(`DELETE FROM sales_order_logs WHERE id = ?;`, [log.id]);
                     //TODO CHECK FOR STATE SALES ORDER AND UPDATE LISTING VIEW *********************************
-                    console.log("Synced sale order succesfully and deleted from local logs");
                     const data =await response.json();
-                        console.log("response Name",data.docs[0].name);
-                        const saleInvoiceItems = await db.getAllAsync(`SELECT * FROM Sales_Invoice_Item WHERE sales_order=?`,[log.name]);
-                        saleInvoiceItems.map(async(item) =>{
-                          await db.runAsync(`UPDATE Sales_Invoice_Item SET sales_order=? WHERE name=?`, [data.docs[0].name, item.name]);
-                        });
-                        await db.runAsync(`UPDATE sales_invoice_logs SET associatedSaleOrder=? WHERE associatedSaleOrder=?`, [data.docs[0].name, log.name]);
+                        // const saleInvoiceItems = await db.getAllAsync(`SELECT * FROM Sales_Invoice_Item WHERE sales_order=?`,[log.name]);
+                        // saleInvoiceItems.map(async(item) =>{
+                        //   await db.runAsync(`UPDATE Sales_Invoice_Item SET sales_order=? WHERE name=?`, [data.docs[0].name, item.name]);
+                        // });
+                        await db.runAsync(`UPDATE payment_entry_logs SET associatedSaleOrder=? WHERE associatedSaleOrder=?`, [data.docs[0].name, log.name]);
 
                         orderTosync= await db.getFirstAsync(`SELECT * FROM Sales_Order WHERE name= ?`,[log.name]);
                         await db.runAsync(`INSERT INTO Sales_Order(
@@ -324,8 +326,9 @@ const HomeScreen = () => {
                         await db.runAsync(`DELETE FROM Sales_Order WHERE name = ?`, [log.name]);
                         await db.runAsync(`UPDATE Sales_Order_Item SET parent=? WHERE parent=?`,[data.docs[0].name, log.name]);
                         await db.runAsync(`UPDATE Sales_Taxes_and_Charges SET parent=? WHERE parent=?`,[data.docs[0].name, log.name]);
+                        await db.runAsync(`UPDATE sales_order_logs SET state= ? WHERE id = ?;`, ["Submitted", log.id]);
                         await db.runAsync(`DELETE FROM sales_order_logs WHERE id = ?;`, [log.id]);
-                        const responseName = data.docs[0].name;
+                        console.log("Synced sale order succesfully and deleted from local logs", data.docs[0].name);
                 }else{
                     console.log("Failed to sync sale order with server", await response.text());
                     return "data.docs[0].name";
@@ -410,8 +413,7 @@ const HomeScreen = () => {
                     })
                 })
                 if(response.ok){
-                    console.log("Synced sale invoice successfully and deleted from local logs");
-                    response.json().then(async(data) =>{
+                    const data =await response.json();
                       console.log("response name",data.docs[0].name);
                         invoiceTosync= await db.getFirstAsync(`SELECT * FROM Sales_Invoice WHERE name= ?`,[log.name]);
                         await db.runAsync(`INSERT INTO Sales_Invoice(
@@ -504,9 +506,9 @@ const HomeScreen = () => {
                       await db.runAsync(`DELETE FROM Sales_Invoice WHERE name = ?`, [log.name]);
                       await db.runAsync(`UPDATE Sales_Invoice_Item SET parent=? WHERE parent=?`,[data.docs[0].name, log.name]);
                       await db.runAsync(`UPDATE Sales_Taxes_and_Charges SET parent=? WHERE parent=?`,[data.docs[0].name, log.name]);
-                      await db.runAsync(`DELETE FROM sales_invoice_logs WHERE id = ?;`, [log.id]);
-                    });
-
+                      // await db.runAsync(`DELETE FROM sales_invoice_logs WHERE id = ?;`, [log.id]);
+                      await db.runAsync(`UPDATE sales_invoice_logs SET state= ? WHERE id = ?;`, ["submitted", log.id]);
+                      console.log("Synced sale invoice successfully and deleted from local logs");
                 }else{
                     console.log("Failed to sync sale invoice with server", await response.text());
                 }
@@ -522,46 +524,185 @@ const HomeScreen = () => {
     }
   };
 
+  const syncPaymentEntryWithServer = async(log) => {
+    try{
+      // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
+      const response = await fetch(
+        'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+            },
+            body: JSON.stringify({
+                "doc": log.data,  
+                "action": "Save"
+            })
+        }
+      );
+      console.log(JSON.stringify({
+        "doc": log.data,  
+        "action": "Save"
+      }));
+    
+    // const response = await fetch(
+    //     'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
+    //     {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //             'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
+    //         },
+    //         body: JSON.stringify({
+    //             "doc": JSON.stringify(log.data),  
+    //             "action": "Save"
+    //         })
+    //     }
+    // );
+    console.log(response.ok);
+      if(response.ok){
+        response.json().then(async (data) => {
+          console.log("saved payment entry to draft", data.docs[0].name);
+            await db.runAsync(`UPDATE payment_entry_logs SET state= ? WHERE id = ?;`, ["Draft", log.id]);
+            console.log(
+                {
+                    "doc": JSON.stringify(data.docs[0]),  
+                    "action": "Submit"
+                }
+            );
+            try{
+                // response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
+                const response = await fetch(
+                    'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                    },
+                    body: JSON.stringify({
+                        "doc": JSON.stringify(data.docs[0]),  
+                        "action": "Submit"
+                    })
+                })
+                console.log("Submitting payment entry...", data.docs[0].name);
+                if(response.ok){
+                    const data =await response.json();
+                        paymentTosync= await db.getFirstAsync(`SELECT * FROM Payment_Entry WHERE name= ?`,[log.name]);
+                        await db.runAsync(`INSERT INTO Payment_Entry(
+                          name, owner,
+                          docstatus, idx, naming_series, payment_type, payment_order_status,
+                          posting_date, company, mode_of_payment, party_type, party,
+                          party_name, book_advance_payments_in_separate_party_account, reconcile_on_advance_payment_date,
+                          paid_from,
+                          paid_from_account_currency, paid_from_account_balance, paid_to, paid_to_account_type, paid_to_account_currency,
+                          paid_amount, paid_amount_after_tax, source_exchange_rate, base_paid_amount,
+                          base_paid_amount_after_tax, received_amount, received_amount_after_tax, target_exchange_rate, base_received_amount,
+                          base_received_amount_after_tax, total_allocated_amount, base_total_allocated_amount, unallocated_amount, difference_amount,
+                          apply_tax_withholding_amount, base_total_taxes_and_charges,
+                          total_taxes_and_charges, reference_date,
+                          status, custom_remarks,
+                          is_opening
+                        ) VALUES (
+                          ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?,
+                          ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?,
+                          ?, ?,
+                          ?, ?,
+                          ?
+                        )`,
+                        [
+                          data.docs[0].name, paymentTosync.owner,
+                          paymentTosync.docstatus, paymentTosync.idx, paymentTosync.naming_series, paymentTosync.payment_type, paymentTosync.payment_order_status,
+                          paymentTosync.posting_date, paymentTosync.company, paymentTosync.mode_of_payment, paymentTosync.party_type, paymentTosync.party,                     
+                          paymentTosync.party_name, paymentTosync.book_advance_payments_in_separate_party_account, paymentTosync.reconcile_on_advance_payment_date,                   
+                          paymentTosync.paid_from,
+                          paymentTosync.paid_from_account_currency, paymentTosync.paid_from_account_balance, paymentTosync.paid_to, paymentTosync.paid_to_account_type, paymentTosync.paid_to_account_currency,                         
+                          paymentTosync.paid_amount, paymentTosync.paid_amount_after_tax, paymentTosync.source_exchange_rate, paymentTosync.base_paid_amount,                        
+                          paymentTosync.base_paid_amount_after_tax, paymentTosync.received_amount, paymentTosync.received_amount_after_tax, paymentTosync.target_exchange_rate, paymentTosync.base_received_amount,                        
+                          paymentTosync.base_received_amount_after_tax, paymentTosync.total_allocated_amount, paymentTosync.base_total_allocated_amount, paymentTosync.unallocated_amount, paymentTosync.difference_amount,                         
+                          paymentTosync.apply_tax_withholding_amount, paymentTosync.base_total_taxes_and_charges,                         
+                          paymentTosync.total_taxes_and_charges, paymentTosync.reference_date,                          
+                          paymentTosync.status, paymentTosync.custom_remarks,                       
+                          paymentTosync.is_opening
+                        ]
+                      );
+                      await db.runAsync(`DELETE FROM Payment_Entry WHERE name = ?`, [log.name]);
+                      await db.runAsync(`UPDATE payment_entry_logs SET state= ? WHERE id = ?;`, ["Submitted", log.id]);
+                      await db.runAsync(`DELETE FROM payment_entry_logs WHERE id = ?;`, [log.id]);
+                      console.log("Synced payment entry success", data.docs[0].name);
+                }else{
+                    console.log("Failed to sync payment entry with server", await response.text());
+                }
+            }catch(e){
+                console.log("Failed to submit payment entry", e);
+            }
+        });
+      }else{
+        console.log("Error from the server payment entry", await response.text());
+      }
+    }catch(e){
+      console.log('Error syncing payment entry with server', e);
+    }
+  }
+
   const syncState = async() => {
     try{
       setIsSyncing(true);
-        if (saleInvoiceLogs) {
-            saleInvoiceLogs.map(async(log) => {
-              console.log(log.data);
-                const logData = JSON.parse(log.data);
-                const saleOrderName = logData.items[0].sales_order;
+      if (saleOrderLogs) {
+          saleOrderLogs.map(async(log) => {
+            if(log.state === "Submitted" ){
 
-                if (saleOrderName) {
-                    const sale_order_log_to_sync = await db.getFirstAsync(`SELECT * FROM sales_order_logs WHERE name = ?;`, [saleOrderName]);
+              console.log("already submitted to server", log.name);
+            }else{
+              console.log("starting syncronizing", log.name);
+              await syncSaleOrderWithServer(log);
+            }
+        });
+      };
+      if (paymentEntryLogs) {
+        paymentEntryLogs.map(async(paymentLog) => {
+          if(paymentLog.state === "Submitted"){
+            console.log("already submitted to server", paymentLog.name);
+          }else {
+            logData= JSON.parse(paymentLog.data);
+            associatedSaleOrderName= await db.getFirstAsync(`SELECT associatedSaleOrder FROM payment_entry_logs WHERE name=?;`,[paymentLog.name]);
+            //console.log(associatedSaleOrderName);
+            if (associatedSaleOrderName.associatedSaleOrder.includes("SAL-ORD-")) {
+              console.log("name", associatedSaleOrderName);
 
-                    await syncSaleOrderWithServer(sale_order_log_to_sync).then(async() =>{
-                      associatedSaleOrderName= await db.getFirstAsync(`SELECT associatedSaleOrder FROM sales_invoice_logs WHERE name=?;`,[log.name]);
-                            if (associatedSaleOrderName) {
-                                console.log("name", associatedSaleOrderName);
+              logData.references.forEach(item => {
+                item.reference_name = associatedSaleOrderName.associatedSaleOrder;
+              });
 
-                                logData.items.forEach(item => {
-                                  item.sales_order = associatedSaleOrderName.associatedSaleOrder;
-                                });
+              console.log("updated stringified logdata", JSON.stringify(logData));
+              try {
+                paymentLog.data = JSON.stringify(logData);
+            
 
-                                console.log("updated stringified logdata", JSON.stringify(logData));
-                                
-                                syncSaleInvoiceWithServer(JSON.stringify(logData));
-                            } else {
-                                console.log("Failed to get associated sale order name");
-                            }
-                    })
-                }
-            });
-        }
-          // else{
-          //   syncSaleInvoiceWithServer(log);
-          //   if(saleOrderLogs){
-          //     saleOrderLogs.map(async (log) =>{
-          //       syncSaleOrderWithServer(log);
-          //     })
-          //   }
-          // }
-      
+                await db.runAsync(`UPDATE payment_entry_logs SET data=? WHERE id=?`, [paymentLog.data, paymentLog.id]);
+            
+                console.log("starting syncing payment entry", paymentLog.name);
+                
+
+                await syncPaymentEntryWithServer(paymentLog);
+              } catch (error) {
+                console.error("Error syncing payment entry:", error);
+              }
+            } else {
+              console.log("Failed to get associated sale order name");
+            }
+          }
+        })       
+      };
     }catch(e){
       console.log('Error syncing data with server', e);
     }finally {
@@ -588,13 +729,35 @@ const HomeScreen = () => {
     }
   };
 
+  const getPaymentEntryLogs = async () =>{
+    try{
+        const result = await db.getAllAsync('SELECT * FROM payment_entry_logs;');
+        setPaymentEntryLogs(result);
+    }catch(error){
+        console.log("Error fetching payment entry logs",error);
+    }
+  };
+
+  useEffect(()=>{
+    if(saleOrderLogs){
+      getSaleOrderLogs();
+    }
+  },[saleOrderLogs]);
+
+  useEffect(()=>{
+    if(paymentEntryLogs){
+      getPaymentEntryLogs();
+    }
+  },[paymentEntryLogs]);
+
   useEffect(() => {   
     if(isFocused){
       const initialize = async () => {
           getTaxesfromAPI();
           getCustomersfromAPI();
-          getSaleOrderLogs();
-          getSaleInvoiceLogs();
+          //getSaleOrderLogs();
+          //getSaleInvoiceLogs();
+          //getPaymentEntryLogs();
           syncState();
       };
       initialize();

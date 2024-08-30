@@ -29,7 +29,7 @@ const ArticleScreen = () => {
                     data_hash TEXT
                 );
             `);
-            const rowCount = await db.runAsync('SELECT COUNT(*) as count FROM ItemMetadata;');
+            const rowCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM ItemMetadata;');
             if (rowCount.count === 0) {
                 await db.runAsync('INSERT INTO ItemMetadata (id, data_hash) VALUES (1, "");');
             }
@@ -81,7 +81,7 @@ const ArticleScreen = () => {
                             },
                             "ignore_prepared_report": false,
                             "are_default_filters": false,
-                            "_": 1724320483743
+                            "_": Date.now()
                           }),
                     }
                 );
@@ -132,7 +132,7 @@ const ArticleScreen = () => {
                 // console.log("selecteditemsinstock",itemsInStock);  TODO ADD QUANTITY TO ITEMS VIEW
                 const newHash = getHash(selectedItems);
 
-                const existingHash = await db.runAsync('SELECT data_hash FROM CustomerMetadata WHERE id = 1;');
+                const existingHash = await db.getFirstAsync('SELECT data_hash FROM CustomerMetadata WHERE id = 1;');
 
                 if (existingHash !== newHash) {
 

@@ -67,7 +67,7 @@ const ClientScreen = () => {
                 
                 const newHash = getHash(json.data);
 
-                const existingHash = await db.runAsync('SELECT data_hash FROM CustomerMetadata WHERE id = 1;');
+                const existingHash = await db.getFirstAsync('SELECT data_hash FROM CustomerMetadata WHERE id = 1;');
                 if (existingHash !== newHash) {
 
                     await Promise.all(customers.map(async (customer) => {

@@ -15,7 +15,6 @@ const LivraisonScreen = () => {
   const Content =  () => {
       const [deliveries , setDeliveries] = useState([]);
       const [livraisons, setLivraisons] = useState([]);
-      const [displayData , setDisplayData] = useState([]);
 
       const getHash = (data) => {
         return CryptoJS.MD5(JSON.stringify(data)).toString();
@@ -30,7 +29,8 @@ const LivraisonScreen = () => {
         `);
         const rowCount = await db.runAsync('SELECT COUNT(*) as count FROM DeliveryMetadata;');
         if (rowCount.count === 0) {
-            await db.runAsync('INSERT INTO DeliveyMetadata (id, data_hash) VALUES (1, "");');
+            await db.runAsync('INSERT INTO DeliveyMetadata (id, data_hash) VALUES (1, "");'); /// Hash of all deliveries data
+            await db.runAsync('INSERT INTO DeliveyMetadata (id, data_hash) VALUES (2, "");'); ///Hash for the list of delivery names
         }
       };
 
@@ -75,9 +75,7 @@ const LivraisonScreen = () => {
             //       },
             //   });
               const data = await response.json();
-              console.log(data);
               const selectedDeliveries = transformJson(data);
-              console.log("data",selectedDeliveries);
               const newHash = getHash(data);
 
                 const existingHash = await db.runAsync('SELECT data_hash FROM DeliveryMetadata WHERE id = 1;');
@@ -179,53 +177,242 @@ const LivraisonScreen = () => {
           }
     };
 
-    // const syncDataWithServer = async (data) => {
-    //   const request = await fetch("");
-    // };
+    const saveInLocalDeliveryItems = async (items) => {
+      try{
+        await Promise.all(items.map(async (item) => {
+          await db.runAsync(`INSERT INTO Delivery_Note_Item(
+              name, creation, modified, modified_by, owner,
+              docstatus, idx, barcode, has_item_scanned, item_code,
+              item_name, customer_item_code, description, brand, item_group,
+              image, qty, stock_uom, uom, conversion_factor,
+              stock_qty, returned_qty, price_list_rate, base_price_list_rate, margin_type,
+              margin_rate_or_amount, rate_with_margin, discount_percentage, discount_amount, base_rate_with_margin,
+              rate, amount, base_rate, base_amount, pricing_rules,
+              stock_uom_rate, is_free_item, grant_commission, net_rate, net_amount,
+              item_tax_template, base_net_rate, base_net_amount, billed_amt, incoming_rate,
+              weight_per_unit, total_weight, weight_uom, warehouse, target_warehouse,
+              quality_inspection, allow_zero_valuation_rate, against_sales_order, so_detail, against_sales_invoice,
+              si_detail, dn_detail, pick_list_item, serial_and_batch_bundle, use_serial_batch_fields,
+              serial_no, batch_no, actual_batch_qty, actual_qty, installed_qty,
+              item_tax_rate, packed_qty, received_qty, expense_account, material_request,
+              purchase_order, purchase_order_item, material_request_item, cost_center, project,
+              page_break, parent, parentfield, parenttype
+            ) VALUES (
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?
+            )`,
+            [
+              item.name, item.creation, item.modified, item.modified_by, item.owner,
+              item.docstatus, item.idx, item.barcode, item.has_item_scanned, item.item_code,
+              item.item_name, item.customer_item_code, item.description, item.brand, item.item_group,
+              item.image, item.qty, item.stock_uom, item.uom, item.conversion_factor,
+              item.stock_qty, item.returned_qty, item.price_list_rate, item.base_price_list_rate, item.margin_type,
+              item.margin_rate_or_amount, item.rate_with_margin, item.discount_percentage, item.discount_amount, item.base_rate_with_margin,
+              item.rate, item.amount, item.base_rate, item.base_amount, item.pricing_rules,
+              item.stock_uom_rate, item.is_free_item, item.grant_commission, item.net_rate, item.net_amount,
+              item.item_tax_template, item.base_net_rate, item.base_net_amount, item.billed_amt, item.incoming_rate,
+              item.weight_per_unit, item.total_weight, item.weight_uom, item.warehouse, item.target_warehouse,
+              item.quality_inspection, item.allow_zero_valuation_rate, item.against_sales_order, item.so_detail, item.against_sales_invoice,
+              item.si_detail, item.dn_detail, item.pick_list_item, item.serial_and_batch_bundle, item.use_serial_batch_fields,
+              item.serial_no, item.batch_no, item.actual_batch_qty, item.actual_qty, item.installed_qty,
+              item.item_tax_rate, item.packed_qty, item.received_qty, item.expense_account, item.material_request,
+              item.purchase_order, item.purchase_order_item, item.material_request_item, item.cost_center, item.project,
+              item.page_break, item.parent, item.parentfield, item.parenttype
+            ]
+          )
+        }));
+      }catch(e){
+        console.log('Error saving delivery items to local database', e);
+      }
+    };
+
+    const saveInLocalDeliveryTaxes = async (taxes) => {
+      try{
+        await Promise.all(taxes.map(async (tax) => {
+          await db.runAsync(`INSERT INTO Sales_Taxes_and_Charges(
+              name, owner, creation, modified, modified_by,
+              docstatus, idx, charge_type, row_id, account_head,
+              description, included_in_print_rate, included_in_paid_amount, cost_center, rate,
+              account_currency, tax_amount, total, tax_amount_after_discount_amount, base_tax_amount,
+              base_total, base_tax_amount_after_discount_amount, item_wise_tax_detail, dont_recompute_tax, parent,
+              parentfield, parenttype
+            ) VALUES (
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?, ?, ?, ?,
+              ?, ?
+            )`,
+            [
+              tax.name, tax.owner, tax.creation, tax.modified, tax.modified_by,
+              tax.docstatus, tax.idx, tax.charge_type, tax.row_id, tax.account_head,
+              tax.description, tax.included_in_print_rate, tax.included_in_paid_amount, tax.cost_center, tax.rate,
+              tax.account_currency, tax.tax_amount, tax.total, tax.tax_amount_after_discount_amount, tax.base_tax_amount,
+              tax.base_total, tax.base_tax_amount_after_discount_amount, tax.item_wise_tax_detail, tax.dont_recompute_tax, tax.parent,
+              tax.parentfield, tax.parenttype
+            ]
+          )
+        }));
+      }catch(e){
+        console.log('Error saving delivery taxes to local database', e);
+      }
+    }
+
+    const getAllDeliveriesDetailsFromAPI = async () => {
+      try{
+        const names = await db.getAllAsync(`SELECT name FROM Deliveries`);
+        const newHash = getHash(names);
+        const existingHash = await db.runAsync('SELECT data_hash FROM DeliveryMetadata WHERE id = 2;');
+        if (existingHash !== newHash) {
+          names.forEach(async(name) => {
+            console.log('Fetching data for:', name.name);
+            const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',{
+              method: 'POST',
+                headers: {
+                  'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  "doctype": "Delivery Note",
+                  "name": name.name,
+                  "_": Date.now(),
+                })
+              }
+            );
+            const data = await response.json();
+            const deliveryItems = data.docs[0].items;
+            saveInLocalDeliveryItems(deliveryItems);
+            const deliveryTaxes = data.docs[0].taxes;
+            saveInLocalDeliveryTaxes(deliveryTaxes);
+            await db.runAsync('UPDATE DeliveryMetadata SET data_hash = ? WHERE id = 1;', [newHash]);
+          });
+        }
+      }catch(e){
+        console.log("Error getting delivery items and taxes", e)
+      };
+    }
+
+    const saveToLocalLogs = async () => {
+      const logs = await db.getAllAsync(`SELECT name FROM delivery_note_logs;`);
+      const names = logs.map(log => log.name);
+
+      const deliveries = await db.getAllAsync(`SELECT * FROM Deliveries;`);
+      deliveries.map(async (delivery)=> {
+          console.log(delivery.name);
+          
+          // if(delivery.name.includes("MAT-DN")){
+          //     return;
+          // }else{
+              const deliveryData= {
+                  ...delivery,
+                  doctype: "Delivery Note",
+                  __islocal: 1,
+                  __unsaved: 1,
+              }
+              const deliveryItems = await db.getAllAsync(`SELECT * FROM Delivery_Note_Item WHERE parent =?`, [delivery.name]);
+              const deliveryItemsData = [];
+              const updatedItems= deliveryItems.map(item =>({
+                  ...item,
+                  __islocal: 1,
+                  __unsaved: 1,
+                  doctype: "Delivery Note Item"
+              }));
+
+              const deliveryTaxes = await db.getFirstAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent=?`, [delivery.name]);
+              const deliveryTaxesData = {
+                  ...deliveryTaxes,
+                  __islocal: 1,
+                  __unsaved: 1,
+                  doctype: "Sales Taxes and Charges"
+              }
+
+              const data = {
+                  ...deliveryData,
+                  items: updatedItems,
+                  taxes: [deliveryTaxesData],
+              }
+
+              if (!names.includes(delivery.name)) {
+                  await db.runAsync(
+                      `INSERT INTO delivery_note_logs (action, name, state, data) VALUES (?, ?, ?, ?)`,
+                      ["INSERT", delivery.name, "local", JSON.stringify(data)]
+                  );
+              } else {
+                console.log("already in log");
+              }
+          //}
+      });
+    }
 
       const getLivraisons = async () => {
           try{
               const allLivraisons= await db.getAllAsync(`SELECT * FROM Deliveries;`);
               setLivraisons(allLivraisons);
-              setDisplayData(allLivraisons);
           }catch(e){
               console.log(e);
           }
       };
 
+      const createDeliveryNoteLocalLogs = async () => {
+        //await db.runAsync(`DROP TABLE IF EXISTS sales_order_logs;`);
+        await db.runAsync(`CREATE TABLE IF NOT EXISTS delivery_note_logs(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                action TEXT,
+                name TEXT,
+                state TEXT,
+                data TEXT
+            )`);
+      };
+
       useEffect(() => {
           if(isFocused){
             const initialize = async () => {
-              await createMetadataTable();
-              NetInfo.fetch().then((state) => {
-                  if (state.isConnected) {
-                      getDeliveriesfromAPI();
-                  } else {
-                      getLivraisons();
-                  }
-              });
-          };
+              //await createMetadataTable();
+              //await createDeliveryNoteLocalLogs();
+              await getDeliveriesfromAPI();
+              //await getAllDeliveriesDetailsFromAPI();
+              await getLivraisons();
+            };
           initialize();
           }
       }, [isFocused]);
 
+      // useEffect(() => {
+
+      // }
+
       return (
           <View>
-                  {deliveries.length=== 0 ? (
+                  {livraisons.length=== 0 ? (
                       <Text>No data yet.</Text>
                   ) : (
                       <FlatList 
-                          data ={deliveries}
+                          data ={livraisons}
                           keyExtractor={(item) => (item.name).toString()}
                           renderItem={({item}) => (
-                              <TouchableOpacity onPress={() => navigation.navigate('LivraisonStatus', { deliveryId: item.name })}>
+                              <TouchableOpacity style={{backgroundColor:"#FFF", padding:15, margin:10, borderRadius:10}} onPress={() => navigation.navigate('LivraisonStatus', { deliveryName: item.name })}>
                                   <View style={{marginBottom:10}}>
                                       <Text style={{fontWeight:'bold'}}>{item.name}</Text>
-                                      <View style={{flexDirection:'row', justifyContent:'space-between'}}>
+                                      <View style={{flexDirection:'column', justifyContent:'space-between'}}>
                                           <Text>Customer: {item.customer_name}</Text>
                                           <Text>Delivery Date: {item.posting_time}</Text>
-                                          <Text style={{fontWeight:'semibold'}}>Adresse: {item.set_warehouse}</Text>
                                           <Text>Delivery Price: {item.total}</Text>
+                                          <Text>Status: {item.status}</Text>
                                       </View>
                                   </View>
                               </TouchableOpacity>

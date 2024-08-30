@@ -13,9 +13,9 @@ const PaimentScreen = () => {
         const [payments , setPayments] = useState([]);
         const [salesInvoices , setSalesInvoices] = useState([]);
 
-        const createSalesInvoiceLocalLogs = async () => {
-          //await db.runAsync(`DELETE FROM sales_invoice_logs;`);
-          await db.runAsync(`CREATE TABLE IF NOT EXISTS sales_invoice_logs(
+        const createPaymentEntryLocalLogs = async () => {
+          //await db.runAsync(`DELETE FROM payment_entry_logs;`);
+          await db.runAsync(`CREATE TABLE IF NOT EXISTS payment_entry_logs(
                   id INTEGER PRIMARY KEY AUTOINCREMENT,
                   action TEXT,
                   name TEXT,
@@ -27,67 +27,46 @@ const PaimentScreen = () => {
 
       const saveToLocalLogs = async () => {
         try{
-          const logs = await db.getAllAsync(`SELECT name FROM sales_invoice_logs;`);
+          const logs = await db.getAllAsync(`SELECT name FROM payment_entry_logs;`);
           const names = logs.map(log => log.name);
           
-          const Invoices = await db.getAllAsync(`SELECT * FROM Sales_Invoice;`);
-          Invoices.map(async (invoice)=> {
-            if(invoice.name.includes("ACC-SINV-")){
-              return;
+          const bills = await db.getAllAsync(`SELECT * FROM Payment_Entry;`);
+          bills.map(async (bill)=> {
+            if(bill.name.includes("ACC-PAY-")){
+              console.log("already synced")
             }else{
-              const invoiceData= {
-                  ...invoice,
-                  doctype: "Sales Invoice",
+              const paymentData= {
+                  ...bill,
+                  doctype: "Payment Entry",
                   __islocal: 1,
                   __unsaved: 1,
               }
-              const invoiceItems = await db.getAllAsync(`SELECT * FROM Sales_Invoice_Item WHERE parent =?;`, [invoice.name]);
-              const invoiceItemsData = [];
-              const updatedItems= invoiceItems.map(item =>{
-                const newItem = {
-                    ...item,
-                    __islocal: 1,
-                    __unsaved: 1,
-                    doctype: "Sales Invoice Item"
-                };
-                if(newItem.sales_order===null){
-                  delete newItem.sales_order;
-                }
-                delete newItem.income_account;
 
-                return newItem;
-              });
-              
-              const invoiceTaxes = await db.getFirstAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent =?`, [invoice.name]);
-              const invoiceTaxesData = {
-                  ...invoiceTaxes,
-                  __islocal: 1,
-                  __unsaved: 1,
-                  doctype: "Sales Taxes and Charges"
-              }
-
-              const invoicePayment = await db.getFirstAsync(`SELECT * FROM Sales_Invoice_Payment WHERE parent =?;`, [invoice.name]);
-              const invoicePaymentData ={
-                ...invoicePayment,
+              const invoicePaymentReference = await db.getFirstAsync(`SELECT * FROM Payment_Reference_Entry WHERE parent =?;`, [bill.name]);
+              const invoicePaymenReferencetData ={
+                ...invoicePaymentReference,
                 __islocal: 1,
                 __unsaved: 1,
-                doctype: "Sales Invoice Payment"
+                doctype: "Payment Entry Reference"
               }
 
               const data = {
-                  ...invoiceData,
-                  items: updatedItems,
-                  taxes: [invoiceTaxesData],
-                  payments: [invoicePaymentData]
+                  ...paymentData,
+                  references: [invoicePaymentReference],
+                  taxes: [],
+                  deductions: [],
               }
 
               // console.log("data",JSON.stringify(data));
 
-              if (!names.includes(invoice.name)) {
+              if (!names.includes(bill.name)) {
                   await db.runAsync(
-                      `INSERT INTO sales_invoice_logs(action, name, associatedSaleOrder, state, data) VALUES (?, ?, ?, ?, ?)`,
-                      ["INSERT", invoice.name, updatedItems[0].sales_order, "Local", JSON.stringify(data)]
+                      `INSERT INTO payment_entry_logs(action, name, associatedSaleOrder, state, data) VALUES (?, ?, ?, ?, ?)`,
+                      ["INSERT", bill.name, invoicePaymentReference.reference_name, "Local", JSON.stringify(data)]
                   );
+                  console.log("saved to payment entry log",bill.name);
+              }else {
+                console.log("already in log");
               }
             }
           });
@@ -201,7 +180,7 @@ const PaimentScreen = () => {
 
         const getSalesPayments = async () => {
           try {
-            const allPayments = await db.getAllAsync(`SELECT * FROM Sales_Invoice_Payment;`);
+            const allPayments = await db.getAllAsync(`SELECT * FROM Payment_Entry;`);
             setPayments(allPayments);
           }catch(e){
             console.log("error retreiving sales payments", e);
@@ -211,8 +190,8 @@ const PaimentScreen = () => {
         useEffect(() => {   
           if(isFocused){
               const initialize = async () => {
-                createSalesInvoiceLocalLogs();
-                getSalesInvoices();
+                createPaymentEntryLocalLogs();
+                // getSalesInvoices();
                 getSalesPayments();
                 saveToLocalLogs();
                 //syncDataWithServer();
@@ -221,12 +200,12 @@ const PaimentScreen = () => {
           }
       }, [isFocused]);
 
-        useEffect(() => {
-          if (salesInvoices) {
-              getSalesInvoices();
-              getSalesPayments();
-          }
-        }, [salesInvoices]);
+        // useEffect(() => {
+        //   if (Payments) {
+        //       getSalesInvoices();
+        //       getSalesPayments();
+        //   }
+        // }, [salesInvoices]);
 
       return(
         <View>
@@ -239,14 +218,14 @@ const PaimentScreen = () => {
                 </View> 
                 <FlatList
                   data ={payments}
-                  keyExtractor={(item) => item.name}
+                  keyExtractor={(item) => item.name.toString()}
                   renderItem={({item}) => (
                     <TouchableOpacity style={{padding:20, flexDirection:'row', backgroundColor:'#fff' , marginBottom:10, borderRadius:15, marginRight:5}}>
                       <View style={{paddingRight:10}}>
-                        <Text>{item.name}</Text>
+                        <Text style={{fontWeight:'bold'}}>{item.name}</Text>
                         <Text>mode_of_payment:{item.mode_of_payment}</Text>
-                        <Text>Amount Paid{item.amount}</Text>
-                        <Text>Invoice Date{item.clearance_date}</Text>
+                        <Text>Amount Paid: {item.paid_amount}</Text>
+                        <Text>Invoice Date: {item.posting_date}</Text>
                       </View>
                       <View style={{paddingLeft:10, flexDirection:'column',alignContent:'center'}}>
                         <TouchableOpacity 
