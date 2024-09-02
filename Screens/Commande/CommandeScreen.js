@@ -309,7 +309,7 @@ const CommandeScreen = () => {
                             <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', bottom: 30, right: 30}} />
                             </View>}
                           renderItem={({item}) => (
-                              <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, marginRight:5}} onPress={() => navigation.navigate('SalesInvoiceScreen',{commandeName: item.name})}>
+                              <TouchableOpacity key={item.key} style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, marginRight:5}} onPress={() => navigation.navigate('SalesInvoiceScreen',{commandeName: item.name})}>
                                   <View style={{marginBottom:10, marginStart:10}}>
                                       <Text style={{fontWeight:'bold'}}>{item.name}</Text>
                                       <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>

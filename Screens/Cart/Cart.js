@@ -700,9 +700,10 @@ const Cart = ({navigation}) => {
         <View style={{ flex: 1, padding: 10, backgroundColor: '#f5f5f5' }}>
             <FlatList
                 data={cartItems}
-                keyExtractor={item => item.name}
+                keyExtractor={item => item.name.toString()}
                 renderItem={({ item }) => (
                     <CartItem 
+                        key={item.key}
                         item={item} 
                         onRemove={handleRemoveItem} 
                         onQuantityChange={handleQuantityChange} 

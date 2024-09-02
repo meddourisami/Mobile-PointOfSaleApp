@@ -288,7 +288,7 @@ const ArticleScreen = () => {
                                 const defaultImage = "https://t3.ftcdn.net/jpg/04/84/88/76/360_F_484887682_Mx57wpHG4lKrPAG0y7Q8Q7bJ952J3TTO.jpg";
                                 const imageUrl = item.image ? item.image : defaultImage;
                                     return (   
-                                        <View style={{flexDirection:'row', height:100 , justifyContent:'space-between', marginBottom:10, backgroundColor: "#FFF", borderRadius:15, margin:5}}>
+                                        <View key={item.key} style={{flexDirection:'row', height:100 , justifyContent:'space-between', marginBottom:10, backgroundColor: "#FFF", borderRadius:15, margin:5}}>
                                             <TouchableOpacity onPress={()=> navigation.navigate('ArticleDetails', {article:item.name})}>
                                                 <View style={{flexDirection: 'row', alignItems:'center', justifyContent:'center'}}>
                                                     <Image

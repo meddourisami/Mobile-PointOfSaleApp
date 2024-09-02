@@ -36,6 +36,21 @@ const LivraisonStatus = () => {
         return result;
     };
 
+    function modifyTaxDetail(taxDetailString) {
+        
+        let taxDetailObject = JSON.parse(taxDetailString);
+    
+        
+        for (let item in taxDetailObject) {
+            
+            if (taxDetailObject[item].length >= 2) {
+                taxDetailObject[item][1] = -Math.abs(taxDetailObject[item][1]);
+            }
+        }
+    
+        return JSON.stringify(taxDetailObject);
+    }
+
     const createDeliveryNoteReturn = async() => {
         try{
             const deliveryNoteName = 'new-delivery-note-'+generateRandomName();
@@ -94,7 +109,7 @@ const LivraisonStatus = () => {
                         deliveryNoteName, livraison.creation, livraison.modified, livraison.modified_by, livraison.owner,
                         livraison.docstatus, livraison.idx, livraison.title, livraison.naming_series, livraison.customer,
                         livraison.tax_id, livraison.customer_name, livraison.posting_date, livraison.posting_time, livraison.set_posting_time,
-                        livraison.company, livraison.amended_from, livraison.is_return, livraison.issue_credit_note, livraison.name,
+                        livraison.company, livraison.amended_from, 1, livraison.issue_credit_note, livraison.name,
                         livraison.cost_center, livraison.project, livraison.currency, livraison.conversion_rate, livraison.selling_price_list,
                         livraison.price_list_currency, livraison.plc_conversion_rate, livraison.ignore_pricing_rule, livraison.scan_barcode, livraison.pick_list,
                         livraison.set_warehouse, livraison.set_target_warehouse, -livraison.total_qty, livraison.total_net_weight, -livraison.base_total,
@@ -159,7 +174,7 @@ const LivraisonStatus = () => {
                         deliveryNoteItemName, item.creation, item.modified, item.modified_by, item.owner,
                         item.docstatus, item.idx, item.barcode, item.has_item_scanned, item.item_code,
                         item.item_name, item.customer_item_code, item.description, item.brand, item.item_group,
-                        item.image, item.qty, item.stock_uom, item.uom, item.conversion_factor,
+                        item.image, -item.qty, item.stock_uom, item.uom, item.conversion_factor,
                         -item.stock_qty, item.returned_qty, item.price_list_rate, item.base_price_list_rate, item.margin_type,
                         item.margin_rate_or_amount, item.rate_with_margin, item.discount_percentage, item.discount_amount, item.base_rate_with_margin,
                         item.rate, -item.amount, item.base_rate, -item.base_amount, item.pricing_rules,
@@ -197,7 +212,7 @@ const LivraisonStatus = () => {
                             deliveryTax.docstatus, deliveryTax.idx, deliveryTax.charge_type, deliveryTax.row_id, deliveryTax.account_head,
                             deliveryTax.description, deliveryTax.included_in_print_rate, deliveryTax.included_in_paid_amount, deliveryTax.cost_center, deliveryTax.rate,
                             deliveryTax.account_currency, -deliveryTax.tax_amount, -deliveryTax.total, -deliveryTax.tax_amount_after_discount_amount, -deliveryTax.base_tax_amount,
-                            -deliveryTax.base_total, -deliveryTax.base_tax_amount_after_discount_amount, deliveryTax.item_wise_tax_detail, deliveryTax.dont_recompute_tax, deliveryNoteName,
+                            -deliveryTax.base_total, -deliveryTax.base_tax_amount_after_discount_amount, modifyTaxDetail(deliveryTax.item_wise_tax_detail), deliveryTax.dont_recompute_tax, deliveryNoteName,
                             deliveryTax.parentfield, deliveryTax.parenttype
                         ]
                     );

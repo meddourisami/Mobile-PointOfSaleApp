@@ -6,7 +6,6 @@ import ArticleScreen from '../Screens/article/ArticleScreen';
 import StockScreen from '../Screens/stock/StockScreen';
 import LivraisonScreen from '../Screens/Livraison/LivraisonScreen';
 import PaimentScreen from '../Screens/paiment/PaimentScreen';
-import VenteScreen from '../Screens/vente/VenteScreen';
 import HomeScreen from '../Screens/HomeScreen';
 import CommandeScreen from '../Screens/Commande/CommandeScreen';
 import AddArticleScreen from '../Screens/article/AddArticleScreen';
@@ -35,7 +34,6 @@ const HomeNavigation = () => {
             <Stack.Screen name="StockScreen" component={StockScreen} />
             <Stack.Screen name="LivraisonScreen" component={LivraisonScreen} />
             <Stack.Screen name="PaimentScreen" component={PaimentScreen} />
-            <Stack.Screen name="VenteScreen" component={VenteScreen} />
             <Stack.Screen name="CommandeScreen" component={CommandeScreen} />
             <Stack.Screen name="AddArticleScreen" component={AddArticleScreen} />
             <Stack.Screen name="AddClientScreen" component={AddClientScreen} />

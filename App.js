@@ -11,37 +11,39 @@ import { Ionicons } from '@expo/vector-icons';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { BudgetProvider } from './BudgetContext';
 import { SyncProvider } from './SyncContext';
+import SettingsScreen from './Settings/SettingsScreen';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 async function initDatabase(db) {
   try{
-    await db.execAsync(`
-      DROP TABLE IF EXISTS Customers;
-      DROP TABLE IF EXISTS CustomerMetadata;
-      DROP TABLE IF EXISTS Deliveries;
-      DROP TABLE IF EXISTS DeliveryMetadata;
-      DROP TABLE IF EXISTS TaxesMetadata;
-      DROP TABLE IF EXISTS GroupItem;
-      DROP TABLE IF EXISTS Item;
-      DROP TABLE IF EXISTS ItemMetadata;
-      DROP TABLE IF EXISTS Warehouse;
-      DROP TABLE IF EXISTS Sales_Taxes_and_Charges;
-      DROP TABLE IF EXISTS Sales_Order;
-      DROP TABLE IF EXISTS Sales_Order_Item;
-      DROP TABLE IF EXISTS Quotation;
-      DROP TABLE IF EXISTS Quotation_Item;
-      DROP TABLE IF EXISTS Tax_Categories;
-      DROP TABLE IF EXISTS Sales_Invoice;
-      DROP TABLE IF EXISTS Sales_Invoice_Item;
-      DROP TABLE IF EXISTS Sales_Invoice_Payment;
-      DROP TABLE IF EXISTS sales_invoice_logs;
-      DROP TABLE IF EXISTS sales_order_logs;
-      DROP TABLE IF EXISTS Payment_Entry;
-      DROP TABLE IF EXISTS Payment_Entry_Reference;
-      DROP TABLE IF EXISTS Delivery_Note_Item;
-      DROP TABLE IF EXISTS payment_entry_logs;
-      DROP TABLE IF EXISTS delivery_note_logs;
-     `
-    );
+    // await db.execAsync(`
+    //   DROP TABLE IF EXISTS Customers;
+    //   DROP TABLE IF EXISTS CustomerMetadata;
+    //   DROP TABLE IF EXISTS Deliveries;
+    //   DROP TABLE IF EXISTS DeliveryMetadata;
+    //   DROP TABLE IF EXISTS TaxesMetadata;
+    //   DROP TABLE IF EXISTS GroupItem;
+    //   DROP TABLE IF EXISTS Item;
+    //   DROP TABLE IF EXISTS ItemMetadata;
+    //   DROP TABLE IF EXISTS Warehouse;
+    //   DROP TABLE IF EXISTS Sales_Taxes_and_Charges;
+    //   DROP TABLE IF EXISTS Sales_Order;
+    //   DROP TABLE IF EXISTS Sales_Order_Item;
+    //   DROP TABLE IF EXISTS Quotation;
+    //   DROP TABLE IF EXISTS Quotation_Item;
+    //   DROP TABLE IF EXISTS Tax_Categories;
+    //   DROP TABLE IF EXISTS Sales_Invoice;
+    //   DROP TABLE IF EXISTS Sales_Invoice_Item;
+    //   DROP TABLE IF EXISTS Sales_Invoice_Payment;
+    //   DROP TABLE IF EXISTS sales_invoice_logs;
+    //   DROP TABLE IF EXISTS sales_order_logs;
+    //   DROP TABLE IF EXISTS Payment_Entry;
+    //   DROP TABLE IF EXISTS Payment_Entry_Reference;
+    //   DROP TABLE IF EXISTS Delivery_Note_Item;
+    //   DROP TABLE IF EXISTS payment_entry_logs;
+    //   DROP TABLE IF EXISTS delivery_note_logs;
+    //  `
+    // );
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS Customers (
         name TEXT PRIMARY KEY,
@@ -1173,10 +1175,10 @@ export default function App() {
               inactiveTintColor: '#FFFFFF',
             },
             }}/>
-          <Tab.Screen name="Profile" component={ProfileScreen} options={{
+          <Tab.Screen name="SettingsScreen" component={SettingsScreen} options={{
             tabBarIcon: ({ focused }) => (
               <View>
-                <Ionicons name="person-sharp" size={24} color="white" />
+                <AntDesign name="setting" size={24} color="white" />
               </View>
             ),
             tabBarOptions: {

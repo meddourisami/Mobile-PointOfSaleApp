@@ -57,8 +57,6 @@ const PaimentScreen = () => {
                   deductions: [],
               }
 
-              // console.log("data",JSON.stringify(data));
-
               if (!names.includes(bill.name)) {
                   await db.runAsync(
                       `INSERT INTO payment_entry_logs(action, name, associatedSaleOrder, state, data) VALUES (?, ?, ?, ?, ?)`,
@@ -81,7 +79,7 @@ const PaimentScreen = () => {
 
       const syncDataWithServer = async () => {
           try {
-            const logs = await db.getAllAsync(`SELECT * FROM sales_invoice_logs;`); //TODO CHECK STATE BEFORE 
+            const logs = await db.getAllAsync(`SELECT * FROM sales_invoice_logs;`);
               await Promise.all(
                 logs.map(async (log) => {
                   console.log(
@@ -220,7 +218,7 @@ const PaimentScreen = () => {
                   data ={payments}
                   keyExtractor={(item) => item.name.toString()}
                   renderItem={({item}) => (
-                    <TouchableOpacity style={{padding:20, flexDirection:'row', backgroundColor:'#fff' , marginBottom:10, borderRadius:15, marginRight:5}}>
+                    <TouchableOpacity key={item.key} style={{padding:20, flexDirection:'row', backgroundColor:'#fff' , marginBottom:10, borderRadius:15, marginRight:5}}>
                       <View style={{paddingRight:10}}>
                         <Text style={{fontWeight:'bold'}}>{item.name}</Text>
                         <Text>mode_of_payment:{item.mode_of_payment}</Text>

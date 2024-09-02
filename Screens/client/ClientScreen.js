@@ -269,7 +269,7 @@ const ClientScreen = () => {
                             data ={filteredClients}
                             keyExtractor={(item) => (item.name).toString()}
                             renderItem={({item}) => (
-                                <TouchableOpacity key={item.name} style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, margin:5}} onPress={() => navigation.navigate('ItemGroupScreen', { customer: item })}>
+                                <TouchableOpacity key={item.key} style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, margin:5}} onPress={() => navigation.navigate('ItemGroupScreen', { customer: item })}>
                                     <View style={{marginBottom:10, marginStart:10}}>
                                         <Text key={item.name} style={{fontWeight:'bold'}}>{item.name}</Text>
                                         <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>

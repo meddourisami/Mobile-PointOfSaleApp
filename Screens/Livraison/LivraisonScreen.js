@@ -111,7 +111,7 @@ const LivraisonScreen = () => {
                 }
               return selectedDeliveries;
           }catch (error){
-            console.log('error fetching data',error);
+            console.log('error fetching delivery notes',error);
           }
       };
 
@@ -336,6 +336,8 @@ const LivraisonScreen = () => {
                   taxes: [deliveryTaxesData],
               }
 
+              console.log(data);
+
               if (!names.includes(delivery.name)) {
                   await db.runAsync(
                       `INSERT INTO delivery_note_logs (action, name, state, data) VALUES (?, ?, ?, ?)`,
@@ -372,9 +374,10 @@ const LivraisonScreen = () => {
       useEffect(() => {
           if(isFocused){
             const initialize = async () => {
-              await createMetadataTable();
-              await createDeliveryNoteLocalLogs();
-              await getDeliveriesfromAPI();
+              createMetadataTable();
+              createDeliveryNoteLocalLogs();
+              getDeliveriesfromAPI();
+              saveToLocalLogs();
             };
           initialize();
           }
@@ -383,7 +386,6 @@ const LivraisonScreen = () => {
       useEffect(() => {
         if(isFocused) { 
           getLivraisons();
-          saveToLocalLogs();
         }
       },[isFocused]);
 

@@ -7,8 +7,10 @@ export const useSync = () => useContext(SyncContext);
 export const SyncProvider = ({ children }) => {
   const [isSyncing, setIsSyncing] = useState(false);
 
+  const [isAutoSync, setIsAutoSync] = useState(false);
+
   return (
-    <SyncContext.Provider value={{ isSyncing, setIsSyncing }}>
+    <SyncContext.Provider value={{ isSyncing, setIsSyncing, isAutoSync, setIsAutoSync }}>
       {children}
     </SyncContext.Provider>
   );

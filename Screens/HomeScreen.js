@@ -9,6 +9,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useBudget } from '../BudgetContext';
 import * as CryptoJS from 'crypto-js';
 import { useSync } from '../SyncContext';
+import { TapGestureHandler, GestureHandlerRootView, State } from 'react-native-gesture-handler';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -25,6 +26,8 @@ const HomeScreen = () => {
   const [deliveryLogs, setDeliveryLogs] = useState([]);
   const [salesOrderCount, setSalesOrderCount] = useState(0);
   const [deliveriesCount, setDeliveriesCount] = useState(0);
+  const { isAutoSync } = useSync();
+  const [disabledButton, setDisabledButton] = useState(false);
 
 
   const getHash = (data) => {
@@ -824,11 +827,13 @@ const HomeScreen = () => {
     }catch(e){
       console.log('Error syncing delivery note with server', e);
     }
-  }
+  };
+
 
   const syncState = async() => {
     try{
       setIsSyncing(true);
+      console.log('Syncing');
       if(deliveryLogs) {
         deliveryLogs.map(async(log) => {
           if(log.state === "Submitted" ){
@@ -889,13 +894,14 @@ const HomeScreen = () => {
     }catch(e){
       console.log('Error syncing data with server', e);
     }finally {
-    setIsSyncing(false);
+      setIsSyncing(false);
+      setDisabledButton(false);
     }
   };
 
-  // const handleSync= () => {
-  //   syncState();
-  // };
+  const handleSync= async() => {
+    await syncState();
+  };
 
   const getSaleOrderLogs = async () =>{
     try{
@@ -978,8 +984,10 @@ const HomeScreen = () => {
   useEffect(() => {   
     if(isFocused){
       const initialize = async () => {
+        if(isAutoSync){
+          await syncState();
+        }
           createMetadataTable();
-          syncState();
           getTaxesfromAPI();
           getCustomersfromAPI();
       };
@@ -989,15 +997,25 @@ const HomeScreen = () => {
 
   return (
       <View style={styles.container}>
-        {/* <View style={{ flexDirection: 'row', alignItems: 'center' , paddingTop:10}} onPress={handleSync} > 
-          <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', right: 30}}/>
-        </View>  */}
+       <GestureHandlerRootView>
+        {!isAutoSync && (
+        <TapGestureHandler
+          onHandlerStateChange={handleSync}
+          enabled={!isSyncing} // Makes the button unclickable when syncing
+        >
+          <Text style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 12 }}>
+            <FontAwesome5 name="sync" size={26} color={isSyncing ? 'gray' : 'black'} style={{ position: 'absolute', right: 30 }} />
+            {isSyncing && <Text style={{ paddingLeft: 10 }}>Syncing...</Text>}
+          </Text>
+        </TapGestureHandler>
+        )}
+        </GestureHandlerRootView>
         {isSyncing && (
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
             <ActivityIndicator size="large" color="#0000ff" />
           </View>
         )}
-      <View>
+        <View>
         <TouchableOpacity style={styles.budgetButton} title="Budget">
           <Text style={styles.budgetText}>Budget:</Text>
           <Text style={styles.budgetText}>{initialBudget} DA</Text>
