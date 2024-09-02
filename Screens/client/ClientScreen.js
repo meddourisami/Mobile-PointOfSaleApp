@@ -17,7 +17,6 @@ const ClientScreen = () => {
         const [customers , setCustomers] = useState([]);
         const [filteredClients, setFilteredClients] = useState(clients);
         const [searchQuery, setSearchQuery] = useState('');
-        //const [displayData , setDisplayData] = useState([]);
 
         const getHash = (data) => {
             return CryptoJS.MD5(JSON.stringify(data)).toString();
@@ -30,7 +29,7 @@ const ClientScreen = () => {
                     data_hash TEXT
                 );
             `);
-            const rowCount = await db.runAsync('SELECT COUNT(*) as count FROM CustomerMetadata;');
+            const rowCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM CustomerMetadata;');
             if (rowCount.count === 0) {
                 await db.runAsync('INSERT INTO CustomerMetadata (id, data_hash) VALUES (1, "");');
             }
@@ -56,7 +55,7 @@ const ClientScreen = () => {
                 //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
                 //     },
                 // });
-                // const response = await fetch('http://192.168.1.12:8002/api/resource/Customer?fields=["*"]', {
+                //  const response = await fetch('http://192.168.1.12:8002/api/resource/Customer?fields=["*"]', {
                     const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
                     method: 'GET',
                     headers: {
@@ -68,11 +67,11 @@ const ClientScreen = () => {
                 const newHash = getHash(json.data);
 
                 const existingHash = await db.getFirstAsync('SELECT data_hash FROM CustomerMetadata WHERE id = 1;');
-                if (existingHash !== newHash) {
+                if (existingHash.data_hash !== newHash) {
 
                     await Promise.all(customers.map(async (customer) => {
-                        const syncedCustomer = await db.runAsync(`SELECT synced FROM Customers WHERE name = ?;`, [customer.name]);
-                        if (syncedCustomer && syncedCustomer.synced === 1) {
+                        const syncedCustomer = await db.getFirstAsync(`SELECT synced FROM Customers WHERE name = ?;`, [customer.name]);
+                        if (syncedCustomer.synced === 1) {
 
                             return;
                         }
@@ -232,6 +231,7 @@ const ClientScreen = () => {
         useEffect(() => {   
             if(isFocused){
                 const initialize = async () => {
+                    createMetadataTable();
                     getCustomersfromAPI();
                     getClients();
 

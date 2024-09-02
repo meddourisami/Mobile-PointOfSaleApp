@@ -27,10 +27,9 @@ const LivraisonScreen = () => {
                 data_hash TEXT
             );
         `);
-        const rowCount = await db.runAsync('SELECT COUNT(*) as count FROM DeliveryMetadata;');
+        const rowCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM DeliveryMetadata;');
         if (rowCount.count === 0) {
-            await db.runAsync('INSERT INTO DeliveyMetadata (id, data_hash) VALUES (1, "");'); /// Hash of all deliveries data
-            await db.runAsync('INSERT INTO DeliveyMetadata (id, data_hash) VALUES (2, "");'); ///Hash for the list of delivery names
+            await db.runAsync('INSERT INTO DeliveryMetadata (id, data_hash) VALUES (?, ?);',[1, ""]); /// Hash of all deliveries data
         }
       };
 
@@ -46,7 +45,9 @@ const LivraisonScreen = () => {
 
       const getDeliveriesfromAPI = async () => {
           try{
-            const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', {
+            // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.reportview.get', 
+            const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
+              {
                 method: 'POST',
                 headers: {
                   'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
@@ -76,13 +77,37 @@ const LivraisonScreen = () => {
             //   });
               const data = await response.json();
               const selectedDeliveries = transformJson(data);
+
               const newHash = getHash(data);
 
-                const existingHash = await db.runAsync('SELECT data_hash FROM DeliveryMetadata WHERE id = 1;');
-                if (existingHash !== newHash) {
-                    setDeliveries(selectedDeliveries);
-                    await saveInLocalDeliveries(selectedDeliveries);
-                    await db.runAsync('UPDATE DeliveryMetadata SET data_hash = ? WHERE id = 1;', [newHash]);
+                const existingHash = await db.getFirstAsync('SELECT data_hash FROM DeliveryMetadata WHERE id = ?;',[1]);
+                if (existingHash.data_hash !== newHash) {
+                  selectedDeliveries.map(async(delivery) => {
+                    console.log(delivery.name);
+                    // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.load.getdoc', 
+                      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
+                        {
+                        method: 'POST',
+                          headers: {
+                            'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            "doctype": "Delivery Note",
+                            "name": delivery.name,
+                            "_": Date.now(),
+                          })
+                        }
+                      );
+                      const data = await response.json();
+                      const deliveryItems = data.docs[0].items;
+                      await saveInLocalDeliveryItems(deliveryItems);
+                      const deliveryTaxes = data.docs[0].taxes;
+                      await saveInLocalDeliveryTaxes(deliveryTaxes);
+                  })
+                  setDeliveries(selectedDeliveries);
+                  await saveInLocalDeliveries(selectedDeliveries);
+                  await db.runAsync('UPDATE DeliveryMetadata SET data_hash = ? WHERE id = ?;', [newHash, 1]);
                 }
               return selectedDeliveries;
           }catch (error){
@@ -273,51 +298,15 @@ const LivraisonScreen = () => {
       }
     }
 
-    const getAllDeliveriesDetailsFromAPI = async () => {
-      try{
-        const names = await db.getAllAsync(`SELECT name FROM Deliveries`);
-        const newHash = getHash(names);
-        const existingHash = await db.runAsync('SELECT data_hash FROM DeliveryMetadata WHERE id = 2;');
-        if (existingHash !== newHash) {
-          names.forEach(async(name) => {
-            console.log('Fetching data for:', name.name);
-            const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',{
-              method: 'POST',
-                headers: {
-                  'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  "doctype": "Delivery Note",
-                  "name": name.name,
-                  "_": Date.now(),
-                })
-              }
-            );
-            const data = await response.json();
-            const deliveryItems = data.docs[0].items;
-            saveInLocalDeliveryItems(deliveryItems);
-            const deliveryTaxes = data.docs[0].taxes;
-            saveInLocalDeliveryTaxes(deliveryTaxes);
-            await db.runAsync('UPDATE DeliveryMetadata SET data_hash = ? WHERE id = 1;', [newHash]);
-          });
-        }
-      }catch(e){
-        console.log("Error getting delivery items and taxes", e)
-      };
-    }
-
     const saveToLocalLogs = async () => {
       const logs = await db.getAllAsync(`SELECT name FROM delivery_note_logs;`);
       const names = logs.map(log => log.name);
 
       const deliveries = await db.getAllAsync(`SELECT * FROM Deliveries;`);
       deliveries.map(async (delivery)=> {
-          console.log(delivery.name);
-          
-          // if(delivery.name.includes("MAT-DN")){
-          //     return;
-          // }else{
+          if(delivery.name.includes("MAT-DN")){
+              console.log("already synced");
+          }else{
               const deliveryData= {
                   ...delivery,
                   doctype: "Delivery Note",
@@ -325,7 +314,7 @@ const LivraisonScreen = () => {
                   __unsaved: 1,
               }
               const deliveryItems = await db.getAllAsync(`SELECT * FROM Delivery_Note_Item WHERE parent =?`, [delivery.name]);
-              const deliveryItemsData = [];
+
               const updatedItems= deliveryItems.map(item =>({
                   ...item,
                   __islocal: 1,
@@ -352,10 +341,11 @@ const LivraisonScreen = () => {
                       `INSERT INTO delivery_note_logs (action, name, state, data) VALUES (?, ?, ?, ?)`,
                       ["INSERT", delivery.name, "local", JSON.stringify(data)]
                   );
+                  console.log("saved to local logs", delivery.name);
               } else {
                 console.log("already in log");
               }
-          //}
+          }
       });
     }
 
@@ -364,12 +354,12 @@ const LivraisonScreen = () => {
               const allLivraisons= await db.getAllAsync(`SELECT * FROM Deliveries;`);
               setLivraisons(allLivraisons);
           }catch(e){
-              console.log(e);
+              console.log("Error fetching all deliveries",e);
           }
       };
 
       const createDeliveryNoteLocalLogs = async () => {
-        //await db.runAsync(`DROP TABLE IF EXISTS sales_order_logs;`);
+        //await db.runAsync(`DROP TABLE IF EXISTS delivery_note_logs;`);
         await db.runAsync(`CREATE TABLE IF NOT EXISTS delivery_note_logs(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 action TEXT,
@@ -382,19 +372,20 @@ const LivraisonScreen = () => {
       useEffect(() => {
           if(isFocused){
             const initialize = async () => {
-              //await createMetadataTable();
-              //await createDeliveryNoteLocalLogs();
+              await createMetadataTable();
+              await createDeliveryNoteLocalLogs();
               await getDeliveriesfromAPI();
-              //await getAllDeliveriesDetailsFromAPI();
-              await getLivraisons();
             };
           initialize();
           }
       }, [isFocused]);
 
-      // useEffect(() => {
-
-      // }
+      useEffect(() => {
+        if(isFocused) { 
+          getLivraisons();
+          saveToLocalLogs();
+        }
+      },[isFocused]);
 
       return (
           <View>

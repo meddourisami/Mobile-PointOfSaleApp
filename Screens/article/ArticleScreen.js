@@ -4,6 +4,7 @@ import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native'
 import { useSQLiteContext } from 'expo-sqlite';
 import * as CryptoJS from 'crypto-js';
 import { AntDesign } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 const ArticleScreen = () => {
     const isFocused = useIsFocused();
@@ -63,7 +64,7 @@ const ArticleScreen = () => {
                 // const json = await response.json();
 
                 response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
-                // response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.query_report.run',
+                //  response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.query_report.run',
                     {
                         method: 'POST',
                         headers: {
@@ -94,13 +95,14 @@ const ArticleScreen = () => {
                     names.push(quantity.item_code);
                 });
 
-                // stockDetails= [];
-                // filteredQuantities.map((quantity) => {
-                //     stockDetails.push(quantity.bal_qty, quantity.bal_val);
-                // });
-                // console.log(stockDetails);
+                filteredQuantities.map((quantity) => {
+                    stockDetails={
+                        bal_qty: quantity.bal_qty,
+                        bal_val: quantity.bal_val,
+                    };
+                });
                 response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
-                // response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.reportview.get', 
+                //  response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.reportview.get', 
                     {
                         method: 'POST',
                         headers: {
@@ -128,22 +130,29 @@ const ArticleScreen = () => {
                 const data = await response.json();
                 const selectedItems = transformJson(data);
                 
-                // itemsInStock = [...selectedItems, ...stockDetails];
-                // console.log("selecteditemsinstock",itemsInStock);  TODO ADD QUANTITY TO ITEMS VIEW
-                const newHash = getHash(selectedItems);
+                const stockItems = selectedItems.map(item => {
+                    const stockDetail = filteredQuantities.find(quantity => quantity.item_code === item.name);
+                    return {
+                        ...item,
+                        bal_qty: stockDetail ? stockDetail.bal_qty : 0,
+                        bal_val: stockDetail ? stockDetail.bal_val : 0
+                    };
+                });
 
-                const existingHash = await db.getFirstAsync('SELECT data_hash FROM CustomerMetadata WHERE id = 1;');
+                const newHash = getHash(stockItems);
 
-                if (existingHash !== newHash) {
+                const existingHash = await db.getFirstAsync('SELECT data_hash FROM ItemMetadata WHERE id = 1;');
+                if (existingHash.data_hash !== newHash) {
 
-                    await Promise.all(items.map(async (item) => {
+                    await Promise.all(stockItems.map(async (item) => {
                         await db.runAsync(`DELETE FROM Item WHERE name = ?;`, [item.name]);
                     }));
 
-                    await saveInLocalItems(selectedItems);
-                    setItems(selectedItems);
+                    await saveInLocalItems(stockItems);
+                    await db.runAsync('UPDATE ItemMetadata SET data_hash = ? WHERE id = 1;', [newHash]);
+                    setItems(stockItems);
                 }
-                return selectedItems;
+                return stockItems;
             } catch(e){
                 console.log("error getting items", e);
             }
@@ -233,7 +242,7 @@ const ArticleScreen = () => {
 
         useEffect(()=>{
             if(isFocused){
-                //createMetadataTable();
+                createMetadataTable();
                 getItemsFromApi();
                 if(ItemGroup){
                     getItemsByGroup(ItemGroup);
@@ -280,7 +289,7 @@ const ArticleScreen = () => {
                                 const imageUrl = item.image ? item.image : defaultImage;
                                     return (   
                                         <View style={{flexDirection:'row', height:100 , justifyContent:'space-between', marginBottom:10, backgroundColor: "#FFF", borderRadius:15, margin:5}}>
-                                            <TouchableOpacity>
+                                            <TouchableOpacity onPress={()=> navigation.navigate('ArticleDetails', {article:item.name})}>
                                                 <View style={{flexDirection: 'row', alignItems:'center', justifyContent:'center'}}>
                                                     <Image
                                                         source={{ uri: imageUrl }} 
@@ -329,18 +338,23 @@ const ArticleScreen = () => {
         return selecteditems.reduce((total, item) => total + item.standard_rate, 0);
     };
 
+    const handleClearSelectedItems = () => {
+        setSelecteditems([]);
+    };
+
   return (
     <View style={styles.container}>
         <Text style={{fontSize:24}}>Liste des articles</Text>
             <View>
-            {selecteditems.length > 0 && (
+            {selecteditems && selecteditems.length > 0 && (
                 <TouchableOpacity
                 style={styles.cartButton}
                 onPress={() => navigation.navigate('Cart', { selectedItems : selecteditems , customer: customer })}
                 >
-                    <Text style={{ color: '#FFF', fontSize: 18 }}>
+                    <Text style={{ color: '#FFF', fontSize: 18, marginLeft:30 }}>
                         {`Items: ${selecteditems.length}, Total: DA ${calculateTotalPrice().toFixed(2)}`}
                     </Text>
+                    <Ionicons name="close-outline" size={24} color="white" onPress={handleClearSelectedItems}/>
                 </TouchableOpacity>
             )}
             </View>
@@ -392,6 +406,8 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         alignItems: 'center',
         marginBottom: 20,
+        flexDirection: 'row',
+        justifyContent:'space-between',
     },
     cartButtonText: {
         color: '#FFF',
@@ -399,6 +415,6 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         flex: 1,
-        marginBottom: 60, // Make space for the icon
+        marginBottom: 60,
     },
 })

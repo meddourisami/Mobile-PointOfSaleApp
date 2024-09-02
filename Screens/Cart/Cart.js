@@ -4,6 +4,8 @@ import { useIsFocused, useRoute } from '@react-navigation/native';
 import * as CryptoJS from 'crypto-js';
 import { useSQLiteContext } from 'expo-sqlite';
 import { Picker } from '@react-native-picker/picker';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 
 const Cart = ({navigation}) => {
@@ -19,8 +21,6 @@ const Cart = ({navigation}) => {
     const [selectedTax, setSelectedTax] = useState(null);
     const [selectedClient, setSelectedClient] = useState(null);
     const [clients, setClients] = useState([]);
-    const [showCustomerPicker, setShowCustomerPicker] = useState(false);
-    const [showTaxPicker, setShowTaxPicker] = useState(false);
 
     const handleRemoveItem = (itemToRemove) => {
         setCartItems(cartItems.filter(item => item.name !== itemToRemove.name));
@@ -98,7 +98,7 @@ const Cart = ({navigation}) => {
                 data_hash TEXT
             );
         `);
-        const rowCount = await db.runAsync('SELECT COUNT(*) as count FROM TaxesMetadata;');
+        const rowCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM TaxesMetadata;');
         if (rowCount.count === 0) {
             await db.runAsync('INSERT INTO TaxesMetadata (id, data_hash) VALUES (1, "");');
         }
@@ -126,8 +126,8 @@ const Cart = ({navigation}) => {
             
             const newHash = getHash(json.data);
 
-            const existingHash = await db.runAsync('SELECT data_hash FROM TaxesMetadata WHERE id = 1;');
-            if (existingHash !== newHash) {
+            const existingHash = await db.getFirstAsync('SELECT data_hash FROM TaxesMetadata WHERE id = 1;');
+            if (existingHash.data_hash !== newHash) {
 
                 await Promise.all(taxes.map(async (tax) => {
                     await db.runAsync(`DELETE FROM Tax_Categories WHERE name = ?;`, [tax.name]);
@@ -653,6 +653,8 @@ const Cart = ({navigation}) => {
     }, [isFocused]);
 
     const CartItem = ({ item, onRemove, onQuantityChange }) => {
+        const defaultImage = "https://t3.ftcdn.net/jpg/04/84/88/76/360_F_484887682_Mx57wpHG4lKrPAG0y7Q8Q7bJ952J3TTO.jpg";
+        const imageUrl = item.image ? item.image : defaultImage;
       return (
             <View style={{
                 flexDirection: 'row',
@@ -671,7 +673,7 @@ const Cart = ({navigation}) => {
                 elevation: 3,
               }}>
                 <Image
-                source={{ uri: item.image }}
+                source={{ uri: imageUrl }}
                 style={{ width: 50, height: 50, borderRadius: 5, marginRight: 10 }}
                 />
                 <View style={{ flex: 1 }}>
@@ -679,16 +681,16 @@ const Cart = ({navigation}) => {
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <TouchableOpacity onPress={() => onQuantityChange(item, -1)}>
-                        <Text style={{ fontSize: 20, paddingHorizontal: 10 }}>-</Text>
+                        <FontAwesome name="minus" size={20} color="black" style={{marginRight:15}}/>
                     </TouchableOpacity>
-                    <Text style={{ marginHorizontal: 10, fontSize: 16 }}>{quantities[item.name]}</Text>
+                    <Text style={{ marginRight: 15, fontSize: 20, fontWeight:'bold' }}>{quantities[item.name]}</Text>
                     <TouchableOpacity onPress={() => onQuantityChange(item, 1)}>
-                        <Text style={{ fontSize: 20, paddingHorizontal: 10 }}>+</Text>
+                        <FontAwesome name="plus" size={20} color="black" style={{marginRight:15}}/>
                      </TouchableOpacity>
                 </View>
-                <Text style={{ fontSize: 16, fontWeight: 'bold' }}>DA {item.standard_rate * quantities[item.name]}</Text>
+                <Text style={{ fontSize: 16, fontWeight: 'bold' , marginHorizontal:10}}>DA {item.standard_rate * quantities[item.name]}</Text>
                 <TouchableOpacity onPress={() => onRemove(item)} style={{ marginLeft: 10 }}>
-                    <Text style={{ color: 'red', fontWeight: 'bold' }}>Remove</Text>
+                    <Ionicons name="close-outline" size={28} color="red" />
                 </TouchableOpacity>
             </View>
         );

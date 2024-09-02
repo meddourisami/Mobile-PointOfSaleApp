@@ -5,6 +5,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useBudget } from '../../BudgetContext';
+import RNHTMLtoPDF from 'react-native-html-to-pdf';
 
 const SalesInvoiceScreen = ({navigation}) => {
     const route = useRoute();
@@ -395,6 +396,52 @@ const SalesInvoiceScreen = ({navigation}) => {
         }
     };
 
+    
+    const generatePDF = async () => {
+        console.log("Generating PDF");
+        const options = {
+            html: `
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        .container { padding: 20px; }
+                        .section { margin-bottom: 20px; }
+                        .title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+                        .text { font-size: 14px; color: #555; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="section">
+                            <div class="title">Invoice Date</div>
+                            <div class="text">${invoiceDate.toLocaleDateString()}</div>
+                        </div>
+                        <div class="section">
+                            <div class="title">Customer</div>
+                            <div class="text">${commande.customer}</div>
+                        </div>
+                        <div class="section">
+                            <div class="title">Amount To Pay</div>
+                            <div class="text">${commande.grand_total} DA</div>
+                        </div>
+                        <div class="section">
+                            <div class="title">Payment Method</div>
+                            <div class="text">${paymentMode}</div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `,
+            fileName: 'payment',
+            directory: 'Documents',
+        };
+
+        let file = await RNHTMLtoPDF.convert(options);
+        console.log(file.filePath);
+        alert(`PDF saved to ${file.filePath}`);
+    };
+
     useEffect(() => { 
         if (isFocused){
             getCommandeDetails();
@@ -490,7 +537,8 @@ const SalesInvoiceScreen = ({navigation}) => {
                         shadowRadius: 4,
                         elevation: 5,
                         alignItems: 'center',
-                    }}>
+                    }}
+                    onPress={generatePDF}>
                         <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#E59135' }}>Print Recipe </Text>
                     </TouchableOpacity>
                 </ScrollView>

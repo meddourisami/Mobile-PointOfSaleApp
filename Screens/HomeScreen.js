@@ -22,11 +22,27 @@ const HomeScreen = () => {
   const [saleOrderLogs, setSaleOrderLogs] = useState([]);
   const [saleInvoiceLogs, setSaleInvoiceLogs] = useState([]);
   const [paymentEntryLogs, setPaymentEntryLogs] = useState([]);
+  const [deliveryLogs, setDeliveryLogs] = useState([]);
+  const [salesOrderCount, setSalesOrderCount] = useState(0);
+  const [deliveriesCount, setDeliveriesCount] = useState(0);
 
 
   const getHash = (data) => {
     return CryptoJS.MD5(JSON.stringify(data)).toString();
   };
+
+  const createMetadataTable = async () => {
+    await db.runAsync(`
+        CREATE TABLE IF NOT EXISTS TaxesMetadata (
+            id INTEGER PRIMARY KEY,
+            data_hash TEXT
+        );
+    `);
+    const rowCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM TaxesMetadata;');
+    if (rowCount.count === 0) {
+        await db.runAsync('INSERT INTO TaxesMetadata (id, data_hash) VALUES (1, "");');
+    }
+};
 
   const getTaxesfromAPI = async () => {
     try{
@@ -48,8 +64,8 @@ const HomeScreen = () => {
         
         const newHash = getHash(json.data);
 
-        const existingHash = await db.runAsync('SELECT data_hash FROM TaxesMetadata WHERE id = 1;');
-        if (existingHash !== newHash) {
+        const existingHash = await db.getFirstAsync('SELECT data_hash FROM TaxesMetadata WHERE id = 1;');
+        if (existingHash.data_hash !== newHash) {
 
             await Promise.all(taxes.map(async (tax) => {
                 await db.runAsync(`DELETE FROM Tax_Categories WHERE name = ?;`, [tax.name]);
@@ -112,12 +128,12 @@ const HomeScreen = () => {
       
       const newHash = getHash(json.data);
 
-      const existingHash = await db.runAsync('SELECT data_hash FROM CustomerMetadata WHERE id = 1;');
-      if (existingHash !== newHash) {
+      const existingHash = await db.getFirstAsync('SELECT data_hash FROM CustomerMetadata WHERE id = 1;');
+      if (existingHash.data_hash !== newHash) {
 
           await Promise.all(customers.map(async (customer) => {
-              const syncedCustomer = await db.runAsync(`SELECT synced FROM Customers WHERE name = ?;`, [customer.name]);
-              if (syncedCustomer && syncedCustomer.synced === 1) {
+              const syncedCustomer = await db.getFirstAsync(`SELECT synced FROM Customers WHERE name = ?;`, [customer.name]);
+              if (syncedCustomer.synced === 1) {
 
                   return;
               }
@@ -253,13 +269,8 @@ const HomeScreen = () => {
                 })
                 console.log("Submitting sale order...", data.docs[0].name);
                 if(response.ok){
-                    //await db.runAsync(`DELETE FROM sales_order_logs WHERE id = ?;`, [log.id]);
-                    //TODO CHECK FOR STATE SALES ORDER AND UPDATE LISTING VIEW *********************************
                     const data =await response.json();
-                        // const saleInvoiceItems = await db.getAllAsync(`SELECT * FROM Sales_Invoice_Item WHERE sales_order=?`,[log.name]);
-                        // saleInvoiceItems.map(async(item) =>{
-                        //   await db.runAsync(`UPDATE Sales_Invoice_Item SET sales_order=? WHERE name=?`, [data.docs[0].name, item.name]);
-                        // });
+
                         await db.runAsync(`UPDATE payment_entry_logs SET associatedSaleOrder=? WHERE associatedSaleOrder=?`, [data.docs[0].name, log.name]);
 
                         orderTosync= await db.getFirstAsync(`SELECT * FROM Sales_Order WHERE name= ?`,[log.name]);
@@ -654,9 +665,181 @@ const HomeScreen = () => {
     }
   }
 
+  const syncDeliveryWithServer = async(log) => {
+    try{
+      // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
+      const response = await fetch(
+        'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+            },
+            body: JSON.stringify({
+                "doc": log.data,  
+                "action": "Save"
+            })
+        }
+      );
+      console.log(JSON.stringify({
+        "doc": log.data,  
+        "action": "Save"
+      }));
+    
+    // const response = await fetch(
+    //     'http://195.201.138.202:8006/api/method/frappe.desk.form.save.savedocs',
+    //     {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //             'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
+    //         },
+    //         body: JSON.stringify({
+    //             "doc": JSON.stringify(log.data),  
+    //             "action": "Save"
+    //         })
+    //     }
+    // );
+    console.log(response.ok);
+      if(response.ok){
+        response.json().then(async (data) => {
+          console.log("saved delivery return to draft", data.docs[0].name);
+            await db.runAsync(`UPDATE delivery_note_logs SET state= ? WHERE id = ?;`, ["Draft", log.id]);
+            console.log(
+                {
+                    "doc": JSON.stringify(data.docs[0]),  
+                    "action": "Submit"
+                }
+            );
+            try{
+                // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
+                const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                    },
+                    body: JSON.stringify({
+                        "doc": JSON.stringify(data.docs[0]),  
+                        "action": "Submit"
+                    })
+                })
+                console.log("Submitting delivery note...", data.docs[0].name);
+                if(response.ok){
+                    const data =await response.json();
+                        deliveryTosync= await db.getFirstAsync(`SELECT * FROM Deliveries WHERE name= ?`,[log.name]);
+                        await db.runAsync(`INSERT INTO Deliveries(
+                          name, modified, modified_by, owner,
+                          docstatus, idx, title, naming_series, customer,
+                          tax_id, customer_name, posting_date, posting_time, set_posting_time,
+                          company, amended_from, is_return, issue_credit_note, return_against,
+                          cost_center, project, currency, conversion_rate, selling_price_list,
+                          price_list_currency, plc_conversion_rate, ignore_pricing_rule, scan_barcode, pick_list,
+                          set_warehouse, set_target_warehouse, total_qty, total_net_weight, base_total,
+                          base_net_total, total, net_total, tax_category, taxes_and_charges,
+                          shipping_rule, incoterm, named_place, base_total_taxes_and_charges, total_taxes_and_charges,
+                          base_grand_total, base_rounding_adjustment, base_rounded_total, base_in_words, grand_total,
+                          rounding_adjustment, rounded_total, in_words, disable_rounded_total, apply_discount_on,
+                          base_discount_amount, additional_discount_percentage, discount_amount, other_charges_calculation, customer_address,
+                          address_display, contact_person, contact_display, contact_mobile, contact_email,
+                          shipping_address_name, shipping_address, dispatch_address_name, dispatch_address, company_address,
+                          company_address_display, tc_name, terms, per_billed, status,
+                          per_installed, installation_status, per_returned, transporter, driver,
+                          lr_no, vehicle_no, transporter_name, driver_name, lr_date,
+                          po_no, po_date, sales_partner, amount_eligible_for_commission, commission_rate,
+                          total_commission, auto_repeat, letter_head, print_without_amount, group_same_items,
+                          select_print_heading, language, is_internal_customer, represents_company, inter_company_reference,
+                          customer_group, territory, source, campaign, excise_page,
+                          instructions, _user_tags, _comments, _assign, _liked_by,
+                          _seen, custom_solde, custom_total_unpaid, custom_delivery_details, custom_driver,
+                          custom_driver_name, custom_vehicle
+                        ) VALUES (
+                          ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?, ?, ?, ?,
+                          ?, ?)`,
+                        [
+                          data.docs[0].name, deliveryTosync.modified, deliveryTosync.modified_by, deliveryTosync.owner,
+                          deliveryTosync.docstatus, deliveryTosync.idx, deliveryTosync.title, deliveryTosync.naming_series, deliveryTosync.customer,
+                          deliveryTosync.tax_id, deliveryTosync.customer_name, deliveryTosync.posting_date, deliveryTosync.posting_time, deliveryTosync.set_posting_time,
+                          deliveryTosync.company, deliveryTosync.amended_from, deliveryTosync.is_return, deliveryTosync.issue_credit_note, deliveryTosync.return_against,
+                          deliveryTosync.cost_center, deliveryTosync.project, deliveryTosync.currency, deliveryTosync.conversion_rate, deliveryTosync.selling_price_list,
+                          deliveryTosync.price_list_currency, deliveryTosync.plc_conversion_rate, deliveryTosync.ignore_pricing_rule, deliveryTosync.scan_barcode, deliveryTosync.pick_list,
+                          deliveryTosync.set_warehouse, deliveryTosync.set_target_warehouse, deliveryTosync.total_qty, deliveryTosync.total_net_weight, deliveryTosync.base_total,
+                          deliveryTosync.base_net_total, deliveryTosync.total, deliveryTosync.net_total, deliveryTosync.tax_category, deliveryTosync.taxes_and_charges,
+                          deliveryTosync.shipping_rule, deliveryTosync.incoterm, deliveryTosync.named_place, deliveryTosync.base_total_taxes_and_charges, deliveryTosync.total_taxes_and_charges,
+                          deliveryTosync.base_grand_total, deliveryTosync.base_rounding_adjustment, deliveryTosync.base_rounded_total, deliveryTosync.base_in_words, deliveryTosync.grand_total,
+                          deliveryTosync.rounding_adjustment, deliveryTosync.rounded_total, deliveryTosync.in_words, deliveryTosync.disable_rounded_total, deliveryTosync.apply_discount_on,
+                          deliveryTosync.base_discount_amount, deliveryTosync.additional_discount_percentage, deliveryTosync.discount_amount, deliveryTosync.other_charges_calculation, deliveryTosync.customer_address,
+                          deliveryTosync.address_display, deliveryTosync.contact_person, deliveryTosync.contact_display, deliveryTosync.contact_mobile, deliveryTosync.contact_email,
+                          deliveryTosync.shipping_address_name, deliveryTosync.shipping_address, deliveryTosync.dispatch_address_name, deliveryTosync.dispatch_address, deliveryTosync.company_address,
+                          deliveryTosync.company_address_display, deliveryTosync.tc_name, deliveryTosync.terms, deliveryTosync.per_billed, deliveryTosync.status,
+                          deliveryTosync.per_installed, deliveryTosync.installation_status, deliveryTosync.per_returned, deliveryTosync.transporter, deliveryTosync.driver,
+                          deliveryTosync.lr_no, deliveryTosync.vehicle_no, deliveryTosync.transporter_name, deliveryTosync.driver_name, deliveryTosync.lr_date,
+                          deliveryTosync.po_no, deliveryTosync.po_date, deliveryTosync.sales_partner, deliveryTosync.amount_eligible_for_commission, deliveryTosync.commission_rate,
+                          deliveryTosync.total_commission, deliveryTosync.auto_repeat, deliveryTosync.letter_head, deliveryTosync.print_without_amount, deliveryTosync.group_same_items,
+                          deliveryTosync.select_print_heading, deliveryTosync.language, deliveryTosync.is_internal_customer, deliveryTosync.represents_company, deliveryTosync.inter_company_reference,
+                          deliveryTosync.customer_group, deliveryTosync.territory, deliveryTosync.source, deliveryTosync.campaign, deliveryTosync.excise_page,
+                          deliveryTosync.instructions, deliveryTosync._user_tags, deliveryTosync._comments, deliveryTosync._assign, deliveryTosync._liked_by,
+                          deliveryTosync._seen, deliveryTosync.custom_solde, deliveryTosync.custom_total_unpaid, deliveryTosync.custom_delivery_details, deliveryTosync.custom_driver,
+                          deliveryTosync.custom_driver_name, deliveryTosync.custom_vehicle
+                        ]
+                      );
+                      await db.runAsync(`DELETE FROM Deliveries WHERE name = ?`, [log.name]);
+                      await db.runAsync(`UPDATE delivery_note_logs SET state= ? WHERE id = ?;`, ["Submitted", log.id]);
+                      await db.runAsync(`DELETE FROM delivery_note_logs WHERE id = ?;`, [log.id]);
+                      console.log("Synced delivery note return successfully", data.docs[0].name);
+                }else{
+                    console.log("Failed to sync delivery note with server", await response.text());
+                }
+            }catch(e){
+                console.log("Failed to submit delivery note", e);
+            }
+        });
+      }else{
+        console.log("Error from the server delivery note", await response.text());
+      }
+    }catch(e){
+      console.log('Error syncing delivery note with server', e);
+    }
+  }
+
   const syncState = async() => {
     try{
       setIsSyncing(true);
+      if(deliveryLogs) {
+        deliveryLogs.map(async(log) => {
+          if(log.state === "Submitted" ){
+
+            console.log("already submitted to server", log.name);
+          }else{
+            console.log("starting syncronizing", log.name);
+            await syncDeliveryWithServer(log);
+          }
+        });
+      }  
       if (saleOrderLogs) {
           saleOrderLogs.map(async(log) => {
             if(log.state === "Submitted" ){
@@ -701,7 +884,7 @@ const HomeScreen = () => {
               console.log("Failed to get associated sale order name");
             }
           }
-        })       
+        })   
       };
     }catch(e){
       console.log('Error syncing data with server', e);
@@ -709,6 +892,10 @@ const HomeScreen = () => {
     setIsSyncing(false);
     }
   };
+
+  // const handleSync= () => {
+  //   syncState();
+  // };
 
   const getSaleOrderLogs = async () =>{
     try{
@@ -738,6 +925,38 @@ const HomeScreen = () => {
     }
   };
 
+  const getDeliveryLogs = async () => {
+    try{
+      const result = await db.getAllAsync('SELECT * FROM delivery_note_logs;');
+      setDeliveryLogs(result);
+    }catch(e){
+      console.log("Error fetching delivery logs",e);
+    }
+  };
+
+  const getDeliveriesCount = async () => {
+    try{
+      const result = await db.getFirstAsync('SELECT COUNT(*) as count FROM Deliveries;')
+      setDeliveriesCount(result.count.toString().padStart(2, '0'));
+    }catch(e){
+      console.log("Error getting delivery count",e);
+    }
+  };
+
+  const getSalesOrderCount = async () => {
+    try{
+      const result = await db.getFirstAsync('SELECT COUNT(*) as count FROM Sales_Order;')
+      setSalesOrderCount(result.count.toString().padStart(2, '0'));
+    }catch(e){
+      console.log("Error getting sales order count",e);
+    }
+  };
+
+  useEffect(() => {
+    getSalesOrderCount();
+    getDeliveriesCount();
+  }, []);
+
   useEffect(()=>{
     if(saleOrderLogs){
       getSaleOrderLogs();
@@ -750,15 +969,19 @@ const HomeScreen = () => {
     }
   },[paymentEntryLogs]);
 
+  useEffect(()=>{
+    if(deliveryLogs){
+      getDeliveryLogs();
+    }
+  },[paymentEntryLogs]);
+
   useEffect(() => {   
     if(isFocused){
       const initialize = async () => {
+          createMetadataTable();
+          syncState();
           getTaxesfromAPI();
           getCustomersfromAPI();
-          //getSaleOrderLogs();
-          //getSaleInvoiceLogs();
-          //getPaymentEntryLogs();
-          syncState();
       };
       initialize();
     }
@@ -766,6 +989,9 @@ const HomeScreen = () => {
 
   return (
       <View style={styles.container}>
+        {/* <View style={{ flexDirection: 'row', alignItems: 'center' , paddingTop:10}} onPress={handleSync} > 
+          <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', right: 30}}/>
+        </View>  */}
         {isSyncing && (
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
             <ActivityIndicator size="large" color="#0000ff" />
@@ -776,11 +1002,13 @@ const HomeScreen = () => {
           <Text style={styles.budgetText}>Budget:</Text>
           <Text style={styles.budgetText}>{initialBudget} DA</Text>
           <View style={styles.budgetRow}>
-            <TouchableOpacity activeOpacity={"#E59135"} style={{backgroundColor:'#FFFFFF', height:50, width:100, marginRight:20, borderRadius:10, alignItems:'center', justifyContent:'center'}}>
-              <Text style={{alignItems:'center', justifyContent:'center'}}>Bon de Commande</Text>
+            <TouchableOpacity activeOpacity={"#E59135"} style={{backgroundColor:'#FFFFFF', height:55, width:100, marginRight:20, borderRadius:10, alignItems:'center', justifyContent:'center'}}>
+              <Text style={{alignItems:'center', justifyContent:'center'}}>Bon de Commande </Text>
+              <Text>{salesOrderCount}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={{backgroundColor:"#FFFFFF", height:50, width:100, borderRadius:10, alignItems:'center', justifyContent:'center'}}>
-              <Text>Bon de Livraison</Text>
+            <TouchableOpacity style={{backgroundColor:"#FFFFFF", height:55, width:100, borderRadius:10, alignItems:'center', justifyContent:'center'}}>
+              <Text>Bon de Livraison </Text>
+              <Text>{deliveriesCount}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

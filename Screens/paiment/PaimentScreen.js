@@ -227,14 +227,14 @@ const PaimentScreen = () => {
                         <Text>Amount Paid: {item.paid_amount}</Text>
                         <Text>Invoice Date: {item.posting_date}</Text>
                       </View>
-                      <View style={{paddingLeft:10, flexDirection:'column',alignContent:'center'}}>
+                      {/* <View style={{paddingLeft:10, flexDirection:'column',alignContent:'center'}}>
                         <TouchableOpacity 
                           style={{justifyContent:'flex-end', alignItems: 'center', backgroundColor:"#E59135", height:20, marginRight:20}}
                           onPress={()=>navigation.navigate('PaymentDetails',{Payment : item.parent})}
                         >
                           <Text style={{color:"#FFF"}}>View Details</Text>
                         </TouchableOpacity>
-                      </View>
+                      </View> */}
                     </TouchableOpacity>
                   )}
                 />

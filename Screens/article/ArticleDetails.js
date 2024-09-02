@@ -33,40 +33,39 @@ const ArticleDetails = () => {
             };
         },[isFocused]);
 
-        // useEffect(() => {
-        //     if(salesOrderItems){
-        //         getSalesOrderItems();
-        //     };
-        // },[salesOrderItems]);
-
-        return(
-            <View>
-                {item ? (
-                        <Text>No data yet.</Text>
-                    ) : (     
-                            <TouchableOpacity>
-                                <View style={{marginBottom:10, marginStart:10}}>
-                                    <Text style={{fontWeight:'bold'}}>{item.name}</Text>
-                                    <View style={{flexDirection:'column', justifyContent:'space-between', marginBottom:10}}>
-                                        <Image
-                                           source={{uri: item.image}}
-                                           style={{width:200, height:200}} 
-                                           resizeMode="contain"
-                                        />
-                                        <Text>Item Name:{item.item_code}</Text>
-                                        <Text style={{fontWeight:'semibold'}}>Item Price:{item.standard_rate}</Text>
-                                        <Text>Quantity:{item.bal_qty}</Text>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                )}
-            </View>
+        return (
+          <View style={styles.ItemContainer}>
+            {!item ? (
+              <Text style={styles.noDataText}>No data yet.</Text>
+            ) : (
+              <TouchableOpacity style={styles.card}>
+                <View>
+                  <Text style={styles.name}>{item.name}</Text>
+                  <View style={styles.detailsContainer}>
+                    <Image
+                      source={{ uri: item.image }}
+                      style={styles.image}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.infoContainer}>
+                      <Text style={styles.itemText}>Name: {item.item_name}</Text>
+                      <Text style={styles.itemText}>Group: {item.item_group}</Text>
+                      <Text style={styles.priceText}>Price: {item.standard_rate} DA</Text>
+                      <Text style={styles.itemText}>Country Of Origin: {item.country_of_origin}</Text>
+                      <Text style={styles.itemText}>Expiration Date: {item.end_of_life}</Text>
+                      <Text style={styles.itemText}>Quantity: {item.bal_qty}</Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
         );
     
     };
     return(
-      <View>
-        <Text style={{fontSize: 24}}>Détails de l'Article</Text>
+      <View >
+        <Text style={styles.title}>Détails de l'Article</Text>
         <Content />
       </View>
     )
@@ -75,4 +74,67 @@ const ArticleDetails = () => {
 
 export default ArticleDetails;
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+  ItemContainer: {
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+  },
+  noDataText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#888',
+    fontSize: 16,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+    marginVertical: 10,
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  detailsContainer: {
+    flexDirection: 'row',
+  },
+  image: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    marginRight: 15,
+  },
+  infoContainer: {
+    flex: 1,
+  },
+  itemText: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+  },
+  priceText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ff6347',
+    marginBottom: 10,
+  },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f0f0f0',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+})

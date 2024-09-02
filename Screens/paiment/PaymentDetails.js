@@ -15,7 +15,7 @@ const PaymentDetails = () => {
         const getSalesInvoice = async () => {
             try{
                 const sales_invoice = await db.getFirstAsync(
-                    `SELECT * FROM Sales_Invoice WHERE name = ?;`,
+                    `SELECT * FROM Sales_Order WHERE name = ?;`,
                     [Payment]
                 );
                 setSalesInvoice(sales_invoice);
@@ -36,7 +36,7 @@ const PaymentDetails = () => {
         return(
             <View>
             {!salesInvoice ? (
-                    <Text>No Payment Procedeed yet.</Text>
+                    <Text>No Payment Details yet.</Text>
                 ) : (
                         <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, margin:5}}>
                             <View style={{marginBottom:10, marginStart:10}}>
