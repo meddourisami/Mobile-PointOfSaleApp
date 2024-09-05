@@ -15,7 +15,7 @@ const SettingsScreen = () => {
       <View style={styles.settingItem}>
         <Text>Automatic Synchronization</Text>
           <Switch
-            value={isAutoSync}
+            value={!isAutoSync}
             onValueChange={toggleAutoSync}
           />
           {/* {!isAutoSync ? (

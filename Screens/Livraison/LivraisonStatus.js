@@ -133,8 +133,8 @@ const LivraisonStatus = () => {
                     ]
                 );
 
-                const deliveryNoteItemName = 'new-delivery-note-item-'+generateRandomName();
                 await Promise.all(deliveryItems.map(async (item)=> {
+                    const deliveryNoteItemName = 'new-delivery-note-item-'+generateRandomName();
                     await db.runAsync(`INSERT INTO Delivery_Note_Item(
                         name, creation, modified, modified_by, owner,
                         docstatus, idx, barcode, has_item_scanned, item_code,
@@ -216,25 +216,74 @@ const LivraisonStatus = () => {
                             deliveryTax.parentfield, deliveryTax.parenttype
                         ]
                     );
+                    // await db.runAsync(`UPDATE Delivery_Note SET status=? WHERE name=?`,["return issued", deliveryName])
         }catch(e){
             console.log("Error creating return delivery note",e);
         };
     };
 
+    const saveToLocalLogs = async (selectedDelivery) => {
+        const logs = await db.getAllAsync(`SELECT name FROM delivery_note_logs;`);
+        const names = logs.map(log => log.name);
+  
+        const delivery = await db.getFirstAsync(`SELECT * FROM Deliveries WHERE name= ?`, [selectedDelivery.name]);
+            
+                const deliveryData= {
+                    ...delivery,
+                    doctype: "Delivery Note",
+                }
+                const deliveryItems = await db.getAllAsync(`SELECT * FROM Delivery_Note_Item WHERE parent =?`, [selectedDelivery.name]);
+  
+                const updatedItems= deliveryItems.map(item =>({
+                    ...item,
+                    doctype: "Delivery Note Item"
+                }));
+  
+                const deliveryTaxes = await db.getFirstAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent=?`, [selectedDelivery.name]);
+                const deliveryTaxesData = {
+                    ...deliveryTaxes,
+                    doctype: "Sales Taxes and Charges"
+                }
+  
+                const data = {
+                    ...deliveryData,
+                    items: updatedItems,
+                    taxes: [deliveryTaxesData],
+                }
+  
+                console.log(data);
+  
+                if (!names.includes(delivery.name)) {
+                    await db.runAsync(
+                        `INSERT INTO delivery_note_logs (action, name, state, data) VALUES (?, ?, ?, ?)`,
+                        ["INSERT", delivery.name, "Draft", JSON.stringify(data)]
+                    );
+                    console.log("saved to local logs", delivery.name);
+                } else {
+                  console.log("already in log");
+                }
+      };
+
+    const completeDeliveryNote = async () => {
+        await saveToLocalLogs(livraison);
+    };
+
     const handleReturn = () => {
+        completeDeliveryNote();
         createDeliveryNoteReturn();
         navigation.navigate('LivraisonScreen');
     };
 
-    // const handleComplete = () => {
-
-    // };
+    const handleComplete = () => {
+        completeDeliveryNote();
+        navigation.navigate('LivraisonScreen');
+    };
     
 
     useEffect(() => {
         if(isFocused){
             const initialize = async() => {
-                await getDeliveryNote();
+                getDeliveryNote();
             }
             initialize();
         }
@@ -243,7 +292,7 @@ const LivraisonStatus = () => {
   return (
     <View>
       <Text>Livraison Status</Text>
-      {!livraison ? (
+      {!livraison || !deliveryTax || !deliveryItems ? (
         <Text>Loading...</Text>
       ) : (
         <View>
@@ -259,7 +308,7 @@ const LivraisonStatus = () => {
                 <TouchableOpacity style={styles.button} onPress={handleReturn}>
                     <Text style={styles.buttonText}>Mark as Return</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.button}>
+                <TouchableOpacity style={styles.button} onPress={handleComplete}>
                     <Text style={styles.buttonText}>Complete Delivery Note</Text>
                 </TouchableOpacity>
             </View>

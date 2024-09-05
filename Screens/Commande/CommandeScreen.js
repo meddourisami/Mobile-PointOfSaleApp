@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -6,6 +6,8 @@ import * as CryptoJS from 'crypto-js';
 import { AntDesign } from '@expo/vector-icons';
 import { FontAwesome5 } from '@expo/vector-icons';
 import * as axios from 'react-native-axios';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Feather from '@expo/vector-icons/Feather';
 
 const CommandeScreen = () => {
     const db = useSQLiteContext();
@@ -262,6 +264,22 @@ const CommandeScreen = () => {
             }
         };
 
+        const deleteSaleOrder = async (saleOrder) => {
+            try{
+                await db.runAsync(`DELETE FROM Sales_Order WHERE name = ?`, [saleOrder]);
+                await db.runAsync(`DELETE FROM Sales_Order_Item WHERE parent =?`, [saleOrder]);
+                await db.runAsync(`DELETE FROM Sales_Taxes_and_Charges WHERE parent =?`, [saleOrder]);
+                await db.runAsync(`DELETE FROM sales_order_logs WHERE name =?`, [saleOrder]);
+            }catch(e){
+                console.log('Error deleting sale order', e);
+            }
+        }
+
+        const handleDelete = (saleOrder) => {
+            deleteSaleOrder(saleOrder);
+            Alert.alert('Deleted sale order successfully');
+        };
+
         const getSalesOrders = async () => {
             try{
                 const allSalesOrders = await db.getAllAsync(`SELECT * FROM Sales_Order;`);
@@ -270,6 +288,42 @@ const CommandeScreen = () => {
                 console.log("error retreiving sales orders", e);
             }
         };
+
+        const getPaymentStatusOfaSaleOrder = async(orderName) => {
+            try{
+                const total= 0;
+                const payments= await db.getAllAsync(`SELECT * FROM Payment_Reference_Entry WHERE reference_name=?`, [orderName]);
+                if (payments.length === 0) {
+                    return "Unpaid";
+                }else {
+        
+                    payments.forEach((payment) => {
+                        total += payment.paid_amount;
+                    });
+        
+                    const totalOrderAmount = payments[0].total_amount; 
+                
+        
+                if (total === 0) {
+                    return "Unpaid";
+                } else if (total < totalOrderAmount) {
+                    return "Partially Paid";
+                } else if (total >= totalOrderAmount) {
+                    return "Paid";
+                }
+                }
+            }catch(e){
+                console.log("error retrieving payments related to this sale order", e);
+            }
+        };
+
+        const getStatusIcon = (status) => {
+            if (status === "Paid") {
+              return <Feather name="check-circle" size={24} color="green" />;
+            } else {
+              return <Feather name="x-circle" size={24} color="red" />;
+            }
+          };
 
         useEffect(() => {   
             if(isFocused){
@@ -298,9 +352,7 @@ const CommandeScreen = () => {
                   ) : (
                     <>
                     <View style={{ flexDirection: 'row', alignItems: 'center' , paddingTop:10}}>
-                        
-                            <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', right: 30}} onPress={handleSubmit} />
-                        
+                        <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', right: 30}} onPress={handleSubmit} />
                     </View> 
                       <FlatList 
                           data ={salesOrders}
@@ -319,14 +371,17 @@ const CommandeScreen = () => {
                                               <Text>Total quantity: {item.total_qty}</Text>
                                               <Text>Total amount: {item.grand_total}</Text>
                                           </View>
+                                          <View style={{flexDirection:'row', justifyContent:'space-between'}}>
+                                            <Text>Status: {getPaymentStatusOfaSaleOrder(item.name)}</Text>
+                                            <View>{getStatusIcon(getPaymentStatusOfaSaleOrder(item.name))}</View>
+                                          </View>
                                           <View style={{flexDirection:'column', marginEnd:20 , marginLeft:10}}>
-                                              <AntDesign name="edit" size={24} style={{paddingBottom:10, marginLeft:18}} color="black" />
                                               <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center', backgroundColor:"#E59135", height:20, marginRight:20}}>
-                                                <Text style={{color:"#FFF"}} onPress={() => navigation.navigate('CommandeArticles', {CommandeName : item.name})}>View items</Text>
+                                                <Text style={{color:"#FFF"}} onPress={() => navigation.navigate('CommandeArticles', {CommandeName : item.name})}>View Items</Text>
                                               </TouchableOpacity>
-                                              <View style={{ flexDirection: 'row', alignItems: 'center' , paddingTop:10}}>
-                                                 <FontAwesome5 name="sync" size={24} color="black" style={{marginLeft:18}} />
-                                              </View>
+                                              <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center',paddingTop:10, height:35, marginLeft:20}}>
+                                                <MaterialIcons name="delete" size={24} color="black" onPress={()=> {handleDelete(item.name)}}/>
+                                              </TouchableOpacity>
                                           </View>
                                       </View>
                                   </View>

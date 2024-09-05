@@ -1,4 +1,4 @@
-import { ActivityIndicator, Animated, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { FontAwesome6 } from '@expo/vector-icons';
@@ -599,7 +599,7 @@ const HomeScreen = () => {
                         "doc": JSON.stringify(data.docs[0]),  
                         "action": "Submit"
                     })
-                })
+                });
                 console.log("Submitting payment entry...", data.docs[0].name);
                 if(response.ok){
                     const data =await response.json();
@@ -830,15 +830,43 @@ const HomeScreen = () => {
   };
 
 
+  const syncDraftDeliverywithServer = async (log) => {
+    try{
+      console.log("started sync");
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+            },
+            body: JSON.stringify({
+                "doc": log.data,  
+                "action": "Submit"
+            })
+        })
+        console.log("Submitting delivery note...", log.name);
+        if(response.ok){
+          console.log(response);
+          await db.runAsync(`DELETE FROM delivery_note_logs WHERE id = ?;`, [log.id]);
+          console.log("Successfully submitted delivery note and deleted from log", log.name);
+        }
+    }catch(e){
+      console.log("Error submitting delivery note",e);
+    }
+  };
+
+
   const syncState = async() => {
     try{
       setIsSyncing(true);
-      console.log('Syncing');
+      setDisabledButton(true);
+      console.log('Syncing ...');
       if(deliveryLogs) {
         deliveryLogs.map(async(log) => {
-          if(log.state === "Submitted" ){
-
-            console.log("already submitted to server", log.name);
+          if(log.state === "Draft" ){
+            console.log("submitting draft to server", log.name);
+            await syncDraftDeliverywithServer(log);
           }else{
             console.log("starting syncronizing", log.name);
             await syncDeliveryWithServer(log);
@@ -895,12 +923,19 @@ const HomeScreen = () => {
       console.log('Error syncing data with server', e);
     }finally {
       setIsSyncing(false);
-      setDisabledButton(false);
+      // setDisabledButton(false);
     }
   };
 
-  const handleSync= async() => {
-    await syncState();
+  // const handleSync= async() => {
+  //   await syncState();
+  // };
+
+  const handleTap = async({ nativeEvent }) => {
+    if (nativeEvent.state === State.ACTIVE && !disabledButton) {
+      await syncState();
+      setDisabledButton(false);
+    }
   };
 
   const getSaleOrderLogs = async () =>{
@@ -942,7 +977,7 @@ const HomeScreen = () => {
 
   const getDeliveriesCount = async () => {
     try{
-      const result = await db.getFirstAsync('SELECT COUNT(*) as count FROM Deliveries;')
+      const result = await db.getFirstAsync(`SELECT COUNT(*) as count FROM Deliveries WHERE status IN (?, ?, ?)`,["Draft", "To Bill", "Return Issued"]);
       setDeliveriesCount(result.count.toString().padStart(2, '0'));
     }catch(e){
       console.log("Error getting delivery count",e);
@@ -987,29 +1022,28 @@ const HomeScreen = () => {
         if(isAutoSync){
           await syncState();
         }
-          createMetadataTable();
-          getTaxesfromAPI();
-          getCustomersfromAPI();
+          // createMetadataTable();
+          // getTaxesfromAPI();
+          // getCustomersfromAPI();
       };
       initialize();
     }
   }, [isFocused]);
 
   return (
+    <GestureHandlerRootView>
       <View style={styles.container}>
-       <GestureHandlerRootView>
         {!isAutoSync && (
         <TapGestureHandler
-          onHandlerStateChange={handleSync}
-          enabled={!isSyncing} // Makes the button unclickable when syncing
+          onHandlerStateChange={handleTap}
+          enabled={!disabledButton && !isSyncing}
         >
-          <Text style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 12 }}>
-            <FontAwesome5 name="sync" size={26} color={isSyncing ? 'gray' : 'black'} style={{ position: 'absolute', right: 30 }} />
+          <Text style={{ flexDirection: 'row', alignItems: 'center'}}>
+            <FontAwesome5 name="sync" size={30} color={isSyncing ? 'green' : 'black'} style={{ position: 'absolute', right: 20, bottom:2 }} />
             {isSyncing && <Text style={{ paddingLeft: 10 }}>Syncing...</Text>}
           </Text>
         </TapGestureHandler>
         )}
-        </GestureHandlerRootView>
         {isSyncing && (
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
             <ActivityIndicator size="large" color="#0000ff" />
@@ -1074,6 +1108,7 @@ const HomeScreen = () => {
         </View>
       </View>
     </View>
+    </GestureHandlerRootView>
   );
 }
 

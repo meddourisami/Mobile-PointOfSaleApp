@@ -63,6 +63,9 @@ const ArticleScreen = () => {
 
                 // const json = await response.json();
 
+                const today = new Date();
+                const monthAgo = new Date();
+                monthAgo.setMonth(today.getMonth() - 1);
                 response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
                 //  response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.query_report.run',
                     {
@@ -75,8 +78,8 @@ const ArticleScreen = () => {
                             "report_name": "Stock Balance",
                             "filters": {
                               "company": "Ites Company (Demo)",
-                              "from_date": "2024-07-22",
-                              "to_date": "2024-08-22",
+                              "from_date": monthAgo.toISOString().split('T')[0],
+                              "to_date": today.toISOString().split('T')[0],
                               "warehouse": "Magasin Fille 1 - ICD",
                               "valuation_field_type": "Currency"
                             },

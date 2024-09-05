@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { useSQLiteContext } from 'expo-sqlite'
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
 
 const PaimentScreen = () => {
   const db = useSQLiteContext();
@@ -196,14 +197,15 @@ const PaimentScreen = () => {
               };
               initialize();
           }
-      }, [isFocused]);
+       }, [isFocused]);
 
-        // useEffect(() => {
-        //   if (Payments) {
-        //       getSalesInvoices();
-        //       getSalesPayments();
-        //   }
-        // }, [salesInvoices]);
+       useEffect(() => {
+           if (payments) {
+               
+               getSalesPayments();
+           }
+         }, [payments]);
+      
 
       return(
         <View>
@@ -224,6 +226,9 @@ const PaimentScreen = () => {
                         <Text>mode_of_payment:{item.mode_of_payment}</Text>
                         <Text>Amount Paid: {item.paid_amount}</Text>
                         <Text>Invoice Date: {item.posting_date}</Text>
+                      </View>
+                      <View style={{flexDirection:'column', marginEnd:20 , marginLeft:10}}>
+                        <AntDesign name="edit" size={24} style={{paddingBottom:10, marginLeft:18}} onPress={()=>{navigation.navigate('UpdatePaymentScreen', {Payment: item.name})}} color="black" />
                       </View>
                       {/* <View style={{paddingLeft:10, flexDirection:'column',alignContent:'center'}}>
                         <TouchableOpacity 

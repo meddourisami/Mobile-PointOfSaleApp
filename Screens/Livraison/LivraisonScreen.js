@@ -5,6 +5,7 @@ import { AntDesign } from '@expo/vector-icons';
 import * as CryptoJS from 'crypto-js';
 import NetInfo from '@react-native-community/netinfo';
 import { useSQLiteContext } from 'expo-sqlite';
+import Feather from '@expo/vector-icons/Feather';
 
 const LivraisonScreen = () => {
   const db = useSQLiteContext();
@@ -83,7 +84,6 @@ const LivraisonScreen = () => {
                 const existingHash = await db.getFirstAsync('SELECT data_hash FROM DeliveryMetadata WHERE id = ?;',[1]);
                 if (existingHash.data_hash !== newHash) {
                   selectedDeliveries.map(async(delivery) => {
-                    console.log(delivery.name);
                     // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.load.getdoc', 
                       const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
                         {
@@ -202,9 +202,20 @@ const LivraisonScreen = () => {
           }
     };
 
+    const generateRandomName = () => {
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let result = '';
+      const charactersLength = characters.length;
+      for (let i = 0; i < 10; i++) {
+          result += characters.charAt(Math.floor(Math.random() * charactersLength));
+      }
+      return result;
+  };
+
     const saveInLocalDeliveryItems = async (items) => {
       try{
         await Promise.all(items.map(async (item) => {
+          const deliveryNoteItemName = 'new-delivery-note-item-'+generateRandomName();
           await db.runAsync(`INSERT INTO Delivery_Note_Item(
               name, creation, modified, modified_by, owner,
               docstatus, idx, barcode, has_item_scanned, item_code,
@@ -241,7 +252,7 @@ const LivraisonScreen = () => {
               ?, ?, ?, ?
             )`,
             [
-              item.name, item.creation, item.modified, item.modified_by, item.owner,
+              deliveryNoteItemName, item.creation, item.modified, item.modified_by, item.owner,
               item.docstatus, item.idx, item.barcode, item.has_item_scanned, item.item_code,
               item.item_name, item.customer_item_code, item.description, item.brand, item.item_group,
               item.image, item.qty, item.stock_uom, item.uom, item.conversion_factor,
@@ -268,6 +279,7 @@ const LivraisonScreen = () => {
     const saveInLocalDeliveryTaxes = async (taxes) => {
       try{
         await Promise.all(taxes.map(async (tax) => {
+          const deliveryNoteTaxName = 'new-delivery-note-item-'+generateRandomName();
           await db.runAsync(`INSERT INTO Sales_Taxes_and_Charges(
               name, owner, creation, modified, modified_by,
               docstatus, idx, charge_type, row_id, account_head,
@@ -284,7 +296,7 @@ const LivraisonScreen = () => {
               ?, ?
             )`,
             [
-              tax.name, tax.owner, tax.creation, tax.modified, tax.modified_by,
+              deliveryNoteTaxName, tax.owner, tax.creation, tax.modified, tax.modified_by,
               tax.docstatus, tax.idx, tax.charge_type, tax.row_id, tax.account_head,
               tax.description, tax.included_in_print_rate, tax.included_in_paid_amount, tax.cost_center, tax.rate,
               tax.account_currency, tax.tax_amount, tax.total, tax.tax_amount_after_discount_amount, tax.base_tax_amount,
@@ -302,7 +314,7 @@ const LivraisonScreen = () => {
       const logs = await db.getAllAsync(`SELECT name FROM delivery_note_logs;`);
       const names = logs.map(log => log.name);
 
-      const deliveries = await db.getAllAsync(`SELECT * FROM Deliveries;`);
+      const deliveries = await db.getAllAsync(`SELECT * FROM Deliveries WHERE status = ?;`,["Draft"]);
       deliveries.map(async (delivery)=> {
           if(delivery.name.includes("MAT-DN")){
               console.log("already synced");
@@ -353,7 +365,7 @@ const LivraisonScreen = () => {
 
       const getLivraisons = async () => {
           try{
-              const allLivraisons= await db.getAllAsync(`SELECT * FROM Deliveries;`);
+              const allLivraisons= await db.getAllAsync(`SELECT * FROM Deliveries WHERE status IN (?, ?, ?)`, ["Draft", "To Bill", "Return Issued"]);
               setLivraisons(allLivraisons);
           }catch(e){
               console.log("Error fetching all deliveries",e);
@@ -361,7 +373,7 @@ const LivraisonScreen = () => {
       };
 
       const createDeliveryNoteLocalLogs = async () => {
-        //await db.runAsync(`DROP TABLE IF EXISTS delivery_note_logs;`);
+        // await db.runAsync(`DELETE FROM delivery_note_logs`);
         await db.runAsync(`CREATE TABLE IF NOT EXISTS delivery_note_logs(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 action TEXT,
@@ -370,6 +382,26 @@ const LivraisonScreen = () => {
                 data TEXT
             )`);
       };
+
+      const getStatusLabel = (status) => {
+        switch (status) {
+          case "Return Issued":
+            return "Return";
+          case "To Bill":
+            return "Delivered";
+          default:
+            return status;
+        }
+      };
+
+      const getStatusIcon = (status) => {
+        if (status === "To Bill") {
+          return <Feather name="check-circle" size={24} color="green" />;
+        } else if(status === "Return Issued"){
+          return <Feather name="x-circle" size={24} color="red" />;
+        }
+      };
+      
 
       useEffect(() => {
           if(isFocused){
@@ -405,7 +437,10 @@ const LivraisonScreen = () => {
                                           <Text>Customer: {item.customer_name}</Text>
                                           <Text>Delivery Date: {item.posting_time}</Text>
                                           <Text>Delivery Price: {item.total}</Text>
-                                          <Text>Status: {item.status}</Text>
+                                      </View>
+                                      <View  style={{flexDirection:'row', justifyContent:'space-between'}}>
+                                        <Text>Status: {getStatusLabel(item.status)} </Text>
+                                        <View>{getStatusIcon(item.status)}</View>
                                       </View>
                                   </View>
                               </TouchableOpacity>

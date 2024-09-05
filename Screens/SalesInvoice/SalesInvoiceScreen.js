@@ -40,7 +40,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                 setCommande(selectedCommande);
                 const salesOrderItems = await db.getAllAsync(`SELECT * FROM Sales_Order_Item WHERE parent= ?;`, [commandeName]);
                 setSalesOrderItems(salesOrderItems);
-                const salesOrderTaxes_and_Charges = await db.getAllAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent= ?;`, [commandeName]); ///TODO CHECK FOR RETURN TYPE
+                const salesOrderTaxes_and_Charges = await db.getAllAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent= ?;`, [commandeName]);
                 setSalesOrderTaxes(salesOrderTaxes_and_Charges);
             }else{
                 const selectedInvoice = await db.getFirstAsync(`SELECT * FROM Sales_Invoice WHERE name= ?;`, [invoice]);
@@ -396,7 +396,6 @@ const SalesInvoiceScreen = ({navigation}) => {
         }
     };
 
-    
     const generatePDF = async () => {
         console.log("Generating PDF");
         const options = {
@@ -441,6 +440,8 @@ const SalesInvoiceScreen = ({navigation}) => {
         console.log(file.filePath);
         alert(`PDF saved to ${file.filePath}`);
     };
+
+
 
     useEffect(() => { 
         if (isFocused){
@@ -552,7 +553,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                     borderRadius: 15,
                     }}
                 >
-                    <Text style={{ fontSize: 18, color: '#FFF', textAlign: 'center'}} onPress={handleSaveSalesInvoice}>Complete Sale</Text>
+                    <Text style={{ fontSize: 18, color: '#FFF', textAlign: 'center'}} onPress={handleSaveSalesInvoice}>Complete Payment</Text>
                 </TouchableOpacity>
             </>
         ) : (

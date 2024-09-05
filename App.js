@@ -13,6 +13,7 @@ import { BudgetProvider } from './BudgetContext';
 import { SyncProvider } from './SyncContext';
 import SettingsScreen from './Settings/SettingsScreen';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 async function initDatabase(db) {
   try{
@@ -1133,7 +1134,33 @@ async function initDatabase(db) {
           parentfield TEXT NULL,
           parenttype TEXT NULL
         );
-    `);
+
+        CREATE TABLE IF NOT EXISTS sales_order_logs(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          action TEXT,
+          name TEXT,
+          state TEXT,
+          data TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS payment_entry_logs(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          action TEXT,
+          name TEXT,
+          associatedSaleOrder TEXT,
+          state TEXT,
+          data TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS delivery_note_logs(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          action TEXT,
+          name TEXT,
+          state TEXT,
+          data TEXT
+        );
+
+    `); // TODOD CREATE METADATA TABLES
 
     
     console.log('Database initialized');
@@ -1146,6 +1173,7 @@ async function initDatabase(db) {
 export default function App() {
   const Tab = createBottomTabNavigator();
   return (
+    // <GestureHandlerRootView>
     <SyncProvider>
     <BudgetProvider>
     <SQLiteProvider databaseName='myDB.db' onInit={initDatabase}>
@@ -1190,7 +1218,8 @@ export default function App() {
       </NavigationContainer>
     </SQLiteProvider>
     </BudgetProvider>
-    </SyncProvider>  
+    </SyncProvider>
+    // </GestureHandlerRootView>
   );
 }
 

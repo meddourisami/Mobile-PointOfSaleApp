@@ -19,6 +19,8 @@
     "@types/crypto-js": "^4.2.2",
     "crypto-js": "^4.2.0",
     "expo": "~51.0.19",
+    "expo-barcode-scanner": "^13.0.1",
+    "expo-image-picker": "^15.0.7",
     "expo-sqlite": "~14.0.4",
     "expo-status-bar": "~1.12.1",
     "react": "18.2.0",
