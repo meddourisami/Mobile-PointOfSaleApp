@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView} from 'react-native';
+import React, { startTransition, useEffect, useState } from 'react';
+import { View, StyleSheet, SafeAreaView, ActivityIndicator} from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { SQLiteProvider } from 'expo-sqlite';
@@ -14,6 +14,9 @@ import { SyncProvider } from './SyncContext';
 import SettingsScreen from './Settings/SettingsScreen';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import LoginPage from './LoginPage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 async function initDatabase(db) {
   try{
@@ -43,8 +46,10 @@ async function initDatabase(db) {
     //   DROP TABLE IF EXISTS Delivery_Note_Item;
     //   DROP TABLE IF EXISTS payment_entry_logs;
     //   DROP TABLE IF EXISTS delivery_note_logs;
+
     //  `
     // );
+    // await db.execAsync(`DROP TABLE IF EXISTS User_Profile;`)
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS Customers (
         name TEXT PRIMARY KEY,
@@ -238,9 +243,9 @@ async function initDatabase(db) {
       );
       
       CREATE TABLE IF NOT EXISTS GroupItem(
-      name TEXT PRIMARY KEY,
-      item_group_name TEXT,
-      parent_item_group TEXT
+        name TEXT PRIMARY KEY,
+        item_group_name TEXT,
+        parent_item_group TEXT
       );
 
       CREATE TABLE IF NOT EXISTS Item (
@@ -1160,6 +1165,18 @@ async function initDatabase(db) {
           data TEXT
         );
 
+        CREATE TABLE IF NOT EXISTS User_Profile(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT,
+          email TEXT,
+          company TEXT,
+          warehouse TEXT,
+          country TEXT,
+          currency TEXT,
+          default_cash_account TEXT,
+          default_receivable_account TEXT
+        );
+
     `); // TODOD CREATE METADATA TABLES
 
     
@@ -1171,7 +1188,70 @@ async function initDatabase(db) {
 
 
 export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(null);
+
+  const checkLoginStatus = async () => {
+    try {
+      const storedLoginStatus = await AsyncStorage.getItem('isLoggedIn');
+      startTransition(() => {
+        if (storedLoginStatus === 'true') {
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+      });
+    } catch (error) {
+      console.error('Error checking login status:', error);
+      startTransition(() => {
+        setIsLoggedIn(false);
+      });
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      await AsyncStorage.setItem('isLoggedIn', 'true');
+      startTransition(() => {
+        setIsLoggedIn(true);
+      });
+    } catch (error) {
+      console.error('Error saving login status:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('isLoggedIn');
+      await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('reference');
+      await AsyncStorage.removeItem('verifCode');
+
+      startTransition(() => {
+        setIsLoggedIn(false);
+      });
+    } catch (error) {
+      console.error('Error clearing login status:', error);
+    }
+  };
+
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
+
   const Tab = createBottomTabNavigator();
+
+  if (isLoggedIn === null) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
   return (
     // <GestureHandlerRootView>
     <SyncProvider>
@@ -1214,6 +1294,22 @@ export default function App() {
               inactiveTintColor: '#FFFFFF',
             },
             }}/>
+            <Tab.Screen
+              name="Profile"
+              options={{
+                tabBarIcon: ({ focused }) => (
+                  <View>
+                    <Ionicons name="person" size={24} color="white" />
+                  </View>
+                ),
+              tabBarOptions: {
+                activeTintColor: '#284979',
+                inactiveTintColor: '#FFFFFF',
+              },
+              }}
+            >
+              {() => <ProfileScreen handleLogout={handleLogout} />}
+            </Tab.Screen>
         </Tab.Navigator>
       </NavigationContainer>
     </SQLiteProvider>

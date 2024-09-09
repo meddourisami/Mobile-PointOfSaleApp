@@ -5,8 +5,10 @@ import { useSQLiteContext } from 'expo-sqlite';
 import * as CryptoJS from 'crypto-js';
 import { AntDesign } from '@expo/vector-icons';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSync } from '../../SyncContext';
 
 const ArticleScreen = () => {
+    const { token } = useSync();
     const isFocused = useIsFocused();
     const db = useSQLiteContext();
     const route = useRoute();
@@ -66,12 +68,12 @@ const ArticleScreen = () => {
                 const today = new Date();
                 const monthAgo = new Date();
                 monthAgo.setMonth(today.getMonth() - 1);
-                response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
-                //  response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.query_report.run',
+                const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
+                // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.query_report.run',
                     {
                         method: 'POST',
                         headers: {
-                            Authorization: 'token 94c0faa6066a7c0:982654458dc9011',
+                            'Authorization': token,
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
@@ -83,7 +85,7 @@ const ArticleScreen = () => {
                               "warehouse": "Magasin Fille 1 - ICD",
                               "valuation_field_type": "Currency"
                             },
-                            "ignore_prepared_report": false,
+                            "ignore_prepared_report": true,
                             "are_default_filters": false,
                             "_": Date.now()
                           }),
@@ -104,12 +106,12 @@ const ArticleScreen = () => {
                         bal_val: quantity.bal_val,
                     };
                 });
-                response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
-                //  response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.reportview.get', 
+                const reponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
+                // const reponse = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.reportview.get', 
                     {
                         method: 'POST',
                         headers: {
-                            Authorization: 'token 94c0faa6066a7c0:982654458dc9011',
+                            'Authorization': token,
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
@@ -130,7 +132,7 @@ const ArticleScreen = () => {
                         }),
                     }
                 );
-                const data = await response.json();
+                const data = await reponse.json();
                 const selectedItems = transformJson(data);
                 
                 const stockItems = selectedItems.map(item => {

@@ -300,6 +300,8 @@ const SalesInvoiceScreen = ({navigation}) => {
     const completeSalesOrderPayment = async () => {
         try{
             const currentDate = new Date();
+            const userProfile = await db.getFirstAsync('SELECT * FROM User_Profile WHERE id =1;'); 
+            // if(userProfile){
             const paymentName = 'new-payment-entry-'+generateRandomName();
             await db.runAsync(`INSERT INTO Payment_Entry(
                     name, owner,
@@ -333,10 +335,10 @@ const SalesInvoiceScreen = ({navigation}) => {
                 [
                     paymentName, "Administrator",
                     0, 0, "ACC-PAY-"+currentDate.getFullYear()+"-", "Receive", "Initiated",
-                    invoiceDate.toISOString().split('T')[0], "Ites Company (Demo)", paymentMode, "Customer", commande.customer,
+                    invoiceDate.toISOString().split('T')[0], userProfile.company, paymentMode, "Customer", commande.customer,
                     commande.customer_name, 0, 0,
-                    "1310 - Debtors - ICD",
-                    "TND", 0, "1110 - Cash - ICD", paymentMode, "TND",
+                    userProfile.default_receivable_account,
+                    userProfile.currency, 0, userProfile.default_cash_account, paymentMode, userProfile.currency,
                     paidAmount, 0, 1, paidAmount,
                     0, paidAmount, 0, 1, paidAmount,
                     0, paidAmount, paidAmount, 0, 0, 
@@ -365,10 +367,11 @@ const SalesInvoiceScreen = ({navigation}) => {
                     paymentReferenceName, "Administrator",
                     0, 1, "Sales Order", commande.name,
                     commande.grand_total,
-                    commande.grand_total, commande.grand_total, 1, 0, "1310 - Debtors - ICD",
+                    commande.grand_total, commande.grand_total, 1, 0, userProfile.default_receivable_account,
                     paymentName, "references", "Payment Entry"
                 ]
             )
+        // }
         }catch(e){
             console.log("Error saving sale order paymment",e);
         }

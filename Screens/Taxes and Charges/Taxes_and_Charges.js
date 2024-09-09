@@ -3,10 +3,11 @@ import React, { useState } from 'react'
 import { useSQLiteContext } from 'expo-sqlite';
 import { useIsFocused } from '@react-navigation/native';
 import * as CryptoJS from 'crypto-js';
+import { useSync } from '../../SyncContext';
 
 const Taxes_and_Charges = () => {
   const db = useSQLiteContext();
-
+  const { token } = useSync();
   const isFocused = useIsFocused();
 
   const Content =  () => {
@@ -48,7 +49,7 @@ const Taxes_and_Charges = () => {
               const response = await fetch('http://195.201.138.202:8006/api/resource/Tax Category?fields=["*"]', {
                   method: 'GET',
                   headers: {
-                      'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
+                      'Authorization': token,
                   },
               });
               const json = await response.json();

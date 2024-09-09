@@ -1,8 +1,10 @@
 import { TouchableOpacity, FlatList, StyleSheet, Text, View } from 'react-native';
 import React, { useState , useEffect} from 'react';
 import { useIsFocused, useRoute } from '@react-navigation/native';
+import { useSync } from '../SyncContext';
 
 const FilteredItemsScreen = ({navigation}) => {
+    const { token } = useSync();
     const isFocused = useIsFocused();
     const route = useRoute();
     const { Item_group } = route.params;
@@ -16,7 +18,7 @@ const FilteredItemsScreen = ({navigation}) => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
+                    'Authorization': token,
                 },
                 body: JSON.stringify({
                     "doctype": "Item",

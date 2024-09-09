@@ -6,6 +6,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { Picker } from '@react-native-picker/picker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useSync } from '../../SyncContext';
 
 
 const Cart = ({navigation}) => {
@@ -13,6 +14,7 @@ const Cart = ({navigation}) => {
     const { selectedItems, customer } = route.params || {};
     const isFocused = useIsFocused();
     const db = useSQLiteContext();
+    const { token } = useSync();
 
     const [cartItems, setCartItems] = useState(selectedItems);
     const [quantities, setQuantities] = useState({});
@@ -114,11 +116,11 @@ const Cart = ({navigation}) => {
             //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
             //     },
             // });
-            // const response = await fetch('http://192.168.1.12:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
+            // const response = await fetch('http://192.168.1.14:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
             const response = await fetch('http://192.168.100.6:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
                 method: 'GET',
                 headers: {
-                    'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                    'Authorization': token,
                 },
             });
 
@@ -212,6 +214,8 @@ const Cart = ({navigation}) => {
             if(!currentCustomer){
                 currentCustomer = selectedClient;
             }
+            const userProfile = await db.getFirstAsync('SELECT * FROM User_Profile WHERE id= 1');
+            // if(userProfile){
             const currentDate = new Date();
             const salesOrderName = 'new-sales-order-'+generateRandomName();
             await db.runAsync(`INSERT INTO Sales_Order(
@@ -257,8 +261,8 @@ const Cart = ({navigation}) => {
                     salesOrderName, "Administrator",
                     0, currentCustomer.name, "SAL-ORD-"+currentDate.getFullYear()+"-", currentCustomer.name,
                     currentCustomer.name, "Sales", currentDate.toISOString().split('T')[0], currentDate.toISOString().split('T')[0],
-                    "Ites Company (Demo)", 0, "TND", "Standard Selling", ///TODO API COMPANY --------------------- "Saadi", 0, "DA", "Standard Selling" 
-                    "Magasin Fille 1 - ICD", //TODO API WAREHOUSE -------------------- "Entropot 1  - TH"
+                    userProfile.company, 0, userProfile.currency, "Standard Selling", 
+                    userProfile.warehouse, 
                     calculateTotalQuantity(quantities), 0, calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(),
                     calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), "", selectedTax.name,
                     calculateTaxAmount(), calculateTaxAmount(), calculateTotalPrice(),
@@ -271,7 +275,7 @@ const Cart = ({navigation}) => {
                     calculateTotalPriceWithoutTax(),
                     0,
                     "en", 0, // TODO API LANGUANGE --------------- "fr"
-                    "TND" // TODO API CURRENCY GET ALL ------------ "DA"
+                    userProfile.currency
                 ]);
 
             await Promise.all(selectedItems.map(async (item)=> {
@@ -292,7 +296,7 @@ const Cart = ({navigation}) => {
                     [
                         sales_order_ItemName, salesOrderName, "items", "Sales Order", 1,
                         item.item_code, item.item_name, item.description, quantities[item.name], item.stock_uom,
-                        item.standard_rate, calculateTotalPricePerItem(item), item.standard_rate, calculateTotalPricePerItem(item), "Magasin Fille 1 - ICD", ///TODO API WAREHOUSE ------------ Entropot 1  - TH
+                        item.standard_rate, calculateTotalPricePerItem(item), item.standard_rate, calculateTotalPricePerItem(item), userProfile.warehouse,
                         0, 0, 0,
                         0, 1, "", 0, 0
                     ]);
@@ -323,6 +327,7 @@ const Cart = ({navigation}) => {
                     "taxes", "Sales Order"
                 ]
             );
+        // }
         }catch(e){
             console.log('Error saving sales order', e);
         }

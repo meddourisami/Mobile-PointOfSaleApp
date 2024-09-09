@@ -1,4 +1,4 @@
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { FontAwesome6 } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { useBudget } from '../BudgetContext';
 import * as CryptoJS from 'crypto-js';
 import { useSync } from '../SyncContext';
 import { TapGestureHandler, GestureHandlerRootView, State } from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -28,13 +29,232 @@ const HomeScreen = () => {
   const [deliveriesCount, setDeliveriesCount] = useState(0);
   const { isAutoSync } = useSync();
   const [disabledButton, setDisabledButton] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const [userCompany, setUserCompany] = useState(null);
+  const [userWarehouse, setUserWarehouse] = useState(null);
+  const [companyDetails, setCompanyDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { token } = useSync();
+
+
+
+  // const getProfileInfofromAPI = async() => {
+  //   try {
+  //     const user = await AsyncStorage.getItem('user');
+  //     // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.load.getdoc',
+  //     const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
+  //       {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': token,
+  //       },
+  //       body: JSON.stringify({
+  //         "doctype": "User",
+  //         "name": user,
+  //         "_": Date.now()
+  //       }),
+  //     })
+  //     if(response.ok) {
+  //       const json = await response.json();
+
+  //       const newHash = getHash(json.docs[0]);
+
+  //       const existingHash = await db.getFirstAsync('SELECT data_hash FROM ProfileMetadata WHERE id = 1;');
+  //       if (existingHash.data_hash !== newHash) {
+  //           await db.runAsync(`DELETE FROM User_Profile`);
+
+  //           await db.runAsync(`INSERT OR REPLACE INTO User_Profile(name, email) VALUES (?, ?)`, [user, user])
+  //           await db.runAsync('UPDATE ProfileMetadata SET data_hash = ? WHERE id = 1;', [newHash]);
+  //           setUserProfile(json.docs[0]);
+  //       }
+
+  //       const profileInfo = json.docs[0];
+
+  //       setUserProfile(profileInfo);
+  //     }
+  //   }catch(e){     
+  //     console.error('Error fetching user profile info:', e);
+  //   }
+  // };
+
+  // const createProfileMetadataTable = async () => {
+  //   await db.runAsync(`
+  //       CREATE TABLE IF NOT EXISTS ProfileMetadata (
+  //           id INTEGER PRIMARY KEY,
+  //           data_hash TEXT
+  //       );
+  //   `);
+  //   const rowCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM ProfileMetadata;');
+  //   if (rowCount.count === 0) {
+  //       await db.runAsync('INSERT INTO ProfileMetadata (id, data_hash) VALUES (1, "");');
+  //   }
+  // };
+
+  const getUserCompanyfromAPI = async () => {
+    try {
+      const user = await AsyncStorage.getItem('user');
+      // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.search.search_link',
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.search.search_link',
+        {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token,
+        },
+        body: JSON.stringify({
+          "txt": "",
+          "doctype": "Company",
+          "ignore_user_permissions": 0,
+          "reference_doctype": "Sales Order",
+          "page_length": 1
+        }),
+      });
+      if(response.ok){
+        const json = await response.json();
+        const company = json.message[0].value;
+        await db.runAsync(`INSERT INTO User_Profile(name) VALUES (?)`, [user]);
+        await db.runAsync('UPDATE User_Profile SET name = ?, email = ?, company = ? WHERE id = 1', [user, user, company]);
+        setUserCompany(company);
+      }
+    }catch(e){
+      console.log('Error fetching user company:', e);
+    }
+  };
+
+  // const createCompanyMetadataTable = async () => {
+  //   await db.runAsync(`
+  //       CREATE TABLE IF NOT EXISTS CompanyMetadata (
+  //           id INTEGER PRIMARY KEY,
+  //           data_hash TEXT
+  //       );
+  //   `);
+  //   const rowCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM CompanyMetadata;');
+  //   if (rowCount.count === 0) {
+  //       await db.runAsync('INSERT INTO CompanyMetadata (id, data_hash) VALUES (1, "");');
+  //   }
+  // };
+
+  const getUserWarehousefromAPI = async() => {
+    if (!userCompany) return;
+    try{
+      // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.search.search_link',
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.search.search_link',
+        {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token,
+        },
+        body: JSON.stringify({
+          "txt": "",
+          "doctype": "Warehouse",
+          "ignore_user_permissions": 0,
+          "reference_doctype": "Sales Order",
+          "page_length": 1,
+          "filters": [
+            ["Warehouse", "company", "in", ["", userCompany]]
+          ]
+        }),
+      });
+      if (response.ok){
+        const json = await response.json();
+        const warehouse = json.message[0].value;
+        await db.runAsync('UPDATE User_Profile SET warehouse=? WHERE id=1', [warehouse])
+        setUserWarehouse(warehouse);
+      }
+    }catch(e){
+      console.log('Error fetching user warehouse:', e);
+    }
+  };
+
+  // const createWarehouseMetadataTable = async () => {
+  //   await db.runAsync(`
+  //       CREATE TABLE IF NOT EXISTS WarehouseMetadata (
+  //           id INTEGER PRIMARY KEY,
+  //           data_hash TEXT
+  //       );
+  //   `);
+  //   const rowCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM WarehouseMetadata;');
+  //   if (rowCount.count === 0) {
+  //       await db.runAsync('INSERT INTO WarehouseMetadata (id, data_hash) VALUES (1, "");');
+  //   }
+  // };
+
+  const getCompanyDetailsfromAPI =async () => {
+    if (!userCompany) return;
+    try{
+      // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.load.getdoc',
+        const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
+        {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token,
+        },
+        body: JSON.stringify({
+          "doctype": "Company",
+          "name": userCompany,
+          "_": Date.now(),
+        }),
+      })
+      if(response.ok){
+        const json = await response.json();
+        const companyDetails = json.docs[0];
+        await db.runAsync('UPDATE User_Profile SET country=?, currency=?, default_cash_account=? ,default_receivable_account=? , WHERE id=1', 
+          [companyDetails.country, companyDetails.default_currency, companyDetails.default_cash_account, companyDetails.default_receivable_account]
+        );
+        setCompanyDetails(companyDetails);
+      }
+    }catch(e){
+      console.log('Error fetching company details:', e);
+    }
+  };
+
+  // const createCurrencyMetadataTable = async () => {
+  //   await db.runAsync(`
+  //       CREATE TABLE IF NOT EXISTS CurrencyMetadata (
+  //           id INTEGER PRIMARY KEY,
+  //           data_hash TEXT
+  //       );
+  //   `);
+  //   const rowCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM CurrencyMetadata;');
+  //   if (rowCount.count === 0) {
+  //       await db.runAsync('INSERT INTO CurrencyMetadata (id, data_hash) VALUES (1, "");');
+  //   }
+  // };
+
+  useEffect(()=>{
+      const initialize = async () =>{
+        // await createProfileMetadataTable();
+        // await getProfileInfofromAPI();
+        // await createCompanyMetadataTable();
+        await getUserCompanyfromAPI();
+        setLoading(false);
+      }
+      if(isFocused){
+      initialize();
+    }
+  },[isFocused]);
+
+  useEffect(()=> {
+    if(userCompany){
+      const initialize = async () => {
+        // await createWarehouseMetadataTable();
+        await getUserWarehousefromAPI();
+        // await createCurrencyMetadataTable();
+        await getCompanyDetailsfromAPI();
+      }
+    initialize();
+    }
+  },[userCompany])
 
 
   const getHash = (data) => {
     return CryptoJS.MD5(JSON.stringify(data)).toString();
   };
 
-  const createMetadataTable = async () => {
+  const createTaxesMetadataTable = async () => {
     await db.runAsync(`
         CREATE TABLE IF NOT EXISTS TaxesMetadata (
             id INTEGER PRIMARY KEY,
@@ -45,21 +265,15 @@ const HomeScreen = () => {
     if (rowCount.count === 0) {
         await db.runAsync('INSERT INTO TaxesMetadata (id, data_hash) VALUES (1, "");');
     }
-};
+  };
 
   const getTaxesfromAPI = async () => {
     try{
-        // const response = await fetch('http://195.201.138.202:8006/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
-        //     method: 'GET',
-        //     headers: {
-        //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
-        //     },
-        // });
-        // const response = await fetch('http://192.168.1.12:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
+        // const response = await fetch('http://192.168.1.14:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
         const response = await fetch('http://192.168.100.6:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
             method: 'GET',
             headers: {
-                'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                'Authorization': token,
             },
         });
 
@@ -114,17 +328,11 @@ const HomeScreen = () => {
 
   const getCustomersfromAPI = async () => {
     try{
-      // const response = await fetch('http://195.201.138.202:8006/api/resource/Customer?fields=["*"]', {
-      //     method: 'GET',
-      //     headers: {
-      //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
-      //     },
-      // });
-      // const response = await fetch('http://192.168.1.12:8002/api/resource/Customer?fields=["*"]', {
+      // const response = await fetch('http://192.168.1.14:8002/api/resource/Customer?fields=["*"]', {
       const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
           method: 'GET',
           headers: {
-              'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+              'Authorization': token,
           },
       });
       const json = await response.json();
@@ -215,14 +423,13 @@ const HomeScreen = () => {
 
   const syncSaleOrderWithServer = async(log) => {
     try{
-      // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
-      const response = await fetch(
-        'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+      // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.save.savedocs',
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
         {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                'Authorization': token
             },
             body: JSON.stringify({
                 "doc": log.data,  
@@ -256,14 +463,13 @@ const HomeScreen = () => {
                 }
             );
             try{
-                // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
-                const response = await fetch(
-                    'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+                // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.save.savedocs',
+                const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                 {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                        'Authorization': token
                     },
                     body: JSON.stringify({
                         "doc": JSON.stringify(data.docs[0]),  
@@ -362,14 +568,13 @@ const HomeScreen = () => {
 
   const syncSaleInvoiceWithServer = async(log) => {
     try{
-      // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
-      const response = await fetch(
-        'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+      // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.save.savedocs',
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
         {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                'Authorization': token
             },
             body: JSON.stringify({
                 "doc": log,  
@@ -412,14 +617,14 @@ const HomeScreen = () => {
                 }
             );
             try{
-                // response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
+                // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.save.savedocs',
                 const response = await fetch(
                     'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                 {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                        'Authorization': token
                     },
                     body: JSON.stringify({
                         "doc": JSON.stringify(data.docs[0]),  
@@ -540,14 +745,14 @@ const HomeScreen = () => {
 
   const syncPaymentEntryWithServer = async(log) => {
     try{
-      // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
+      // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.save.savedocs',
       const response = await fetch(
         'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
         {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                'Authorization': token
             },
             body: JSON.stringify({
                 "doc": log.data,  
@@ -586,14 +791,14 @@ const HomeScreen = () => {
                 }
             );
             try{
-                // response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
+                // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.save.savedocs',
                 const response = await fetch(
                     'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                 {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                        'Authorization': token
                     },
                     body: JSON.stringify({
                         "doc": JSON.stringify(data.docs[0]),  
@@ -670,14 +875,14 @@ const HomeScreen = () => {
 
   const syncDeliveryWithServer = async(log) => {
     try{
-      // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
+      // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.save.savedocs',
       const response = await fetch(
         'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
         {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                'Authorization': token
             },
             body: JSON.stringify({
                 "doc": log.data,  
@@ -716,13 +921,13 @@ const HomeScreen = () => {
                 }
             );
             try{
-                // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.save.savedocs',
+                // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.save.savedocs',
                 const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                 {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                        'Authorization': token
                     },
                     body: JSON.stringify({
                         "doc": JSON.stringify(data.docs[0]),  
@@ -838,7 +1043,7 @@ const HomeScreen = () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                'Authorization': token
             },
             body: JSON.stringify({
                 "doc": log.data,  
@@ -891,7 +1096,7 @@ const HomeScreen = () => {
           }else {
             logData= JSON.parse(paymentLog.data);
             associatedSaleOrderName= await db.getFirstAsync(`SELECT associatedSaleOrder FROM payment_entry_logs WHERE name=?;`,[paymentLog.name]);
-            //console.log(associatedSaleOrderName);
+            
             if (associatedSaleOrderName.associatedSaleOrder.includes("SAL-ORD-")) {
               console.log("name", associatedSaleOrderName);
 
@@ -1022,9 +1227,9 @@ const HomeScreen = () => {
         if(isAutoSync){
           await syncState();
         }
-          // createMetadataTable();
-          // getTaxesfromAPI();
-          // getCustomersfromAPI();
+          createTaxesMetadataTable();
+          getTaxesfromAPI();
+          getCustomersfromAPI();
       };
       initialize();
     }

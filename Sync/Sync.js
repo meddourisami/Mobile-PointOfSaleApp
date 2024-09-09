@@ -2,10 +2,13 @@ import { ActivityIndicator, Button, ScrollView, StyleSheet, Text, View } from 'r
 import React, { useEffect, useState } from 'react'
 import { useSQLiteContext } from 'expo-sqlite'
 import { useIsFocused } from '@react-navigation/native';
+import { useSync } from '../SyncContext';
 
 const Sync = () => {
     const db = useSQLiteContext();
     const isFocused = useIsFocused();
+    const { token } = useSync();
+
     const [saleOrderLogs, setSaleOrderLogs] = useState([]);
     const [saleInvoiceLogs, setSaleInvoiceLogs] = useState([]);
 
@@ -27,7 +30,7 @@ const Sync = () => {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                                'Authorization': token
                             },
                             body: JSON.stringify({
                                 "doc": log.data,  
@@ -70,7 +73,7 @@ const Sync = () => {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
-                                        'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                                        'Authorization': token
                                     },
                                     body: JSON.stringify({
                                         "doc": JSON.stringify(data.docs[0]),  
@@ -188,7 +191,7 @@ const Sync = () => {
                               method: 'POST',
                               headers: {
                                   'Content-Type': 'application/json',
-                                  'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                                  'Authorization': token
                               },
                               body: JSON.stringify({
                                   "doc": log.data,  
@@ -231,7 +234,7 @@ const Sync = () => {
                                       method: 'POST',
                                       headers: {
                                           'Content-Type': 'application/json',
-                                          'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                                          'Authorization': token
                                       },
                                       body: JSON.stringify({
                                           "doc": JSON.stringify(data.docs[0]),  

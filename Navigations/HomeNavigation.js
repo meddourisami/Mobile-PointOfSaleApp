@@ -22,6 +22,7 @@ import Sync from '../Sync/Sync';
 import ArticleDetails from '../Screens/article/ArticleDetails';
 import LivraisonStatus from '../Screens/Livraison/LivraisonStatus';
 import UpdatePaymentScreen from '../Screens/paiment/UpdatePaymentScreen';
+import LoginPage from '../LoginPage';
 
 
 const Stack = createNativeStackNavigator();
@@ -50,6 +51,7 @@ const HomeNavigation = () => {
             <Stack.Screen name="ArticleDetails" component={ArticleDetails} />
             <Stack.Screen name="LivraisonStatus" component={LivraisonStatus} />
             <Stack.Screen name="UpdatePaymentScreen" component={UpdatePaymentScreen} />
+            <Stack.Screen name="LoginPage" component={LoginPage} />
         </Stack.Navigator>
     );
 }

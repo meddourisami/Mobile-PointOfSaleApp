@@ -5,10 +5,12 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { AntDesign } from '@expo/vector-icons';
 import * as CryptoJS from 'crypto-js';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { useSync } from '../../SyncContext';
+
 
 const ClientScreen = () => {
     const db = useSQLiteContext();
-
+    const { token } = useSync();
     const navigation = useNavigation();
     const isFocused = useIsFocused();
 
@@ -55,11 +57,11 @@ const ClientScreen = () => {
                 //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
                 //     },
                 // });
-                //  const response = await fetch('http://192.168.1.12:8002/api/resource/Customer?fields=["*"]', {
+                // const response = await fetch('http://192.168.1.14:8002/api/resource/Customer?fields=["*"]', {
                     const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
                     method: 'GET',
                     headers: {
-                        'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                        'Authorization': token,
                     },
                 });
                 const json = await response.json();
@@ -186,7 +188,7 @@ const ClientScreen = () => {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c'
+                                'Authorization': token,
                             },
                             body: JSON.stringify({
                                 "doc": JSON.stringify(data),  

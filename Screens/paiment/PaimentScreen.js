@@ -4,11 +4,13 @@ import { useSQLiteContext } from 'expo-sqlite'
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
+import { useSync } from '../../SyncContext';
 
 const PaimentScreen = () => {
   const db = useSQLiteContext();
     const navigation = useNavigation();
     const isFocused = useIsFocused();
+    const { token } = useSync();
 
     const Content =  () => {
         const [payments , setPayments] = useState([]);
@@ -96,7 +98,7 @@ const PaimentScreen = () => {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                                    'Authorization': token
                                 },
                                 body: JSON.stringify({
                                     "doc": log.data,  
@@ -139,7 +141,7 @@ const PaimentScreen = () => {
                                         method: 'POST',
                                         headers: {
                                             'Content-Type': 'application/json',
-                                            'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                                            'Authorization': token
                                         },
                                         body: JSON.stringify({
                                             "doc": JSON.stringify(data.docs[0]),  

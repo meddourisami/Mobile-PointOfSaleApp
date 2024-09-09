@@ -8,11 +8,13 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import * as axios from 'react-native-axios';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Feather from '@expo/vector-icons/Feather';
+import { useSync } from '../../SyncContext';
 
 const CommandeScreen = () => {
     const db = useSQLiteContext();
     const navigation = useNavigation();
     const isFocused = useIsFocused();
+    const { token } = useSync();
 
     const Content =  () => {
         const [commandes , setCommandes] = useState([]);
@@ -99,9 +101,9 @@ const CommandeScreen = () => {
             });
         };
 
-        const handleSubmit = () => {
-            saveToLocalLogs();  
-        };
+        // const handleSubmit = () => {
+        //     saveToLocalLogs();  
+        // };
 
         const syncDataWithServer = async () => {
             try {
@@ -121,7 +123,7 @@ const CommandeScreen = () => {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                                    'Authorization': token
                                 },
                                 body: JSON.stringify({
                                     "doc": log.data,  
@@ -164,7 +166,7 @@ const CommandeScreen = () => {
                                         method: 'POST',
                                         headers: {
                                             'Content-Type': 'application/json',
-                                            'Authorization': 'token 94c0faa6066a7c0:982654458dc9011'
+                                            'Authorization': token
                                         },
                                         body: JSON.stringify({
                                             "doc": JSON.stringify(data.docs[0]),  
@@ -289,32 +291,35 @@ const CommandeScreen = () => {
             }
         };
 
-        const getPaymentStatusOfaSaleOrder = async(orderName) => {
+        const getPaymentStatusOfaSaleOrder = async (orderName) => {
             try{
-                const total= 0;
+                let total= 0;
                 const payments= await db.getAllAsync(`SELECT * FROM Payment_Reference_Entry WHERE reference_name=?`, [orderName]);
                 if (payments.length === 0) {
                     return "Unpaid";
                 }else {
-        
-                    payments.forEach((payment) => {
-                        total += payment.paid_amount;
+                    payments.forEach(async(payment) => {
+                        const paid = await db.getFirstAsync(`SELECT * FROM Payment_Entry WHERE name= ?`,[payment.parent]);
+                        total += paid.paid_amount;
                     });
         
                     const totalOrderAmount = payments[0].total_amount; 
                 
-        
-                if (total === 0) {
-                    return "Unpaid";
-                } else if (total < totalOrderAmount) {
-                    return "Partially Paid";
-                } else if (total >= totalOrderAmount) {
-                    return "Paid";
-                }
+                    if (total === 0) {
+                        return "Unpaid";
+                    } else if (total < totalOrderAmount) {
+                        return "Partially Paid";
+                    } else if (total >= totalOrderAmount) {
+                        return "Paid";
+                    }
                 }
             }catch(e){
                 console.log("error retrieving payments related to this sale order", e);
             }
+        };
+
+        const PaymentStatus = (order) => {
+            getPaymentStatusOfaSaleOrder(order);
         };
 
         const getStatusIcon = (status) => {
@@ -323,7 +328,7 @@ const CommandeScreen = () => {
             } else {
               return <Feather name="x-circle" size={24} color="red" />;
             }
-          };
+        };
 
         useEffect(() => {   
             if(isFocused){
@@ -351,14 +356,14 @@ const CommandeScreen = () => {
                       <Text>No data yet.</Text>
                   ) : (
                     <>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' , paddingTop:10}}>
+                    {/* <View style={{ flexDirection: 'row', alignItems: 'center' , paddingTop:10}}>
                         <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', right: 30}} onPress={handleSubmit} />
-                    </View> 
+                    </View>  */}
                       <FlatList 
                           data ={salesOrders}
                           keyExtractor={(item) => item.name}
                           ListHeaderComponent={<View style={{ flexDirection: 'row', alignItems: 'center' , paddingTop:10}}>
-                            <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', bottom: 30, right: 30}} />
+                            {/* <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', bottom: 30, right: 30}} /> */}
                             </View>}
                           renderItem={({item}) => (
                               <TouchableOpacity key={item.key} style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, marginRight:5}} onPress={() => navigation.navigate('SalesInvoiceScreen',{commandeName: item.name})}>
@@ -370,10 +375,11 @@ const CommandeScreen = () => {
                                               <Text>Date: {item.transaction_date}</Text>
                                               <Text>Total quantity: {item.total_qty}</Text>
                                               <Text>Total amount: {item.grand_total}</Text>
-                                          </View>
-                                          <View style={{flexDirection:'row', justifyContent:'space-between'}}>
-                                            <Text>Status: {getPaymentStatusOfaSaleOrder(item.name)}</Text>
-                                            <View>{getStatusIcon(getPaymentStatusOfaSaleOrder(item.name))}</View>
+                                          
+                                            <View style={{flexDirection:'row', justifyContent:'space-between'}}>
+                                                <Text>Status: {PaymentStatus(item.name)} </Text>
+                                                <View>{getStatusIcon(PaymentStatus(item.name))}</View>
+                                            </View>
                                           </View>
                                           <View style={{flexDirection:'column', marginEnd:20 , marginLeft:10}}>
                                               <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center', backgroundColor:"#E59135", height:20, marginRight:20}}>

@@ -6,10 +6,11 @@ import * as CryptoJS from 'crypto-js';
 import NetInfo from '@react-native-community/netinfo';
 import { useSQLiteContext } from 'expo-sqlite';
 import Feather from '@expo/vector-icons/Feather';
+import { useSync } from '../../SyncContext';
 
 const LivraisonScreen = () => {
   const db = useSQLiteContext();
-
+  const { token } = useSync();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
 
@@ -46,12 +47,12 @@ const LivraisonScreen = () => {
 
       const getDeliveriesfromAPI = async () => {
           try{
-            // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.reportview.get', 
+            // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.reportview.get', 
             const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
               {
                 method: 'POST',
                 headers: {
-                  'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                  'Authorization': token,
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
@@ -84,12 +85,12 @@ const LivraisonScreen = () => {
                 const existingHash = await db.getFirstAsync('SELECT data_hash FROM DeliveryMetadata WHERE id = ?;',[1]);
                 if (existingHash.data_hash !== newHash) {
                   selectedDeliveries.map(async(delivery) => {
-                    // const response = await fetch('http://192.168.1.12:8002/api/method/frappe.desk.form.load.getdoc', 
+                    // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.load.getdoc', 
                       const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
                         {
                         method: 'POST',
                           headers: {
-                            'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                            'Authorization': token,
                             'Content-Type': 'application/json',
                           },
                           body: JSON.stringify({
