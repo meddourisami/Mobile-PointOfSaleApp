@@ -50,12 +50,24 @@ const ProfileScreen = ({handleLogout}) => {
     <View style={styles.container}>
       {userProfile && userName ? (
         <View style={styles.profileContainer}>
-          <Text style={styles.label}>Name: <Text style={styles.value}>{userName}</Text></Text>
-          <Text style={styles.label}>Email: <Text style={styles.value}>{userName}</Text></Text>
-          <Text style={styles.label}>Company: <Text style={styles.value}>{userProfile.company}</Text></Text>
-          <Text style={styles.label}>Warehouse: <Text style={styles.value}>{userProfile.warehouse}</Text></Text>
-          <Text style={styles.label}>Country: <Text style={styles.value}>{userProfile.country}</Text></Text>
-          <Text style={styles.label}>Currency: <Text style={styles.value}>{userProfile.currency}</Text></Text>
+          <View style={styles.item}>
+            <Text style={styles.label}>Name: <Text style={styles.value}>{userName}</Text></Text>
+          </View>
+          <View style={styles.item}>
+            <Text style={styles.label}>Email: <Text style={styles.value}>{userName}</Text></Text>
+          </View>
+          <View style={styles.item}>
+            <Text style={styles.label}>Company: <Text style={styles.value}>{userProfile.company}</Text></Text>
+          </View>
+          <View style={styles.item}>
+            <Text style={styles.label}>Warehouse: <Text style={styles.value}>{userProfile.warehouse}</Text></Text>
+          </View>
+          <View style={styles.item}>
+            <Text style={styles.label}>Country: <Text style={styles.value}>{userProfile.country}</Text></Text>
+          </View>
+          <View style={styles.item}>
+            <Text style={styles.label}>Currency: <Text style={styles.value}>{userProfile.currency}</Text></Text>
+          </View>
           <Button title="Logout" onPress={handleLogout} />
         </View>
       ) : (
@@ -82,8 +94,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileContainer: {
-    width: '90%',
-    maxWidth: 300,
+    width: '95%',
     marginTop: 30,
     marginBottom: 30,
     backgroundColor: '#fff',
@@ -107,5 +118,13 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: 'red',
+  },
+  item: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
   },
 })

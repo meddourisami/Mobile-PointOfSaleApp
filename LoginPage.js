@@ -59,7 +59,7 @@ const LoginPage = ({onLogin}) => {
       if (verificationCode) {
         try {
           await AsyncStorage.setItem('verifCode', verificationCode);
-          const reference= await AsyncStorage.getItem('reference')
+          const reference= await AsyncStorage.getItem('reference');
           const response = await fetch('http://192.168.100.6:8002/api/method/frappe.auth.get_logged_user',{
             method: 'GET',
             headers: {
@@ -112,6 +112,7 @@ const LoginPage = ({onLogin}) => {
     const barCodeScanner = await Camera.scanFromURLAsync(uri);
     if (barCodeScanner.length > 0) {
       setScannedData(barCodeScanner[0].data);
+      setVerificationCode(barCodeScanner[0].data);
       Alert.alert("QR Code Found", `Data: ${barCodeScanner[0].data}`);
     } else {
       Alert.alert("No QR Code Found", "Please try another image.");
@@ -189,7 +190,7 @@ const LoginPage = ({onLogin}) => {
           <TextInput
             style={styles.input}
             placeholder="Enter Verification Code"
-            value={scannedData ? scannedData : verificationCode}
+            value={verificationCode}
             onChangeText={(text) => setVerificationCode(text)}
             // secureTextEntry={true}
           />

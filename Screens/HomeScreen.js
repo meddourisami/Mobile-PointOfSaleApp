@@ -201,7 +201,7 @@ const HomeScreen = () => {
       if(response.ok){
         const json = await response.json();
         const companyDetails = json.docs[0];
-        await db.runAsync('UPDATE User_Profile SET country=?, currency=?, default_cash_account=? ,default_receivable_account=? , WHERE id=1', 
+        await db.runAsync('UPDATE User_Profile SET country=?, currency=?, default_cash_account=? ,default_receivable_account=?  WHERE id=1', 
           [companyDetails.country, companyDetails.default_currency, companyDetails.default_cash_account, companyDetails.default_receivable_account]
         );
         setCompanyDetails(companyDetails);
