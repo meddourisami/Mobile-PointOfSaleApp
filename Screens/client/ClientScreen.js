@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import React, { useState , useEffect } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -57,8 +57,8 @@ const ClientScreen = () => {
                 //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
                 //     },
                 // });
-                // const response = await fetch('http://192.168.1.14:8002/api/resource/Customer?fields=["*"]', {
-                    const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
+                const response = await fetch('http://192.168.1.16:8002/api/resource/Customer?fields=["*"]', {
+                    // const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
                     method: 'GET',
                     headers: {
                         'Authorization': token,
@@ -68,7 +68,7 @@ const ClientScreen = () => {
                 
                 const newHash = getHash(json.data);
 
-                const existingHash = await db.getFirstAsync('SELECT data_hash FROM CustomerMetadata WHERE id = 1;');
+                const existingHash = await db.getFirstAsync('SELECT data_hash FROM CustomerMetadata ORDER BY Id DESC;');
                 if (existingHash.data_hash !== newHash) {
 
                     await Promise.all(customers.map(async (customer) => {
@@ -81,7 +81,7 @@ const ClientScreen = () => {
                     }));
 
                     await saveInLocalCustomers(json.data);
-                    await db.runAsync('UPDATE CustomerMetadata SET data_hash = ? WHERE id = 1;', [newHash]);
+                    await db.runAsync('INSERT INTO CustomerMetadata (data_hash) VALUES (?);', [newHash]); 
                     setCustomers(json.data);
                 }
                 return json.data;
@@ -233,7 +233,7 @@ const ClientScreen = () => {
         useEffect(() => {   
             if(isFocused){
                 const initialize = async () => {
-                    createMetadataTable();
+                    // createMetadataTable();
                     getCustomersfromAPI();
                     getClients();
 
@@ -257,7 +257,7 @@ const ClientScreen = () => {
         // }, [clients]);
 
         return (
-            <View>
+            <View style={styles.contentContainer}>
                 <TextInput
                     placeholder="Search Clients"
                     value={searchQuery}
@@ -265,32 +265,46 @@ const ClientScreen = () => {
                     style={styles.searchInput}
                 />
                     {clients.length === 0 ? (
-                        <Text>No data yet.</Text>
+                        <ActivityIndicator
+                        size="large"
+                        color="#FF6B35"
+                        style={styles.loader}
+                        />
                     ) : (
                         <FlatList 
                             data ={filteredClients}
                             keyExtractor={(item) => (item.name).toString()}
-                            renderItem={({item}) => (
-                                <TouchableOpacity key={item.key} style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, margin:5}} onPress={() => navigation.navigate('ItemGroupScreen', { customer: item })}>
-                                    <View style={{marginBottom:10, marginStart:10}}>
-                                        <Text key={item.name} style={{fontWeight:'bold'}}>{item.name}</Text>
-                                        <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>
+                            style={styles.flatList}
+                            renderItem={({item}) => {
+                                const defaultImage = "https://t3.ftcdn.net/jpg/04/84/88/76/360_F_484887682_Mx57wpHG4lKrPAG0y7Q8Q7bJ952J3TTO.jpg";
+                                const imageUrl = item.image ? item.image : defaultImage;
+                                    return (   
+                                <TouchableOpacity key={item.key} style={styles.clientCard} onPress={() => navigation.navigate('ItemGroupScreen', { customer: item })}>
+                                    <View style={styles.clientCardContent}>
+                                        <Text key={item.name} style={styles.clientName}>{item.name}</Text>
+                                        <View style={styles.clientDetails}>
+                                            <Image
+                                                source={{ uri: imageUrl }} 
+                                                style={styles.clientImage}
+                                            />
                                             <View>
-                                                <Text key={item.name}>{item.name}</Text>
-                                                <Text style={{fontWeight:'semibold'}}>Adresse:{item.custom_address}</Text>
-                                                <Text>Phone: {item.custom_phone}</Text>
+                                                <Text style={styles.detailText}>{item.name}</Text>
+                                                <Text style={styles.detailText}>Adresse: {item.custom_address}</Text>
+                                                <Text style={styles.detailText}>Phone: {item.custom_phone}</Text>
                                             </View>
-                                            <View style={{flexDirection:'column', marginEnd:20 , paddingLeft:20, marginLeft:10}}>
+                                        </View>
+                                            {/* <View style={{flexDirection:'column', marginEnd:20 , paddingLeft:20, marginLeft:10}}>
                                                 <AntDesign name="edit" size={24} style={{paddingBottom:10}} color="black" onPress={() => navigation.navigate('EditClientScreen', { customerName: item.name })} />
                                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                                     <FontAwesome5 name="sync" size={24} color="black"  onPress={() => syncDataWithServer(item)} />
                                                     <Text style={{width: 15,height: 15, borderRadius: 5, backgroundColor: item.synced === 1 ? 'green' : 'red', marginLeft: 5}} />
                                                 </View>
-                                            </View>
-                                        </View>
+                                            </View> */}
+                                       
                                     </View>
                                 </TouchableOpacity>
-                            )}
+                                    );
+                            }}
                         />
                     )}
             </View>
@@ -320,11 +334,15 @@ export default ClientScreen;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'flex-start',
+        backgroundColor: '#F8F9FA',
+        padding: 10,
     },
     header: {
-        fontSize: 24,
-    },
+    fontSize: 24,
+    // fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
     iconAdd: {
         position: 'absolute',
         bottom: 30,
@@ -351,4 +369,53 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         paddingHorizontal: 10
     },
+    clientImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    marginRight: 10,
+  },
+//     contentContainer: {
+//     flex: 1,
+//   },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  clientCard: {
+    backgroundColor: '#FFF',
+    padding: 15,
+    marginVertical: 5,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  clientCardContent: {
+    marginBottom: 10,
+    flexDirection: 'column',
+  },
+  clientName: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 5,
+  },
+  clientDetails: {
+    flexDirection: 'row',
+    // justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 5,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#606060',
+  },
+  flatList: {
+    marginBottom: 140,
+  },
 })

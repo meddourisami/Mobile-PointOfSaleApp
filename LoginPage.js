@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { CameraView, Camera } from "expo-camera";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 const LoginPage = ({onLogin}) => {
     const [name, setName] = useState('');
@@ -19,8 +20,8 @@ const LoginPage = ({onLogin}) => {
     const loginAuth = async () => {
       if (name && password) {
         try{
-        const response = await fetch('http://192.168.100.6:8002/api/method/login', {
-        // const response = await fetch('http://192.168.1.14:8002/api/method/login', {
+        // const response = await fetch('http://192.168.100.6:8002/api/method/login', {
+        const response = await fetch('http://192.168.1.16:8002/api/method/login', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -60,14 +61,14 @@ const LoginPage = ({onLogin}) => {
         try {
           await AsyncStorage.setItem('verifCode', verificationCode);
           const reference= await AsyncStorage.getItem('reference');
-          const response = await fetch('http://192.168.100.6:8002/api/method/frappe.auth.get_logged_user',{
+          // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.auth.get_logged_user',{
+            const response = await fetch('http://192.168.1.16:8002/api/method/frappe.auth.get_logged_user',{ 
             method: 'GET',
             headers: {
               Authorization: `token ${reference}:${verificationCode}`,
             },
           })
           if (response.ok){
-            Alert.alert('Valid verification code');
             Alert.alert("Verification Successful", "You will be redirected to the home screen.");
           onLogin();
           }else {
@@ -164,10 +165,10 @@ const LoginPage = ({onLogin}) => {
   
     return (
       <View style={styles.container}>
-          <Text style={styles.title}>Login</Text>
 
         {!isLoggedIn && (
         <>
+        <Text style={styles.title}>Login</Text>
         <TextInput
           style={styles.input}
           placeholder="Enter Email"
@@ -187,6 +188,8 @@ const LoginPage = ({onLogin}) => {
 
         {isLoggedIn && (
         <>
+          <Text style={styles.title}>Login</Text>
+          <AntDesign name="arrowleft" size={28} color="black" onPress={()=>setIsLoggedIn(false)}/>
           <TextInput
             style={styles.input}
             placeholder="Enter Verification Code"

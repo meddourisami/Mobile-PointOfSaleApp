@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -42,12 +42,14 @@ const CommandeArticles = ({navigation}) => {
         return(
             <View>
                 {salesOrderItems.length=== 0 ? (
-                        <Text>No data yet.</Text>
+                    <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
                     ) : (
                     <FlatList
                         data ={salesOrderItems}
                         keyExtractor={(item) => item.name}
                         renderItem={({item}) => (
+                            // const defaultImage = "https://t3.ftcdn.net/jpg/04/84/88/76/360_F_484887682_Mx57wpHG4lKrPAG0y7Q8Q7bJ952J3TTO.jpg";
+                            // const imageUrl = item.image ? item.image : defaultImage;
                             <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, margin:5}}>
                                 <View style={{marginBottom:10, marginStart:10}}>
                                     <Text style={{fontWeight:'bold'}}>{item.name}</Text>
@@ -56,6 +58,10 @@ const CommandeArticles = ({navigation}) => {
                                         <Text style={{fontWeight:'semibold'}}>Item Price:{item.rate}</Text>
                                         <Text>Quantity:{item.qty}</Text>
                                         <Text>Total Price:{item.amount}</Text>
+                                        {/* <Image
+                                        source={{ uri: imageUrl }}
+                                        style={{ width: 50, height: 50, borderRadius: 5, marginRight: 10 }}
+                                        /> */}
                                     </View>
                                 </View>
                             </TouchableOpacity>

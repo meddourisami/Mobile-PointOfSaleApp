@@ -1177,7 +1177,32 @@ async function initDatabase(db) {
           default_receivable_account TEXT
         );
 
+        CREATE TABLE IF NOT EXISTS CustomerMetadata (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          data_hash TEXT
+        );
+
+        INSERT INTO CustomerMetadata (data_hash) VALUES ("");
+
+        CREATE TABLE IF NOT EXISTS DeliveryMetadata (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          data_hash TEXT
+        );
+
+        INSERT INTO DeliveryMetadata (data_hash) VALUES ("");
+
+
+        CREATE TABLE IF NOT EXISTS TaxesMetadata (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          data_hash TEXT
+        );
+
+        INSERT INTO TaxesMetadata (data_hash) VALUES ("");
+
+
     `); // TODOD CREATE METADATA TABLES
+
+    // INSERT OR REPLACE INTO CustomerMetadata (id, data_hash) VALUES (1, "");
 
     
     console.log('Database initialized');
@@ -1262,6 +1287,7 @@ export default function App() {
           tabBarStyle: { backgroundColor:'#284979', borderTopLeftRadius:15 , borderTopRightRadius:15 },
         }}>
           <Tab.Screen name="Home" component={HomeNavigation} options={{
+            headerShown:false,
             tabBarIcon: ({ focused }) => (
               <View>
                <FontAwesome5 name="home" size={24} color="white" />

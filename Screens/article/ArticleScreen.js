@@ -1,10 +1,11 @@
-import { Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
 import * as CryptoJS from 'crypto-js';
 import { AntDesign } from '@expo/vector-icons';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useSync } from '../../SyncContext';
 
 const ArticleScreen = () => {
@@ -68,8 +69,8 @@ const ArticleScreen = () => {
                 const today = new Date();
                 const monthAgo = new Date();
                 monthAgo.setMonth(today.getMonth() - 1);
-                const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
-                // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.query_report.run',
+                // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
+                const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.query_report.run',
                     {
                         method: 'POST',
                         headers: {
@@ -106,8 +107,8 @@ const ArticleScreen = () => {
                         bal_val: quantity.bal_val,
                     };
                 });
-                const reponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
-                // const reponse = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.reportview.get', 
+                // const reponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
+                const reponse = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.reportview.get', 
                     {
                         method: 'POST',
                         headers: {
@@ -271,7 +272,7 @@ const ArticleScreen = () => {
 
         return(
             <View>
-                {/* <TextInput
+                <TextInput
                     placeholder="Search Articles"
                     value={searchQuery}
                     style={{
@@ -282,9 +283,9 @@ const ArticleScreen = () => {
                         marginBottom: 10,
                         paddingHorizontal: 10
                     }}
-                /> */}
+                />
                 {articles.length === 0 ? (
-                        <Text>No data yet.</Text>
+                    <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
                     ) : (
                         <FlatList
                             data={articles}
@@ -293,25 +294,27 @@ const ArticleScreen = () => {
                                 const defaultImage = "https://t3.ftcdn.net/jpg/04/84/88/76/360_F_484887682_Mx57wpHG4lKrPAG0y7Q8Q7bJ952J3TTO.jpg";
                                 const imageUrl = item.image ? item.image : defaultImage;
                                     return (   
-                                        <View key={item.key} style={{flexDirection:'row', height:100 , justifyContent:'space-between', marginBottom:10, backgroundColor: "#FFF", borderRadius:15, margin:5}}>
+                                        <View key={item.key} style={styles.articleCard}>
                                             <TouchableOpacity onPress={()=> navigation.navigate('ArticleDetails', {article:item.name})}>
-                                                <View style={{flexDirection: 'row', alignItems:'center', justifyContent:'center'}}>
+                                                <View style={styles.articleContent}>
                                                     <Image
                                                         source={{ uri: imageUrl }} 
-                                                        style={{ width: 80, height: 80, borderRadius: 10, marginRight: 10,  }} 
+                                                        style={styles.articleImage}
                                                     />
-                                                    <View style={{justifyContent: 'center' }}>
-                                                        <Text>
-                                                            {item.item_name} - {item.item_group}
-                                                        </Text>
-                                                        <Text>On Stock {item.bal_qty}</Text>
-                                                        <Text>Prix de vente : {item.standard_rate}</Text>
+                                                     <View style={styles.articleDetails}>
+                                                        <Text style={styles.articleTitle}>{item.item_name} - {item.item_group}</Text>
+                                                        <Text style={styles.articleStock}>On Stock: {item.bal_qty}</Text>
+                                                        <Text style={styles.articlePrice}>Prix de vente: {item.standard_rate} DA</Text>
                                                     </View>
                                                 </View>
                                             </TouchableOpacity>
-                                            <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center', backgroundColor:"#E59135", height:20, marginRight:10}} onPress={() => handleAddItemToCart(item)}>
-                                                <Text style={{color:"#FFF"}}>Add to cart</Text>
-                                            </TouchableOpacity>
+                                            <MaterialCommunityIcons
+                                                name="cart-plus"
+                                                size={30}
+                                                color="#FF6B35"
+                                                style={styles.addToCartIcon}
+                                            onPress={() => handleAddItemToCart(item)}
+                                            />
                                         </View>
                                     );
                                 }}
@@ -349,24 +352,28 @@ const ArticleScreen = () => {
 
   return (
     <View style={styles.container}>
-        <Text style={{fontSize:24}}>Liste des articles</Text>
+        <Text style={styles.header}>Liste des articles</Text>
+            
+            <View style={styles.articlesContainer}>
+                <Content />
+            </View>
             <View>
             {selecteditems && selecteditems.length > 0 && (
+                <View style={styles.selectedItemsContainer}>
+
                 <TouchableOpacity
                 style={styles.cartButton}
                 onPress={() => navigation.navigate('Cart', { selectedItems : selecteditems , customer: customer })}
                 >
-                    <Text style={{ color: '#FFF', fontSize: 18, marginLeft:30 }}>
+                    <Text  style={styles.cartButtonText}>
                         {`Items: ${selecteditems.length}, Total: DA ${calculateTotalPrice().toFixed(2)}`}
                     </Text>
-                    <Ionicons name="close-outline" size={24} color="white" onPress={handleClearSelectedItems}/>
+                    <Ionicons name="close-outline" size={24} style={{justifyContent:'flex-end', marginLeft:20}} color="white" onPress={handleClearSelectedItems}/>
                 </TouchableOpacity>
+                </View>
             )}
             </View>
-            <View style={styles.contentContainer}>
-                <Content />
-            </View>
-            <View>
+            {/* <View>
                 <AntDesign 
                 name="pluscircle" 
                 size={35} 
@@ -374,7 +381,7 @@ const ArticleScreen = () => {
                 style={styles.icon} 
                 onPress={() => navigation.navigate('AddArticleScreen')}
                 />
-            </View>
+            </View> */}
     </View>
   );
 }
@@ -398,28 +405,87 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        padding: 0,
-        position: 'relative',
+        padding: 10,
+        backgroundColor: '#F8F9FA',
     },
-    headerText: {
+    header: {
         fontSize: 24,
+        color: '#333',
         marginBottom: 10,
     },
     cartButton: {
-        backgroundColor: '#284979',
-        padding: 15,
-        borderRadius: 5,
-        alignItems: 'center',
-        marginBottom: 20,
-        flexDirection: 'row',
-        justifyContent:'space-between',
-    },
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
     cartButtonText: {
         color: '#FFF',
         fontSize: 18,
     },
-    contentContainer: {
+    articlesContainer: {
         flex: 1,
-        marginBottom: 60,
+        marginBottom: 70,
     },
+    articleCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF',
+    borderRadius: 15,
+    marginVertical: 5,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  articleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  articleImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    marginRight: 10,
+  },
+  articleDetails: {
+    justifyContent: 'center',
+  },
+  articleTitle: {
+    fontSize: 16,
+    // fontWeight: 'bold',
+    color: '#333',
+  },
+  articleStock: {
+    fontSize: 14,
+    color: '#606060',
+  },
+  articlePrice: {
+    fontSize: 14,
+    color: '#FF6B35',
+  },
+  addToCartIcon: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+    marginRight: 10,
+  },
+  selectedItemsContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: '#666',
+    padding: 10,
+    borderRadius:15,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cartButtonText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginRight: 20,
+    marginLeft: 10,
+  },
 })

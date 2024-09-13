@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, Touchable, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, FlatList, StyleSheet, Text, Touchable, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useSQLiteContext } from 'expo-sqlite'
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -212,25 +212,31 @@ const PaimentScreen = () => {
       return(
         <View>
           {payments.length=== 0 ? (
-            <Text>No Transactions yet.</Text>
+            <ActivityIndicator
+              size="large"
+              color="#FF6B35"
+              style={styles.loader}
+            />
               ) : (
                 <>
-                <View style={{ flexDirection: 'row', alignItems: 'center' , padding:20}}>
+                {/* <View style={{ flexDirection: 'row', alignItems: 'center' , padding:20}}>
                   <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', right: 30}} onPress={handleSubmit} />
-                </View> 
+                </View>  */}
                 <FlatList
                   data ={payments}
                   keyExtractor={(item) => item.name.toString()}
                   renderItem={({item}) => (
-                    <TouchableOpacity key={item.key} style={{padding:20, flexDirection:'row', backgroundColor:'#fff' , marginBottom:10, borderRadius:15, marginRight:5}}>
-                      <View style={{paddingRight:10}}>
-                        <Text style={{fontWeight:'bold'}}>{item.name}</Text>
-                        <Text>mode_of_payment:{item.mode_of_payment}</Text>
-                        <Text>Amount Paid: {item.paid_amount}</Text>
-                        <Text>Invoice Date: {item.posting_date}</Text>
+                    <TouchableOpacity key={item.key} style={styles.card}>
+                      <View style={styles.cardContent}>
+                        <Text style={styles.paymentName}>{item.name}</Text>
+                        <View style={styles.paymentDetails}>
+                          <Text style={styles.detailText}>Mode of Payment: {item.mode_of_payment}</Text>
+                          <Text style={styles.detailText}>Amount Paid: {item.paid_amount}</Text>
+                          <Text style={styles.detailText}>Invoice Date: {item.posting_date}</Text>
+                        </View>
                       </View>
-                      <View style={{flexDirection:'column', marginEnd:20 , marginLeft:10}}>
-                        <AntDesign name="edit" size={24} style={{paddingBottom:10, marginLeft:18}} onPress={()=>{navigation.navigate('UpdatePaymentScreen', {Payment: item.name})}} color="black" />
+                      <View style={styles.cardActions}>
+                        <AntDesign name="edit" size={24} color="#FF6B35" onPress={()=>{navigation.navigate('UpdatePaymentScreen', {Payment: item.name})}} />
                       </View>
                       {/* <View style={{paddingLeft:10, flexDirection:'column',alignContent:'center'}}>
                         <TouchableOpacity 
@@ -249,8 +255,8 @@ const PaimentScreen = () => {
       );
     };
   return (
-    <View style={{flex:1, justifyContent:'center', alignItems:'center', marginTop:10}}>
-      <Text style={{fontSize:24}}>Liste des Transactions</Text>
+    <View style={styles.container}>
+      <Text style={styles.header}>Liste des Transactions</Text>
       <Content />
     </View>
   )
@@ -258,4 +264,60 @@ const PaimentScreen = () => {
 
 export default PaimentScreen;
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F7F9FB',
+    padding: 10,
+  },
+  header: {
+    fontSize: 24,
+    // fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E5E5E5',
+    borderWidth: 1,
+    borderRadius: 10,
+    marginBottom: 10,
+    padding: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cardContent: {
+    flex: 1,
+  },
+  paymentName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  paymentDetails: {
+    marginTop: 5,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 2,
+  },
+  cardActions: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+})

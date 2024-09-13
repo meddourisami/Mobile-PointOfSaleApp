@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import React, { useState } from 'react'
 import { useSQLiteContext } from 'expo-sqlite';
 import { useIsFocused } from '@react-navigation/native';
@@ -196,7 +196,7 @@ const Taxes_and_Charges = () => {
       return (
           <View>
                   {stocks.length=== 0 ? (
-                      <Text>No data yet.</Text>
+                    <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
                   ) : (
                       <FlatList 
                           data ={stocks}

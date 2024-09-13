@@ -182,7 +182,7 @@ const LivraisonStatus = () => {
                         item.item_tax_template, item.base_net_rate, -item.base_net_amount, item.billed_amt, item.incoming_rate,
                         item.weight_per_unit, item.total_weight, item.weight_uom, item.warehouse, item.target_warehouse,
                         item.quality_inspection, item.allow_zero_valuation_rate, item.against_sales_order, item.so_detail, item.against_sales_invoice,
-                        item.si_detail, item.dn_detail, item.pick_list_item, item.serial_and_batch_bundle, item.use_serial_batch_fields,
+                        item.si_detail, item.name, item.pick_list_item, item.serial_and_batch_bundle, item.use_serial_batch_fields,
                         item.serial_no, item.batch_no, item.actual_batch_qty, item.actual_qty, item.installed_qty,
                         item.item_tax_rate, item.packed_qty, item.received_qty, item.expense_account, item.material_request,
                         item.purchase_order, item.purchase_order_item, item.material_request_item, item.cost_center, item.project,
@@ -266,11 +266,13 @@ const LivraisonStatus = () => {
 
     const completeDeliveryNote = async () => {
         await saveToLocalLogs(livraison);
+        await db.runAsync(`UPDATE Deliveries SET status=? WHERE name=? ;`,["Completed", deliveryName]);
     };
 
-    const handleReturn = () => {
-        completeDeliveryNote();
-        createDeliveryNoteReturn();
+    const handleReturn = async () => {
+        await db.runAsync(`UPDATE Deliveries SET per_returned=? WHERE name =?;`,[100, deliveryName]);
+        await saveToLocalLogs(livraison);
+        await createDeliveryNoteReturn();
         navigation.navigate('LivraisonScreen');
     };
 

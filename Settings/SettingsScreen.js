@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useSync } from '../SyncContext';
 import { Picker } from '@react-native-picker/picker';
 
+
 const SettingsScreen = () => {
   const { isAutoSync, setIsAutoSync } = useSync(); 
   const [syncMode, setSyncMode] = useState(null); 
@@ -13,13 +14,15 @@ const SettingsScreen = () => {
 
   const currentTime = new Date();
   const syncTimes = {
-    midday: new Date().setHours(12, 0, 0, 0),
+    midday: new Date().setHours(12, 34, 0, 0),
     midnight: new Date().setHours(0, 0, 0, 0),
   };
 
   useEffect(() => {
-    if (!isAutoSync) {
-      const timeDifference = syncTimes[syncMode] - currentTime;
+    if (!isAutoSync && syncMode) {
+      const timeDifference = syncMode - currentTime;
+      console.log("difference",timeDifference.toString());
+      console.log("time",syncMode);
 
       if (timeDifference > 0) {
         const timeoutId = setTimeout(() => {
@@ -29,7 +32,7 @@ const SettingsScreen = () => {
         return () => clearTimeout(timeoutId);
       }
     }
-  }, [isAutoSync]);
+  }, [isAutoSync, syncMode]);
 
   return (
     <View style={styles.container}>
@@ -43,11 +46,12 @@ const SettingsScreen = () => {
         <View style={styles.settingItem}>
           <Text>Select Sync Time</Text>
           <Picker
-            selectedValue={syncMode}
-            onValueChange={(itemValue) => setSyncMode(itemValue)}
+          selectedValue={syncMode}
+          onValueChange={(itemValue) => setSyncMode(itemValue)}
+          style={{ height: 50, width: 200 }}
           >
-            <Picker.Item label="Midday" value="midday" />
-            <Picker.Item label="Midnight" value="midnight" />
+            <Picker.Item label="Midday" value={syncTimes.midday} />
+            <Picker.Item label="Midnight" value={syncTimes.midnight} />
           </Picker>
         </View>
       )}

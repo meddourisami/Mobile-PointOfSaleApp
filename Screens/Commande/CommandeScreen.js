@@ -1,4 +1,4 @@
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -301,17 +301,20 @@ const CommandeScreen = () => {
                     payments.forEach(async(payment) => {
                         const paid = await db.getFirstAsync(`SELECT * FROM Payment_Entry WHERE name= ?`,[payment.parent]);
                         total += paid.paid_amount;
-                    });
+                        // console.log("in",total);
+                    
         
                     const totalOrderAmount = payments[0].total_amount; 
-                
-                    if (total === 0) {
-                        return "Unpaid";
-                    } else if (total < totalOrderAmount) {
+                    // console.log(totalOrderAmount);    
+                    
+                    // if (total === 0) {
+                    //     return "Unpaid";
+                    if (total < totalOrderAmount) {
                         return "Partially Paid";
                     } else if (total >= totalOrderAmount) {
                         return "Paid";
                     }
+                });
                 }
             }catch(e){
                 console.log("error retrieving payments related to this sale order", e);
@@ -353,7 +356,9 @@ const CommandeScreen = () => {
         return (
           <View>
                   {salesOrders.length=== 0 ? (
-                      <Text>No data yet.</Text>
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color="#FF6B35" />
+                    </View>
                   ) : (
                     <>
                     {/* <View style={{ flexDirection: 'row', alignItems: 'center' , paddingTop:10}}>
@@ -362,32 +367,35 @@ const CommandeScreen = () => {
                       <FlatList 
                           data ={salesOrders}
                           keyExtractor={(item) => item.name}
-                          ListHeaderComponent={<View style={{ flexDirection: 'row', alignItems: 'center' , paddingTop:10}}>
+                          ListHeaderComponent={<View style={styles.headerContainer}>
                             {/* <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', bottom: 30, right: 30}} /> */}
                             </View>}
                           renderItem={({item}) => (
-                              <TouchableOpacity key={item.key} style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, marginRight:5}} onPress={() => navigation.navigate('SalesInvoiceScreen',{commandeName: item.name})}>
-                                  <View style={{marginBottom:10, marginStart:10}}>
-                                      <Text style={{fontWeight:'bold'}}>{item.name}</Text>
-                                      <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>
-                                          <View style={{}}>
-                                              <Text style={{fontWeight:'semibold'}}>Customer: {item.customer}</Text>
-                                              <Text>Date: {item.transaction_date}</Text>
-                                              <Text>Total quantity: {item.total_qty}</Text>
-                                              <Text>Total amount: {item.grand_total}</Text>
-                                          
-                                            <View style={{flexDirection:'row', justifyContent:'space-between'}}>
+                              <TouchableOpacity key={item.key} style={styles.card} onPress={() => navigation.navigate('SalesInvoiceScreen',{commandeName: item.name})}>
+                                    <View style={styles.cardContent}>
+                                        <View style={styles.cardHeader}>
+                                            <Text style={styles.cardTitle}>{item.name}</Text>
+                                            <MaterialIcons name="arrow-forward-ios" size={24} color="#333" style={{marginRight:20, marginBottom:5}} onPress={() => navigation.navigate('CommandeArticles', {CommandeName : item.name})} />
+                                        </View>
+                                        <View style={{flexDirection:'row', justifyContent:'space-between', marginBottom:10}}>
+                                            <View style={styles.cardDetails}>
+                                                <Text style={styles.detailText}>Customer: {item.customer}</Text>
+                                                <Text style={styles.detailText}>Date: {item.transaction_date}</Text>
+                                                <Text style={styles.detailText}>Total Quantity: {item.total_qty}</Text>
+                                                <Text style={styles.detailText}>Total Amount: {item.grand_total}</Text>
+                                                <Text style={styles.detailText}>Status: {PaymentStatus(item.name)}</Text>
+                                            </View>
+                                            {/* <View style={{flexDirection:'row', justifyContent:'space-between'}}>
                                                 <Text>Status: {PaymentStatus(item.name)} </Text>
                                                 <View>{getStatusIcon(PaymentStatus(item.name))}</View>
+                                            </View> */}
+                                          <View style={styles.cardActions}>
+                                              <TouchableOpacity style={styles.actionButton}>
+                                                <MaterialIcons name="delete" size={26} color="#FF6B35" onPress={()=> {handleDelete(item.name)}}/>
+                                              </TouchableOpacity>
+                                              <View style={styles.statusIcon}>
+                                                <View>{getStatusIcon(PaymentStatus(item.name))}</View>
                                             </View>
-                                          </View>
-                                          <View style={{flexDirection:'column', marginEnd:20 , marginLeft:10}}>
-                                              <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center', backgroundColor:"#E59135", height:20, marginRight:20}}>
-                                                <Text style={{color:"#FFF"}} onPress={() => navigation.navigate('CommandeArticles', {CommandeName : item.name})}>View Items</Text>
-                                              </TouchableOpacity>
-                                              <TouchableOpacity style={{justifyContent:'flex-end', alignItems: 'center',paddingTop:10, height:35, marginLeft:20}}>
-                                                <MaterialIcons name="delete" size={24} color="black" onPress={()=> {handleDelete(item.name)}}/>
-                                              </TouchableOpacity>
                                           </View>
                                       </View>
                                   </View>
@@ -401,8 +409,8 @@ const CommandeScreen = () => {
     
   };
   return (
-    <View>
-        <Text style={{fontSize:24}}>Liste des commandes</Text>
+    <View style={styles.container}>
+        <Text style={styles.header}>Liste des commandes</Text>
         <Content />   
     </View>
   );
@@ -410,4 +418,72 @@ const CommandeScreen = () => {
 
 export default CommandeScreen;
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+    container: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+    padding: 10,
+  },
+  header: {
+    fontSize: 24,
+    // fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 10,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    marginBottom: 10,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cardContent: {
+    flexDirection: 'column',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  cardDetails: {
+    marginBottom: 10,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 2,
+  },
+  cardActions: {
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    // alignItems: 'center',
+    marginEnd:10 ,
+    marginLeft:10,
+  },
+  actionButton: {
+    justifyContent:'flex-end', alignItems: 'center',paddingTop:10, height:35, marginRight:10, marginBottom:25
+  },
+  statusIcon: {
+    justifyContent:'flex-end', alignItems: 'center',paddingTop:10, height:35, marginRight:10, marginBottom:5
+  },
+})

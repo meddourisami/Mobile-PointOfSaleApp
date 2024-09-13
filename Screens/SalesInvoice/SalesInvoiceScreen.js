@@ -341,7 +341,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                     userProfile.currency, 0, userProfile.default_cash_account, paymentMode, userProfile.currency,
                     paidAmount, 0, 1, paidAmount,
                     0, paidAmount, 0, 1, paidAmount,
-                    0, paidAmount, paidAmount, 0, 0, 
+                    0, paidAmount, paidAmount, 0, 0,
                     0, 0,
                     0, invoiceDate.toISOString().split('T')[0],
                     "Draft", 0,
@@ -367,7 +367,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                     paymentReferenceName, "Administrator",
                     0, 1, "Sales Order", commande.name,
                     commande.grand_total,
-                    commande.grand_total, commande.grand_total, 1, 0, userProfile.default_receivable_account,
+                    commande.grand_total, paidAmount, 1, 0, userProfile.default_receivable_account,
                     paymentName, "references", "Payment Entry"
                 ]
             )

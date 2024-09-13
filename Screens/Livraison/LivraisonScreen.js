@@ -1,4 +1,4 @@
-import { FlatList, TouchableOpacity, StyleSheet, Text, View } from 'react-native'
+import { FlatList, TouchableOpacity, StyleSheet, Text, View, ActivityIndicator } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { AntDesign } from '@expo/vector-icons';
@@ -7,6 +7,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { useSQLiteContext } from 'expo-sqlite';
 import Feather from '@expo/vector-icons/Feather';
 import { useSync } from '../../SyncContext';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 const LivraisonScreen = () => {
   const db = useSQLiteContext();
@@ -47,8 +48,8 @@ const LivraisonScreen = () => {
 
       const getDeliveriesfromAPI = async () => {
           try{
-            // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.reportview.get', 
-            const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
+            const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.reportview.get', 
+            // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
               {
                 method: 'POST',
                 headers: {
@@ -79,14 +80,15 @@ const LivraisonScreen = () => {
             //   });
               const data = await response.json();
               const selectedDeliveries = transformJson(data);
+              
 
               const newHash = getHash(data);
 
-                const existingHash = await db.getFirstAsync('SELECT data_hash FROM DeliveryMetadata WHERE id = ?;',[1]);
+                const existingHash = await db.getFirstAsync('SELECT data_hash FROM DeliveryMetadata ORDER BY Id DESC;');
                 if (existingHash.data_hash !== newHash) {
                   selectedDeliveries.map(async(delivery) => {
-                    // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.load.getdoc', 
-                      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
+                    const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.form.load.getdoc', 
+                      // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
                         {
                         method: 'POST',
                           headers: {
@@ -108,7 +110,7 @@ const LivraisonScreen = () => {
                   })
                   setDeliveries(selectedDeliveries);
                   await saveInLocalDeliveries(selectedDeliveries);
-                  await db.runAsync('UPDATE DeliveryMetadata SET data_hash = ? WHERE id = ?;', [newHash, 1]);
+                  await db.runAsync('INSERT INTO DeliveryMetadata (data_hash) VALUES (?);', [newHash]);
                 }
               return selectedDeliveries;
           }catch (error){
@@ -211,13 +213,13 @@ const LivraisonScreen = () => {
           result += characters.charAt(Math.floor(Math.random() * charactersLength));
       }
       return result;
-  };
+    };
 
     const saveInLocalDeliveryItems = async (items) => {
       try{
         await Promise.all(items.map(async (item) => {
           const deliveryNoteItemName = 'new-delivery-note-item-'+generateRandomName();
-          await db.runAsync(`INSERT INTO Delivery_Note_Item(
+          await db.runAsync(`INSERT OR REPLACE INTO Delivery_Note_Item(
               name, creation, modified, modified_by, owner,
               docstatus, idx, barcode, has_item_scanned, item_code,
               item_name, customer_item_code, description, brand, item_group,
@@ -253,7 +255,7 @@ const LivraisonScreen = () => {
               ?, ?, ?, ?
             )`,
             [
-              deliveryNoteItemName, item.creation, item.modified, item.modified_by, item.owner,
+              item.name, item.creation, item.modified, item.modified_by, item.owner,
               item.docstatus, item.idx, item.barcode, item.has_item_scanned, item.item_code,
               item.item_name, item.customer_item_code, item.description, item.brand, item.item_group,
               item.image, item.qty, item.stock_uom, item.uom, item.conversion_factor,
@@ -281,7 +283,7 @@ const LivraisonScreen = () => {
       try{
         await Promise.all(taxes.map(async (tax) => {
           const deliveryNoteTaxName = 'new-delivery-note-item-'+generateRandomName();
-          await db.runAsync(`INSERT INTO Sales_Taxes_and_Charges(
+          await db.runAsync(`INSERT OR REPLACE INTO Sales_Taxes_and_Charges(
               name, owner, creation, modified, modified_by,
               docstatus, idx, charge_type, row_id, account_head,
               description, included_in_print_rate, included_in_paid_amount, cost_center, rate,
@@ -297,7 +299,7 @@ const LivraisonScreen = () => {
               ?, ?
             )`,
             [
-              deliveryNoteTaxName, tax.owner, tax.creation, tax.modified, tax.modified_by,
+              tax.name, tax.owner, tax.creation, tax.modified, tax.modified_by,
               tax.docstatus, tax.idx, tax.charge_type, tax.row_id, tax.account_head,
               tax.description, tax.included_in_print_rate, tax.included_in_paid_amount, tax.cost_center, tax.rate,
               tax.account_currency, tax.tax_amount, tax.total, tax.tax_amount_after_discount_amount, tax.base_tax_amount,
@@ -334,6 +336,7 @@ const LivraisonScreen = () => {
                   __unsaved: 1,
                   doctype: "Delivery Note Item"
               }));
+              console.log(updatedItems);
 
               const deliveryTaxes = await db.getFirstAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent=?`, [delivery.name]);
               const deliveryTaxesData = {
@@ -366,7 +369,7 @@ const LivraisonScreen = () => {
 
       const getLivraisons = async () => {
           try{
-              const allLivraisons= await db.getAllAsync(`SELECT * FROM Deliveries WHERE status IN (?, ?, ?)`, ["Draft", "To Bill", "Return Issued"]);
+              const allLivraisons= await db.getAllAsync(`SELECT * FROM Deliveries WHERE status IN (?, ?, ?, ?)`, ["Draft", "To Bill", "Return Issued", "Completed"]);
               setLivraisons(allLivraisons);
           }catch(e){
               console.log("Error fetching all deliveries",e);
@@ -384,14 +387,18 @@ const LivraisonScreen = () => {
             )`);
       };
 
-      const getStatusLabel = (status) => {
-        switch (status) {
-          case "Return Issued":
-            return "Return";
-          case "To Bill":
-            return "Delivered";
-          default:
-            return status;
+      const getStatusLabel = (status, is_return) => {
+        if (is_return) {
+          return "Return";
+        }else{
+          switch (status) {
+            case "Return Issued":
+              return "Return";
+            case "To Bill":
+              return "Delivered";
+            default:
+              return status;
+          }
         }
       };
 
@@ -407,41 +414,46 @@ const LivraisonScreen = () => {
       useEffect(() => {
           if(isFocused){
             const initialize = async () => {
-              createMetadataTable();
+              // createMetadataTable();
               createDeliveryNoteLocalLogs();
               getDeliveriesfromAPI();
               saveToLocalLogs();
+              getLivraisons();
             };
           initialize();
           }
       }, [isFocused]);
 
-      useEffect(() => {
-        if(isFocused) { 
-          getLivraisons();
-        }
-      },[isFocused]);
+      // useEffect(() => {
+      //   if(livraisons) { 
+      //     getLivraisons();
+      //   }
+      // },[livraisons]);
 
       return (
           <View>
                   {livraisons.length=== 0 ? (
-                      <Text>No data yet.</Text>
+                    <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
                   ) : (
                       <FlatList 
                           data ={livraisons}
                           keyExtractor={(item) => (item.name).toString()}
+                          style={{marginBottom:40}}
                           renderItem={({item}) => (
-                              <TouchableOpacity style={{backgroundColor:"#FFF", padding:15, margin:10, borderRadius:10}} onPress={() => navigation.navigate('LivraisonStatus', { deliveryName: item.name })}>
-                                  <View style={{marginBottom:10}}>
-                                      <Text style={{fontWeight:'bold'}}>{item.name}</Text>
-                                      <View style={{flexDirection:'column', justifyContent:'space-between'}}>
-                                          <Text>Customer: {item.customer_name}</Text>
-                                          <Text>Delivery Date: {item.posting_time}</Text>
-                                          <Text>Delivery Price: {item.total}</Text>
+                              <TouchableOpacity key={item.key} style={styles.deliveryCard} onPress={() => navigation.navigate('LivraisonStatus', { deliveryName: item.name })}>
+                                  <View style={styles.deliveryContent}>
+                                      <View style={styles.deliveryHeader}>
+                                        <Text style={styles.deliveryTitle}>{item.name}</Text>
+                                        <MaterialIcons name="arrow-forward-ios" size={24} color="black" style={styles.arrowIcon} onPress={() => navigation.navigate('LivraisonDetails', {delivery_name: item.name})}/>
                                       </View>
-                                      <View  style={{flexDirection:'row', justifyContent:'space-between'}}>
-                                        <Text>Status: {getStatusLabel(item.status)} </Text>
-                                        <View>{getStatusIcon(item.status)}</View>
+                                      <View style={styles.deliveryDetails}>
+                                      <Text style={styles.detailText}>Customer: {item.customer_name}</Text>
+                                      <Text style={styles.detailText}>Delivery Date: {item.posting_time}</Text>
+                                      <Text style={styles.detailText}>Delivery Price: DA {item.total}</Text>
+                                      </View>
+                                      <View  style={styles.statusContainer}>
+                                      <Text style={styles.statusText}>Status: {getStatusLabel(item.status, item.is_return)}</Text>
+                                      <View style={styles.statusIcon}>{getStatusIcon(item.status)}</View>
                                       </View>
                                   </View>
                               </TouchableOpacity>
@@ -458,13 +470,13 @@ const LivraisonScreen = () => {
         <Text style={styles.header}>List of Deliveries</Text>
         <Content style={styles.items}/>
       </View>
-      <AntDesign 
+      {/* <AntDesign 
         name="pluscircle" 
         size={30} 
         color="#284979" 
         style={styles.icon} 
         onPress={() => navigation.navigate('AddLivraisonScreen')}
-        />
+        /> */}
       </View>
   );
 }
@@ -473,12 +485,17 @@ export default LivraisonScreen;
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        justifyContent: 'flex-start',
-    },
+    flex: 1,
+    justifyContent: 'flex-start',
+    backgroundColor: '#F8F9FA',
+    padding: 10,
+  },
     header: {
-        fontSize: 24,
-    },
+    fontSize: 24,
+    // fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
     icon: {
         position: 'absolute',
         bottom: 30,
@@ -488,4 +505,54 @@ const styles = StyleSheet.create({
     items: {
         backgroundColor: '#fff',
     },
+    deliveryCard: {
+    backgroundColor: '#FFF',
+    padding: 15,
+    marginVertical: 5,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  deliveryContent: {
+    marginBottom: 10,
+  },
+  deliveryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  deliveryTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: '#333',
+  },
+  arrowIcon: {
+    marginRight: 10,
+  },
+  deliveryDetails: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    marginVertical: 3,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#606060',
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#FF6B35',
+  },
+  statusIcon: {
+    marginRight: 10,
+    marginBottom: 5,
+  },
 });

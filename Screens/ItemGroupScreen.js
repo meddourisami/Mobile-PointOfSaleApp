@@ -1,4 +1,4 @@
-import { Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Button, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useIsFocused, useRoute } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -35,8 +35,8 @@ const ItemGroupScreen = ({navigation}) => {
 
     const getItemGroupsFromApi = async () => {
       try{
-        // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.reportview.get', 
-        const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
+        const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.reportview.get', 
+        // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
           {
             method: 'POST',
             headers: {
@@ -135,7 +135,7 @@ const ItemGroupScreen = ({navigation}) => {
     return (
       <View style={styles.container}>
         {groupItems=== 0 ? (
-          <Text>No data yet.</Text>
+          <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
         ) : (
           <FlatList
           data= {groupItems}

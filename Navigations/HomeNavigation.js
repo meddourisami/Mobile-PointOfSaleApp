@@ -23,6 +23,7 @@ import ArticleDetails from '../Screens/article/ArticleDetails';
 import LivraisonStatus from '../Screens/Livraison/LivraisonStatus';
 import UpdatePaymentScreen from '../Screens/paiment/UpdatePaymentScreen';
 import LoginPage from '../LoginPage';
+import LivraisonDetails from '../Screens/Livraison/LivraisonDetails';
 
 
 const Stack = createNativeStackNavigator();
@@ -52,6 +53,7 @@ const HomeNavigation = () => {
             <Stack.Screen name="LivraisonStatus" component={LivraisonStatus} />
             <Stack.Screen name="UpdatePaymentScreen" component={UpdatePaymentScreen} />
             <Stack.Screen name="LoginPage" component={LoginPage} />
+            <Stack.Screen name="LivraisonDetails" component={LivraisonDetails} />
         </Stack.Navigator>
     );
 }

@@ -1,4 +1,4 @@
-import { TouchableOpacity, FlatList, StyleSheet, Text, View } from 'react-native';
+import { TouchableOpacity, FlatList, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import React, { useState , useEffect} from 'react';
 import { useIsFocused, useRoute } from '@react-navigation/native';
 import { useSync } from '../SyncContext';
@@ -53,7 +53,7 @@ const FilteredItemsScreen = ({navigation}) => {
         return (
             <View>
                 {items.length === 0 ? (
-                    <Text>No data yet.</Text>
+                    <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
                 ) : (
                     <FlatList
                     data= {items}

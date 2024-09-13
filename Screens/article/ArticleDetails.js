@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useIsFocused, useRoute } from '@react-navigation/native'
 import { useSQLiteContext } from 'expo-sqlite';
@@ -38,7 +38,7 @@ const ArticleDetails = () => {
         return (
           <View style={styles.ItemContainer}>
             {!item ? (
-              <Text style={styles.noDataText}>No data yet.</Text>
+              <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
             ) : (
               <TouchableOpacity style={styles.card}>
                 <View>
