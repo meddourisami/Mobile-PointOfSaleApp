@@ -530,7 +530,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                             </Picker>
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity style={{
+                    {/* <TouchableOpacity style={{
                         borderRadius: 10,
                         backgroundColor: '#FFF',
                         marginVertical: 10,
@@ -544,7 +544,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                     }}
                     onPress={generatePDF}>
                         <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#E59135' }}>Print Recipe </Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </ScrollView>
                 <TouchableOpacity  style={{
                     height: 50,

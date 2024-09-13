@@ -48,7 +48,7 @@ const LivraisonScreen = () => {
 
       const getDeliveriesfromAPI = async () => {
           try{
-            const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.reportview.get', 
+            const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
             // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
               {
                 method: 'POST',
@@ -87,7 +87,7 @@ const LivraisonScreen = () => {
                 const existingHash = await db.getFirstAsync('SELECT data_hash FROM DeliveryMetadata ORDER BY Id DESC;');
                 if (existingHash.data_hash !== newHash) {
                   selectedDeliveries.map(async(delivery) => {
-                    const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.form.load.getdoc', 
+                    const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc', 
                       // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
                         {
                         method: 'POST',
@@ -370,7 +370,8 @@ const LivraisonScreen = () => {
       const getLivraisons = async () => {
           try{
               const allLivraisons= await db.getAllAsync(`SELECT * FROM Deliveries WHERE status IN (?, ?, ?, ?)`, ["Draft", "To Bill", "Return Issued", "Completed"]);
-              setLivraisons(allLivraisons);
+              const filteredLivraisons = allLivraisons.filter(item => item.total >= 0);
+              setLivraisons(filteredLivraisons);
           }catch(e){
               console.log("Error fetching all deliveries",e);
           }
@@ -396,14 +397,29 @@ const LivraisonScreen = () => {
               return "Return";
             case "To Bill":
               return "Delivered";
+            case "Completed":
+              return "Delivered";
+            case "Draft":
+              return "Pending";
             default:
               return status;
           }
         }
       };
 
-      const getStatusIcon = (status) => {
-        if (status === "To Bill") {
+      const getStatusColor = (status) => {
+        const statusColors = {
+          "Return": "#ff5252",      // Red for return
+          "Delivered": "#4BB543",
+          "Completed": "#4BB543",
+          "Pending": "#aaaaaa"
+        };
+      
+        return statusColors[status] || "#FFFFFF"; // Default color if status not found
+      };
+
+      const getStatusIcon = (name, status) => {
+        if (name.includes("MAT-DN-") && status !== "Draft") {
           return <Feather name="check-circle" size={24} color="green" />;
         } else if(status === "Return Issued"){
           return <Feather name="x-circle" size={24} color="red" />;
@@ -451,10 +467,10 @@ const LivraisonScreen = () => {
                                       <Text style={styles.detailText}>Delivery Date: {item.posting_time}</Text>
                                       <Text style={styles.detailText}>Delivery Price: DA {item.total}</Text>
                                       </View>
-                                      <View  style={styles.statusContainer}>
-                                      <Text style={styles.statusText}>Status: {getStatusLabel(item.status, item.is_return)}</Text>
-                                      <View style={styles.statusIcon}>{getStatusIcon(item.status)}</View>
-                                      </View>
+                                      <TouchableOpacity  style={[styles.statusContainer, { backgroundColor: getStatusColor(getStatusLabel(item.status, item.is_return)) }]}>
+                                      <Text style={styles.statusText}> {getStatusLabel(item.status, item.is_return)}</Text>
+                                      {/* <View backgroundColor='#' style={styles.statusIcon}>{getStatusIcon(item.name, item.status)}</View> */}
+                                      </TouchableOpacity>
                                   </View>
                               </TouchableOpacity>
                           )}
@@ -543,13 +559,25 @@ const styles = StyleSheet.create({
   },
   statusContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 5,
+    backgroundColor: "#ff5252",
+    height: 30,
+    width: 100,
+    borderRadius:10,
+    justifyContent: 'center',
+    alignContent:'center',
   },
   statusText: {
-    fontSize: 14,
-    color: '#FF6B35',
+    fontSize: 16,
+    color: '#FFF',
+    margin:5,
+    alignItems:'center',
+    justifyContent: 'center',
+    alignContent:'center',
+
+    // backgroundColor:" #FF0000"
   },
   statusIcon: {
     marginRight: 10,

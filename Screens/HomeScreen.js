@@ -95,7 +95,7 @@ const HomeScreen = () => {
   const getUserCompanyfromAPI = async () => {
     try {
       const user = await AsyncStorage.getItem('user');
-      const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.search.search_link',
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.search.search_link',
       // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.search.search_link',
         {
         method: 'POST',
@@ -124,9 +124,8 @@ const HomeScreen = () => {
   };
 
   const getUserWarehousefromAPI = async() => {
-    if (!userCompany) return;
     try{
-      const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.search.search_link',
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.search.search_link',
       // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.search.search_link',
         {
         method: 'POST',
@@ -140,9 +139,6 @@ const HomeScreen = () => {
           "ignore_user_permissions": 0,
           "reference_doctype": "Sales Order",
           "page_length": 1,
-          "filters": [
-            ["Warehouse", "company", "in", ["", userCompany]]
-          ]
         }),
       });
       if (response.ok){
@@ -159,7 +155,7 @@ const HomeScreen = () => {
   const getCompanyDetailsfromAPI =async () => {
     if (!userCompany) return;
     try{
-      const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.form.load.getdoc',
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
         // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
         {
         method: 'POST',
@@ -214,7 +210,7 @@ const HomeScreen = () => {
 
   const getTaxesfromAPI = async () => {
     try{
-        const response = await fetch('http://192.168.1.16:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
+        const response = await fetch('http://192.168.100.6:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
         // const response = await fetch('http://192.168.100.6:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
             method: 'GET',
             headers: {
@@ -274,7 +270,7 @@ const HomeScreen = () => {
 
   const getCustomersfromAPI = async () => {
     try{
-      const response = await fetch('http://192.168.1.16:8002/api/resource/Customer?fields=["*"]', {
+      const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
       // const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
           method: 'GET',
           headers: {
@@ -379,7 +375,7 @@ const HomeScreen = () => {
 
   const getDeliveriesfromAPI = async () => {
     try{
-      const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.reportview.get', 
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
       // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
         {
           method: 'POST',
@@ -417,7 +413,7 @@ const HomeScreen = () => {
           const existingHash = await db.getFirstAsync('SELECT data_hash FROM DeliveryMetadata WHERE id = ?;',[1]);
           if (existingHash.data_hash !== newHash) {
             selectedDeliveries.map(async(delivery) => {
-              const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.form.load.getdoc', 
+              const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc', 
                 // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
                   {
                   method: 'POST',
@@ -645,7 +641,7 @@ const HomeScreen = () => {
 
   const syncSaleOrderWithServer = async(log) => {
     try{
-      const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.form.save.savedocs',
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
       // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
         {
             method: 'POST',
@@ -671,7 +667,7 @@ const HomeScreen = () => {
                 }
             );
             try{
-                const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.form.save.savedocs',
+                const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                 // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                 {
                     method: 'POST',
@@ -776,7 +772,7 @@ const HomeScreen = () => {
 
   const syncSaleInvoiceWithServer = async(log) => {
     try{
-      const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.form.save.savedocs',
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
       // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
         {
             method: 'POST',
@@ -953,7 +949,7 @@ const HomeScreen = () => {
 
   const syncPaymentEntryWithServer = async(log) => {
     try{
-      const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.form.save.savedocs',
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
       // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
         {
             method: 'POST',
@@ -998,7 +994,7 @@ const HomeScreen = () => {
                 }
             );
             try{
-                const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.form.save.savedocs',
+                const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                 // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                 {
                     method: 'POST',
@@ -1081,7 +1077,7 @@ const HomeScreen = () => {
 
   const syncDeliveryWithServer = async(log) => {
     try{
-      const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.form.save.savedocs',
+      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
       // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
         {
             method: 'POST',
@@ -1126,7 +1122,7 @@ const HomeScreen = () => {
                 }
             );
             try{
-                const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.form.save.savedocs',
+                const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                 // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                 {
                     method: 'POST',

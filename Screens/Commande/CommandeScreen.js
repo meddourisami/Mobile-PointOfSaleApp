@@ -20,6 +20,7 @@ const CommandeScreen = () => {
         const [commandes , setCommandes] = useState([]);
         const [salesOrders , setSaleOrders] = useState([]);
         const [saleOrder, setSaleOrder] = useState([]);
+        const [paymentStatuses, setPaymentStatuses] = useState({});
 
         const getHash = (data) => {
             return CryptoJS.MD5(JSON.stringify(data)).toString();
@@ -291,35 +292,35 @@ const CommandeScreen = () => {
             }
         };
 
-        const getPaymentStatusOfaSaleOrder = async (orderName) => {
-            try{
-                let total= 0;
-                const payments= await db.getAllAsync(`SELECT * FROM Payment_Reference_Entry WHERE reference_name=?`, [orderName]);
-                if (payments.length === 0) {
-                    return "Unpaid";
-                }else {
-                    payments.forEach(async(payment) => {
-                        const paid = await db.getFirstAsync(`SELECT * FROM Payment_Entry WHERE name= ?`,[payment.parent]);
-                        total += paid.paid_amount;
-                        // console.log("in",total);
+        // // const getPaymentStatusOfaSaleOrder = async (orderName) => {
+        // //     try{
+        //         let total= 0;
+        //         const payments= await db.getAllAsync(`SELECT * FROM Payment_Reference_Entry WHERE reference_name=?`, [orderName]);
+        //         if (payments.length === 0) {
+        //             return "Unpaid";
+        //         }else {
+        //             payments.forEach(async(payment) => {
+        //                 const paid = await db.getFirstAsync(`SELECT * FROM Payment_Entry WHERE name= ?`,[payment.parent]);
+        //                 total += paid.paid_amount;
+        //                 // console.log("in",total);
                     
         
-                    const totalOrderAmount = payments[0].total_amount; 
-                    // console.log(totalOrderAmount);    
+        //             const totalOrderAmount = payments[0].total_amount; 
+        //             // console.log(totalOrderAmount);    
                     
-                    // if (total === 0) {
-                    //     return "Unpaid";
-                    if (total < totalOrderAmount) {
-                        return "Partially Paid";
-                    } else if (total >= totalOrderAmount) {
-                        return "Paid";
-                    }
-                });
-                }
-            }catch(e){
-                console.log("error retrieving payments related to this sale order", e);
-            }
-        };
+        //             // if (total === 0) {
+        //             //     return "Unpaid";
+        //             if (total < totalOrderAmount) {
+        //                 return "Partially Paid";
+        //             } else if (total >= totalOrderAmount) {
+        //                 return "Paid";
+        //             }
+        //         });
+        //         }
+        //     }catch(e){
+        //         console.log("error retrieving payments related to this sale order", e);
+        //     }
+        // };
 
         const PaymentStatus = (order) => {
             getPaymentStatusOfaSaleOrder(order);
@@ -332,6 +333,52 @@ const CommandeScreen = () => {
               return <Feather name="x-circle" size={24} color="red" />;
             }
         };
+
+        const fetchPaymentStatuses = async () => {
+            const statuses = {};
+        
+            for (const order of salesOrders) {
+              const status = await getPaymentStatusOfaSaleOrder(order.name);
+              statuses[order.name] = status;
+            }
+        
+            setPaymentStatuses(statuses);
+          };
+        
+          
+          useEffect(() => {
+            if (salesOrders && salesOrders.length > 0) {
+              fetchPaymentStatuses();
+            }
+          }, [salesOrders]);
+        
+          
+          const getPaymentStatusOfaSaleOrder = async (orderName) => {
+            try {
+                let total= 0;
+              const payments = await db.getAllAsync(`SELECT * FROM Payment_Reference_Entry WHERE reference_name=?`, [orderName]);
+              const totalOrderAmount = payments[0]?.total_amount || 0;
+
+              if (payments.length === 0) {
+                            return "Unpaid";
+                        }else {
+                            payments.forEach(async(payment) => {
+                                const paid = await db.getFirstAsync(`SELECT * FROM Payment_Entry WHERE name= ?`,[payment.parent]);
+                                total += paid.paid_amount;
+                                console.log("in",total); 
+                        });
+                        if (total < totalOrderAmount) {
+                            console.log("in d",total);
+                            return "Partially Paid";
+                        } else if (total >= totalOrderAmount) {
+                            return "Paid";
+                        }
+                    }
+            }catch(e){
+                console.error('Error fetching payment status:', e);
+                return 'Unpaid';
+            }
+        }
 
         useEffect(() => {   
             if(isFocused){
@@ -351,7 +398,7 @@ const CommandeScreen = () => {
             if (salesOrders) {
                 getSalesOrders();
             }
-        }, [salesOrders]);
+        }, []);
 
         return (
           <View>
@@ -383,7 +430,7 @@ const CommandeScreen = () => {
                                                 <Text style={styles.detailText}>Date: {item.transaction_date}</Text>
                                                 <Text style={styles.detailText}>Total Quantity: {item.total_qty}</Text>
                                                 <Text style={styles.detailText}>Total Amount: {item.grand_total}</Text>
-                                                <Text style={styles.detailText}>Status: {PaymentStatus(item.name)}</Text>
+                                                <Text style={styles.detailText}>Payment Status: {paymentStatuses[item.name]}</Text>
                                             </View>
                                             {/* <View style={{flexDirection:'row', justifyContent:'space-between'}}>
                                                 <Text>Status: {PaymentStatus(item.name)} </Text>
@@ -394,7 +441,7 @@ const CommandeScreen = () => {
                                                 <MaterialIcons name="delete" size={26} color="#FF6B35" onPress={()=> {handleDelete(item.name)}}/>
                                               </TouchableOpacity>
                                               <View style={styles.statusIcon}>
-                                                <View>{getStatusIcon(PaymentStatus(item.name))}</View>
+                                                <View>{getStatusIcon(paymentStatuses[item.name])}</View>
                                             </View>
                                           </View>
                                       </View>
@@ -415,6 +462,7 @@ const CommandeScreen = () => {
     </View>
   );
 }
+
 
 export default CommandeScreen;
 

@@ -117,7 +117,7 @@ const Cart = ({navigation}) => {
             //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
             //     },
             // });
-            const response = await fetch('http://192.168.1.16:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
+            const response = await fetch('http://192.168.100.6:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
             // const response = await fetch('http://192.168.100.6:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
                 method: 'GET',
                 headers: {
@@ -727,18 +727,20 @@ const Cart = ({navigation}) => {
         ))}
       </Picker>
     </View>
+    <View style={styles.separator} />
     <View style={styles.summaryContainer}>
       <Text style={styles.summaryText}>Net Total: DA {calculateTotalPriceWithoutTax()}</Text>
       <Text style={styles.summaryText}>Total Tax: DA {calculateTaxAmount()}</Text>
+      <View style={styles.separator} />
       <Text style={styles.summaryText}>Grand Total: DA {calculateTotalPrice()}</Text>
     </View>
     <View style={styles.buttonContainer}>
       <TouchableOpacity style={styles.button} onPress={handleSaveSaleOrder}>
         <Text style={styles.buttonText}>Passer à la Commande</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={handleSaveSalesInvoice}>
+      {/* <TouchableOpacity style={styles.button} onPress={handleSaveSalesInvoice}>
         <Text style={styles.buttonText}>Passer au Paiment</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   </View>
 );
@@ -852,5 +854,11 @@ const styles = StyleSheet.create({
     color: '#FFF', 
     fontSize: 16, 
     fontWeight: 'bold',
+  },
+  separator: {
+    borderBottomWidth: 3,
+    borderColor: '#ccc',
+    borderStyle: 'dotted',
+    marginVertical: 3,
   },
 })

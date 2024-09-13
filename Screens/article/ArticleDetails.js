@@ -41,7 +41,7 @@ const ArticleDetails = () => {
               <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
             ) : (
               <TouchableOpacity style={styles.card}>
-                <View>
+                <View style={{justifyContent:'center', alignItems:'center'}}>
                   <Text style={styles.name}>{item.name}</Text>
                   <View style={styles.detailsContainer}>
                     <Image
@@ -66,7 +66,7 @@ const ArticleDetails = () => {
     
     };
     return(
-      <View >
+      <View style={styles.container}>
         <Text style={styles.title}>Détails de l'Article</Text>
         <Content />
       </View>
@@ -77,6 +77,11 @@ const ArticleDetails = () => {
 export default ArticleDetails;
 
 const styles = StyleSheet.create({
+  container:{
+    // flex: 1,
+    backgroundColor: '#F8F9FA',
+    // padding: 20,
+  },
   ItemContainer: {
     padding: 10,
     backgroundColor: '#f0f0f0',
@@ -97,6 +102,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
     marginVertical: 10,
+    alignItems:'center',
   },
   name: {
     fontSize: 18,
@@ -105,16 +111,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   detailsContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
+    alignItems:'center',
+    justifyContent: 'center',
   },
   image: {
-    width: 200,
-    height: 200,
+    width: 180,
+    height: 180,
     borderRadius: 10,
     marginRight: 15,
   },
   infoContainer: {
-    flex: 1,
+    // flex: 1,
   },
   itemText: {
     fontSize: 14,

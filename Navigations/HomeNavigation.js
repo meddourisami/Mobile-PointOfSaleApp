@@ -31,29 +31,29 @@ const Stack = createNativeStackNavigator();
 const HomeNavigation = () => {
     return (
         <Stack.Navigator initialRouteName="Home">
-            <Stack.Screen name="HomeScreen" component={HomeScreen} />
-            <Stack.Screen name="ArticleScreen" component={ArticleScreen} />
-            <Stack.Screen name="ClientScreen" component={ClientScreen} />
-            <Stack.Screen name="StockScreen" component={StockScreen} />
-            <Stack.Screen name="LivraisonScreen" component={LivraisonScreen} />
-            <Stack.Screen name="PaimentScreen" component={PaimentScreen} />
-            <Stack.Screen name="CommandeScreen" component={CommandeScreen} />
-            <Stack.Screen name="AddArticleScreen" component={AddArticleScreen} />
-            <Stack.Screen name="AddClientScreen" component={AddClientScreen} />
-            <Stack.Screen name="EditClientScreen"  component={EditClientScreen} />
-            <Stack.Screen name="ItemGroupScreen" component={ItemGroupScreen} />
-            <Stack.Screen name="Cart" component={Cart} />
-            <Stack.Screen name="Quotation" component={Quotation} />
-            <Stack.Screen name="CommandeArticles" component={CommandeArticles} />
-            <Stack.Screen name="AddStockScreen" component={AddStockScreen} />
-            <Stack.Screen name="SalesInvoiceScreen" component={SalesInvoiceScreen} />
-            <Stack.Screen name="PaymentDetails" component={PaymentDetails} />
-            <Stack.Screen name="Sync" component={Sync} />
-            <Stack.Screen name="ArticleDetails" component={ArticleDetails} />
-            <Stack.Screen name="LivraisonStatus" component={LivraisonStatus} />
-            <Stack.Screen name="UpdatePaymentScreen" component={UpdatePaymentScreen} />
-            <Stack.Screen name="LoginPage" component={LoginPage} />
-            <Stack.Screen name="LivraisonDetails" component={LivraisonDetails} />
+            <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Home Page' }}/>
+            <Stack.Screen name="ArticleScreen" component={ArticleScreen} options={{ title: 'Items' }}/>
+            <Stack.Screen name="ClientScreen" component={ClientScreen} options={{ title: 'Customers' }}/>
+            <Stack.Screen name="StockScreen" component={StockScreen} options={{ title: 'Stock' }}/>
+            <Stack.Screen name="LivraisonScreen" component={LivraisonScreen} options={{ title: 'Deliveries' }}/>
+            <Stack.Screen name="PaimentScreen" component={PaimentScreen} options={{ title: 'Payments' }}/>
+            <Stack.Screen name="CommandeScreen" component={CommandeScreen} options={{ title: 'Sale Orders' }}/>
+            <Stack.Screen name="AddArticleScreen" component={AddArticleScreen} options={{ title: 'Add Item' }}/>
+            <Stack.Screen name="AddClientScreen" component={AddClientScreen} options={{ title: 'Add Client' }}/>
+            <Stack.Screen name="EditClientScreen"  component={EditClientScreen} options={{ title: 'Edit Client' }}/>
+            <Stack.Screen name="ItemGroupScreen" component={ItemGroupScreen} options={{ title: 'Item Groups' }}/>
+            <Stack.Screen name="Cart" component={Cart} options={{ title: 'Cart' }}/>
+            <Stack.Screen name="Quotation" component={Quotation} options={{ title: 'Quotation' }}/>
+            <Stack.Screen name="CommandeArticles" component={CommandeArticles} options={{ title: 'Sale Order Details' }}/>
+            <Stack.Screen name="AddStockScreen" component={AddStockScreen} options={{ title: 'Add Stock' }}/>
+            <Stack.Screen name="SalesInvoiceScreen" component={SalesInvoiceScreen} options={{ title: 'Proceed to Payment' }}/>
+            <Stack.Screen name="PaymentDetails" component={PaymentDetails} options={{ title: 'Payment Details' }}/>
+            <Stack.Screen name="Sync" component={Sync} options={{ title: 'Sync' }}/>
+            <Stack.Screen name="ArticleDetails" component={ArticleDetails} options={{ title: 'Item Details' }}/>
+            <Stack.Screen name="LivraisonStatus" component={LivraisonStatus} options={{ title: 'Delivery Status' }}/>
+            <Stack.Screen name="UpdatePaymentScreen" component={UpdatePaymentScreen} options={{ title: 'Update Payments' }}/>
+            <Stack.Screen name="LoginPage" component={LoginPage} options={{ title: 'Login Page' }}/>
+            <Stack.Screen name="LivraisonDetails" component={LivraisonDetails} options={{ title: 'Delivery Details' }}/>
         </Stack.Navigator>
     );
 }

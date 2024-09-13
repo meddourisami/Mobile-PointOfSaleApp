@@ -58,7 +58,7 @@ const StockScreen = ({navigation}) => {
 
     return (
         <View>
-            <Text>
+            <Text style={{fontSize:24}}>
                 Items list per warehouse
             </Text>
             <Content/>
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     card: {
         backgroundColor: '#FFF',
         borderRadius: 15,
-        padding: 15,
+        padding: 10,
         marginVertical: 10,
         marginHorizontal: 5,
         flexDirection: 'row',

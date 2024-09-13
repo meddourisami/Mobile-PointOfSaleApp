@@ -20,6 +20,7 @@ const ArticleScreen = () => {
     const Content = () => {
         const [items, setItems] = useState([]);
         const [articles, setArticles] = useState([]);
+        const [filteredArticles, setFilteredArticles] = useState([]);
         const [searchQuery, setSearchQuery] = useState('');
 
         const getHash = (data) => {
@@ -70,7 +71,7 @@ const ArticleScreen = () => {
                 const monthAgo = new Date();
                 monthAgo.setMonth(today.getMonth() - 1);
                 // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
-                const response = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.query_report.run',
+                const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
                     {
                         method: 'POST',
                         headers: {
@@ -108,7 +109,7 @@ const ArticleScreen = () => {
                     };
                 });
                 // const reponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
-                const reponse = await fetch('http://192.168.1.16:8002/api/method/frappe.desk.reportview.get', 
+                const reponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
                     {
                         method: 'POST',
                         headers: {
@@ -231,19 +232,30 @@ const ArticleScreen = () => {
             try{
                 const allArticles = await db.getAllAsync(`SELECT * FROM Item;`);
                 setArticles(allArticles);
+                setFilteredArticles(allArticles);
             }catch(e){
                 console.log("error getting items from database", e);
             }
         };
 
-        const getItemsByGroup = async (item_group) => {
-            try{
-                const articlesByGroup = await db.getAllAsync(`SELECT * FROM Item WHERE item_group = ?`,[item_group]);
-                setArticles(articlesByGroup);
+        // const getItemsByGroup = async (item_group) => {
+        //     try{
+        //         const articlesByGroup = await db.getAllAsync(`SELECT * FROM Item WHERE item_group = ?`,[item_group]);
+        //         setArticles(articlesByGroup);
+        //     }
+        //     catch(e){
+        //         console.log("error getting items by group", e);
+        //     };
+        // };
+
+        const handleSearch = (query) => {
+            setSearchQuery(query);
+            if (query === '') {
+                setFilteredArticles(articles);
+            } else {
+                const filtered = articles.filter(article => article.name.toLowerCase().includes(query.toLowerCase()));
+                setFilteredArticles(filtered);
             }
-            catch(e){
-                console.log("error getting items by group", e);
-            };
         };
 
         useEffect(()=>{
@@ -259,10 +271,10 @@ const ArticleScreen = () => {
         }, [isFocused, ItemGroup]);
 
         useEffect(() => {
-            if (articles && !ItemGroup) {
-              getItems();
+            if (filteredArticles) {
+                getItems();
             }
-          }, [articles, ItemGroup]);
+        }, [filteredArticles]);
 
         // useEffect(() =>{
         //     if(articles){
@@ -275,6 +287,7 @@ const ArticleScreen = () => {
                 <TextInput
                     placeholder="Search Articles"
                     value={searchQuery}
+                    onChangeText={handleSearch}
                     style={{
                         height: 40,
                         borderColor: '#ccc',
@@ -284,11 +297,11 @@ const ArticleScreen = () => {
                         paddingHorizontal: 10
                     }}
                 />
-                {articles.length === 0 ? (
+                {filteredArticles.length === 0 ? (
                     <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
                     ) : (
                         <FlatList
-                            data={articles}
+                            data={filteredArticles}
                             keyExtractor= {(item) => (item.name).toString()}
                             renderItem={({item}) => {
                                 const defaultImage = "https://t3.ftcdn.net/jpg/04/84/88/76/360_F_484887682_Mx57wpHG4lKrPAG0y7Q8Q7bJ952J3TTO.jpg";

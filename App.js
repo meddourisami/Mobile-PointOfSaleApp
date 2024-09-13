@@ -1285,6 +1285,7 @@ export default function App() {
       <NavigationContainer>
         <Tab.Navigator screenOptions={{
           tabBarStyle: { backgroundColor:'#284979', borderTopLeftRadius:15 , borderTopRightRadius:15 },
+          tabBarHideOnKeyboard: true,
         }}>
           <Tab.Screen name="Home" component={HomeNavigation} options={{
             headerShown:false,
@@ -1298,29 +1299,7 @@ export default function App() {
               inactiveTintColor: '#FFFFFF',
             },
           }}/>
-          <Tab.Screen name="Clients" component={ClientNavigation} screenOptions={{headerShown:false}} options={{
-            tabBarIcon: ({ focused }) => (
-              <View>
-                <FontAwesome6 name="people-group" size={24} color="white" />
-              </View>
-            ),
-            tabBarOptions: {
-              activeTintColor: '#284979',
-              inactiveTintColor: '#FFFFFF',
-            },
-            }}/>
-          <Tab.Screen name="SettingsScreen" component={SettingsScreen} options={{
-            tabBarIcon: ({ focused }) => (
-              <View>
-                <AntDesign name="setting" size={24} color="white" />
-              </View>
-            ),
-            tabBarOptions: {
-              activeTintColor: '#284979',
-              inactiveTintColor: '#FFFFFF',
-            },
-            }}/>
-            <Tab.Screen
+          <Tab.Screen
               name="Profile"
               options={{
                 tabBarIcon: ({ focused }) => (
@@ -1336,6 +1315,28 @@ export default function App() {
             >
               {() => <ProfileScreen handleLogout={handleLogout} />}
             </Tab.Screen>
+          {/* <Tab.Screen name="Clients" component={ClientNavigation} screenOptions={{headerShown:false}} options={{
+            tabBarIcon: ({ focused }) => (
+              <View>
+                <FontAwesome6 name="people-group" size={24} color="white" />
+              </View>
+            ),
+            tabBarOptions: {
+              activeTintColor: '#284979',
+              inactiveTintColor: '#FFFFFF',
+            },
+            }}/> */}
+          <Tab.Screen name="Settings" component={SettingsScreen} options={{
+            tabBarIcon: ({ focused }) => (
+              <View>
+                <AntDesign name="setting" size={24} color="white" />
+              </View>
+            ),
+            tabBarOptions: {
+              activeTintColor: '#FF6B35',
+              inactiveTintColor: '#FFFFFF',
+            },
+            }}/>
         </Tab.Navigator>
       </NavigationContainer>
     </SQLiteProvider>

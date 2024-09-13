@@ -39,48 +39,109 @@ const CommandeArticles = ({navigation}) => {
         //     };
         // },[salesOrderItems]);
 
-        return(
-            <View>
-                {salesOrderItems.length=== 0 ? (
-                    <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
-                    ) : (
-                    <FlatList
-                        data ={salesOrderItems}
-                        keyExtractor={(item) => item.name}
-                        renderItem={({item}) => (
-                            // const defaultImage = "https://t3.ftcdn.net/jpg/04/84/88/76/360_F_484887682_Mx57wpHG4lKrPAG0y7Q8Q7bJ952J3TTO.jpg";
-                            // const imageUrl = item.image ? item.image : defaultImage;
-                            <TouchableOpacity style={{backgroundColor:'#fff' , marginBottom:10, borderRadius:15, margin:5}}>
-                                <View style={{marginBottom:10, marginStart:10}}>
-                                    <Text style={{fontWeight:'bold'}}>{item.name}</Text>
-                                    <View style={{flexDirection:'column', justifyContent:'space-between', marginBottom:10}}>
-                                        <Text>Item Name:{item.item_name}</Text>
-                                        <Text style={{fontWeight:'semibold'}}>Item Price:{item.rate}</Text>
-                                        <Text>Quantity:{item.qty}</Text>
-                                        <Text>Total Price:{item.amount}</Text>
-                                        {/* <Image
-                                        source={{ uri: imageUrl }}
-                                        style={{ width: 50, height: 50, borderRadius: 5, marginRight: 10 }}
-                                        /> */}
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                        )}
-                    />
-                )}
+        return (
+            <View style={styles.contentContainer}>
+              {salesOrderItems.length === 0 ? (
+                <ActivityIndicator size="large" color="#284979" style={styles.loadingIndicator} />
+              ) : (
+                <FlatList
+                  data={salesOrderItems}
+                  keyExtractor={(item) => item.name}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity style={styles.itemCard}>
+                      <View style={styles.itemInfoContainer}>
+                        <Text style={styles.itemName}>{item.name}</Text>
+                        <View style={styles.itemDetails}>
+                          <Text style={styles.itemLabel}>Item Name: <Text style={styles.itemText}>{item.item_name}</Text></Text>
+                          <Text style={styles.itemLabel}>Item Price: <Text style={styles.itemPrice}>{item.rate} DA</Text></Text>
+                          <Text style={styles.itemLabel}>Quantity: <Text style={styles.itemText}>{item.qty}</Text></Text>
+                          <Text style={styles.itemLabel}>Total Price: <Text style={styles.itemTotal}>{item.amount} DA</Text></Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                />
+              )}
             </View>
-        )
-    };
-    
-
-  return (
-    <View>
-      <Text style={{fontSize: 24}}>Liste des articles Commandées</Text>
-      <Content />
-    </View>
-  )
-};
-
-export default CommandeArticles;
-
-const styles = StyleSheet.create({})
+          );
+        };
+      
+        return (
+          <View style={styles.container}>
+            <Text style={styles.title}>Liste des articles Commandées</Text>
+            <Content />
+          </View>
+        );
+      };
+      
+      export default CommandeArticles;
+      
+      const styles = StyleSheet.create({
+        container: {
+          flex: 1,
+          padding: 16,
+          backgroundColor: '#f0f4f7', // Light background color for overall layout
+        },
+        title: {
+          fontSize: 24,
+        //   fontWeight: 'bold',
+          color: '#333', // Darker text color for title
+          marginBottom: 16,
+        },
+       
+        loadingIndicator: {
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        itemCard: {
+          backgroundColor: '#fff',
+          borderRadius: 12,
+          padding: 15,
+          marginVertical: 8,
+          marginHorizontal: 5,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3, 
+        },
+        itemInfoContainer: {
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        },
+        itemName: {
+          fontWeight: 'bold',
+          fontSize: 16,
+          color: '#222', 
+          marginBottom: 8,
+        },
+        itemDetails: {
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          marginBottom: 10,
+        },
+        itemLabel: {
+        //   fontWeight: 'bold',
+          fontSize: 14,
+          color: '#666', 
+          marginBottom: 2,
+        },
+        itemText: {
+          fontSize: 14,
+          color: '#222',
+          marginBottom: 6,
+        },
+        itemPrice: {
+          fontSize: 14,
+        //   fontWeight: 'bold',
+          color: '#DAA520',
+          marginBottom: 6,
+        },
+        itemTotal: {
+          fontSize: 14,
+        //   fontWeight: 'bold',
+          color: '#DAA520',
+          marginBottom: 6,
+        },
+      });

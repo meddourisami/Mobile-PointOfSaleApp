@@ -21,7 +21,7 @@ const LoginPage = ({onLogin}) => {
       if (name && password) {
         try{
         // const response = await fetch('http://192.168.100.6:8002/api/method/login', {
-        const response = await fetch('http://192.168.1.16:8002/api/method/login', {
+        const response = await fetch('http://192.168.100.6:8002/api/method/login', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -62,7 +62,7 @@ const LoginPage = ({onLogin}) => {
           await AsyncStorage.setItem('verifCode', verificationCode);
           const reference= await AsyncStorage.getItem('reference');
           // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.auth.get_logged_user',{
-            const response = await fetch('http://192.168.1.16:8002/api/method/frappe.auth.get_logged_user',{ 
+            const response = await fetch('http://192.168.100.6:8002/api/method/frappe.auth.get_logged_user',{ 
             method: 'GET',
             headers: {
               Authorization: `token ${reference}:${verificationCode}`,
