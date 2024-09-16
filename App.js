@@ -16,6 +16,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import LoginPage from './LoginPage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import './i18n/i18n'; // Initialize i18n globally in the app
 
 
 async function initDatabase(db) {

@@ -21,7 +21,7 @@ const Cart = ({navigation}) => {
     const [quantities, setQuantities] = useState({});
     const [taxes, setTaxes] = useState([]);
     const [charges, setCharges] = useState([]);
-    const [selectedTax, setSelectedTax] = useState(null);
+    const [selectedTax, setSelectedTax] = useState(charges.length > 0 ? charges[0] : null);
     const [selectedClient, setSelectedClient] = useState(null);
     const [clients, setClients] = useState([]);
 
@@ -658,6 +658,12 @@ const Cart = ({navigation}) => {
         }
     }, [isFocused]);
 
+// Optional useEffect to handle changes when `charges` updates (if dynamically loaded)
+    useEffect(() => {
+        if (charges.length > 0 && !selectedTax) {
+            setSelectedTax(charges[0]); // Set the first element as default
+        }
+    }, [charges]);
     const CartItem = ({ item, onRemove, onQuantityChange }) => {
         const defaultImage = "https://t3.ftcdn.net/jpg/04/84/88/76/360_F_484887682_Mx57wpHG4lKrPAG0y7Q8Q7bJ952J3TTO.jpg";
         const imageUrl = item.image ? item.image : defaultImage;
@@ -721,10 +727,17 @@ const Cart = ({navigation}) => {
         onValueChange={(itemValue) => setSelectedTax(itemValue)}
         style={styles.picker}
       >
-        <Picker.Item label="Select Tax" value={null} />
+          {charges.length === 0 ? (
+              <Picker.Item label="Select Tax" value={null} />
+          ) : (
+              charges.map((tax) => (
+                  <Picker.Item key={tax.name} label={tax.name} value={tax} />
+              ))
+          )}
+        {/*<Picker.Item label="Select Tax" value={null} />
         {charges.map((tax) => (
           <Picker.Item key={tax.name} label={tax.name} value={tax} />
-        ))}
+        ))}*/}
       </Picker>
     </View>
     <View style={styles.separator} />

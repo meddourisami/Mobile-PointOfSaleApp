@@ -1,12 +1,23 @@
-import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
-import { useSQLiteContext } from 'expo-sqlite';
+import {
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {useIsFocused, useNavigation, useRoute} from '@react-navigation/native';
+import {useSQLiteContext} from 'expo-sqlite';
 import * as CryptoJS from 'crypto-js';
-import { AntDesign } from '@expo/vector-icons';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useSync } from '../../SyncContext';
+import {useSync} from '../../SyncContext';
+import { transformData } from '../../helpers/helper';
+import {Picker} from "@react-native-picker/picker";
 
 const ArticleScreen = () => {
     const { token } = useSync();
@@ -15,13 +26,15 @@ const ArticleScreen = () => {
     const route = useRoute();
     const { ItemGroup, customer } = route.params || {};
     const navigation = useNavigation();
-    const [selecteditems, setSelecteditems] = useState([]);
+    const [selectedItems, setSelectedItems] = useState([]);
 
     const Content = () => {
         const [items, setItems] = useState([]);
         const [articles, setArticles] = useState([]);
         const [filteredArticles, setFilteredArticles] = useState([]);
         const [searchQuery, setSearchQuery] = useState('');
+        const [itemsGroups, setItemsGroups] = useState([]); // State for selected group
+        const [selectedGroup, setSelectedGroup] = useState(null); // State for selected group
 
         const getHash = (data) => {
             return CryptoJS.MD5(JSON.stringify(data)).toString();
@@ -48,30 +61,11 @@ const ArticleScreen = () => {
                 keys.forEach((key, index) => { obj[key] = entry[index]; });
                 return obj; 
             }); 
-        };    
+        };
 
-        const getItemsFromApi = async () =>{
-            try{
-                // const response = await fetch('http://195.201.138.202:8006/api/resource/Item?fields=["*"]', {
-                //         method: 'GET',
-                //         headers: {
-                //             'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
-                //         },
-                //     });
-                // const response = await fetch('http://192.168.100.6:8002/api/resource/Item?fields=["*"]', {
-                //     method: 'GET',
-                //     headers: {
-                //         'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
-                //     },
-                // });
-
-                // const json = await response.json();
-
-                const today = new Date();
-                const monthAgo = new Date();
-                monthAgo.setMonth(today.getMonth() - 1);
-                // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
-                const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
+        const getItemsGroups = async () => {
+            try {
+                const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
                     {
                         method: 'POST',
                         headers: {
@@ -79,96 +73,158 @@ const ArticleScreen = () => {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            "report_name": "Stock Balance",
-                            "filters": {
-                              "company": "Ites Company (Demo)",
-                              "from_date": monthAgo.toISOString().split('T')[0],
-                              "to_date": today.toISOString().split('T')[0],
-                              "warehouse": "Magasin Fille 1 - ICD",
-                              "valuation_field_type": "Currency"
-                            },
-                            "ignore_prepared_report": true,
-                            "are_default_filters": false,
-                            "_": Date.now()
-                          }),
-                    }
-                );
-                const json = await response.json();
-                quantities = json.message.result;
-                const filteredQuantities = quantities.filter(item => !Array.isArray(item));
-    
-                names= [];
-                filteredQuantities.map((quantity) => {
-                    names.push(quantity.item_code);
-                });
-
-                filteredQuantities.map((quantity) => {
-                    stockDetails={
-                        bal_qty: quantity.bal_qty,
-                        bal_val: quantity.bal_val,
-                    };
-                });
-                // const reponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
-                const reponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': token,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            "doctype": "Item",
+                            "doctype": "Item Group",
                             "fields": [
-                            "*"
+                                "`tabItem Group`.`name`",
+                                "`tabItem Group`.`owner`",
+                                "`tabItem Group`.`_user_tags`",
+                                "`tabItem Group`.`item_group_name`",
+                                "`tabItem Group`.`parent_item_group`",
+                                "`tabItem Group`.`is_group`",
+                                "`tabItem Group`.`image`"
                             ],
-                            "filters": [
-                                ["Item", "name", "in", names]
-                            ],
-                            "order_by": "`tabItem`.`modified` desc",
+                            "filters": [],
+                            "order_by": "`tabItem Group`.`modified` desc",
                             "start": 0,
                             "page_length": 20,
                             "view": "List",
                             "group_by": "",
                             "with_comment_count": 1
-                              
                         }),
                     }
                 );
-                const data = await reponse.json();
-                const selectedItems = transformJson(data);
-                
-                const stockItems = selectedItems.map(item => {
-                    const stockDetail = filteredQuantities.find(quantity => quantity.item_code === item.name);
-                    return {
-                        ...item,
-                        bal_qty: stockDetail ? stockDetail.bal_qty : 0,
-                        bal_val: stockDetail ? stockDetail.bal_val : 0
-                    };
-                });
-
-                const newHash = getHash(stockItems);
-
-                const existingHash = await db.getFirstAsync('SELECT data_hash FROM ItemMetadata WHERE id = 1;');
-                if (existingHash.data_hash !== newHash) {
-
-                    await Promise.all(stockItems.map(async (item) => {
-                        await db.runAsync(`DELETE FROM Item WHERE name = ?;`, [item.name]);
-                    }));
-
-                    await saveInLocalItems(stockItems);
-                    await db.runAsync('UPDATE ItemMetadata SET data_hash = ? WHERE id = 1;', [newHash]);
-                    setItems(stockItems);
+                if(response.ok === true) {
+                    const groups = await response.json();
+                    const transformedGroups = transformData(groups)
+                    setItemsGroups(transformedGroups)
+                    console.log(transformedGroups, 'newer groups')
+                } else {
+                    throw new Error('No article groups');
                 }
-                return stockItems;
-            } catch(e){
+            } catch (e) {
                 console.log("error getting items", e);
             }
-        };
+            }
+            const getItemsFromApi = async () => {
+                try {
+                    // const response = await fetch('http://195.201.138.202:8006/api/resource/Item?fields=["*"]', {
+                    //         method: 'GET',
+                    //         headers: {
+                    //             'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
+                    //         },
+                    //     });
+                    // const response = await fetch('http://192.168.100.6:8002/api/resource/Item?fields=["*"]', {
+                    //     method: 'GET',
+                    //     headers: {
+                    //         'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
+                    //     },
+                    // });
 
-        const saveInLocalItems = async (items) => {
-            try{
-                await Promise.all(items.map(async (item) => {
-                    await db.runAsync(`INSERT OR REPLACE INTO Item(
+                    // const json = await response.json();
+
+                    const today = new Date();
+                    const monthAgo = new Date();
+                    monthAgo.setMonth(today.getMonth() - 1);
+                    // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
+                    const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': token,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                "report_name": "Stock Balance",
+                                "filters": {
+                                    "company": "Ites Company (Demo)",
+                                    "from_date": monthAgo.toISOString().split('T')[0],
+                                    "to_date": today.toISOString().split('T')[0],
+                                    "warehouse": "Magasin Fille 1 - ICD",
+                                    "valuation_field_type": "Currency"
+                                },
+                                "ignore_prepared_report": true,
+                                "are_default_filters": false,
+                                "_": Date.now()
+                            }),
+                        }
+                    );
+                    const json = await response.json();
+                    quantities = json.message.result;
+                    const filteredQuantities = quantities.filter(item => !Array.isArray(item));
+
+                    names = [];
+                    filteredQuantities.map((quantity) => {
+                        names.push(quantity.item_code);
+                    });
+
+                    filteredQuantities.map((quantity) => {
+                        stockDetails = {
+                            bal_qty: quantity.bal_qty,
+                            bal_val: quantity.bal_val,
+                        };
+                    });
+                    console.log(token)
+                    // const reponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
+                    const reponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': token,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                "doctype": "Item",
+                                "fields": [
+                                    "*"
+                                ],
+                                "filters": [
+                                    ["Item", "name", "in", names]
+                                ],
+                                "order_by": "`tabItem`.`modified` desc",
+                                "start": 0,
+                                "page_length": 20,
+                                "view": "List",
+                                "group_by": "",
+                                "with_comment_count": 1
+
+                            }),
+                        }
+                    );
+                    const data = await reponse.json();
+                    const selectedItems = transformJson(data);
+
+                    const stockItems = selectedItems.map(item => {
+                        const stockDetail = filteredQuantities.find(quantity => quantity.item_code === item.name);
+                        return {
+                            ...item,
+                            bal_qty: stockDetail ? stockDetail.bal_qty : 0,
+                            bal_val: stockDetail ? stockDetail.bal_val : 0
+                        };
+                    });
+
+                    const newHash = getHash(stockItems);
+
+                    const existingHash = await db.getFirstAsync('SELECT data_hash FROM ItemMetadata WHERE id = 1;');
+                    if (existingHash.data_hash !== newHash) {
+
+                        await Promise.all(stockItems.map(async (item) => {
+                            await db.runAsync(`DELETE FROM Item WHERE name = ?;`, [item.name]);
+                        }));
+
+                        await saveInLocalItems(stockItems);
+                        await db.runAsync('UPDATE ItemMetadata SET data_hash = ? WHERE id = 1;', [newHash]);
+                        setItems(stockItems);
+                    }
+                    return stockItems;
+                } catch (e) {
+                    console.log("error getting items", e);
+                }
+            };
+
+            const saveInLocalItems = async (items) => {
+                try {
+                    await Promise.all(items.map(async (item) => {
+                        await db.runAsync(`INSERT OR REPLACE INTO Item(
                         name, owner, creation, modified,
                         modified_by, docstatus, idx, naming_series, item_code,
                         item_name, item_group, stock_uom, disabled, allow_alternative_item,
@@ -203,148 +259,171 @@ const ArticleScreen = () => {
                         ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?
                     )`,
-                        [
-                            item.name, item.owner, item.creation, item.modified,
-                            item.modified_by, item.docstatus, item.idx, item.naming_series, item.item_code,
-                            item.item_name, item.item_group, item.stock_uom, item.disabled, item.allow_alternative_item,
-                            item.is_stock_item, item.has_variants, item.opening_stock, item.valuation_rate, item.standard_rate,
-                            item.is_fixed_asset, item.auto_create_assets, item.is_grouped_asset, item.asset_category, item.asset_naming_series,
-                            item.over_delivery_receipt_allowance, item.over_billing_allowance, item.image, item.description, item.brand,
-                            item.shelf_life_in_days, item.end_of_life, item.default_material_request_type, item.valuation_method, item.warranty_period,
-                            item.weight_per_unit, item.weight_uom, item.allow_negative_stock, item.has_batch_no, item.create_new_batch,
-                            item.batch_number_series, item.has_expiry_date, item.retain_sample, item.sample_quantity, item.has_serial_no,
-                            item.serial_no_series, item.variant_of, item.variant_based_on, item.enable_deferred_expense, item.no_of_months_exp,
-                            item.enable_deferred_revenue, item.no_of_months, item.purchase_uom, item.min_order_qty, item.safety_stock,
-                            item.is_purchase_item, item.lead_time_days, item.last_purchase_rate, item.is_customer_provided_item, item.customer,
-                            item.delivered_by_supplier, item.country_of_origin, item.customs_tariff_number, item.sales_uom, item.grant_commission,
-                            item.is_sales_item, item.max_discount, item.inspection_required_before_purchase, item.quality_inspection_template, item.inspection_required_before_delivery,
-                            item.include_item_in_manufacturing, item.is_sub_contracted_item, item.default_bom, item.customer_code, item.default_item_manufacturer,
-                            item.default_manufacturer_part_no, item.total_projected_qty, item._comment_count, item.bal_qty, item.bal_val
-                        ]
-                    )
-                }));
-            } catch(e){
-                console.log("error saving items in local", e);
-            }
-        };
-
-        const getItems = async () => {
-            try{
-                const allArticles = await db.getAllAsync(`SELECT * FROM Item;`);
-                setArticles(allArticles);
-                setFilteredArticles(allArticles);
-            }catch(e){
-                console.log("error getting items from database", e);
-            }
-        };
-
-        // const getItemsByGroup = async (item_group) => {
-        //     try{
-        //         const articlesByGroup = await db.getAllAsync(`SELECT * FROM Item WHERE item_group = ?`,[item_group]);
-        //         setArticles(articlesByGroup);
-        //     }
-        //     catch(e){
-        //         console.log("error getting items by group", e);
-        //     };
-        // };
-
-        const handleSearch = (query) => {
-            setSearchQuery(query);
-            if (query === '') {
-                setFilteredArticles(articles);
-            } else {
-                const filtered = articles.filter(article => article.name.toLowerCase().includes(query.toLowerCase()));
-                setFilteredArticles(filtered);
-            }
-        };
-
-        useEffect(()=>{
-            if(isFocused){
-                createMetadataTable();
-                getItemsFromApi();
-                if(ItemGroup){
-                    getItemsByGroup(ItemGroup);
-                }else{
-                    getItems();
+                            [
+                                item.name, item.owner, item.creation, item.modified,
+                                item.modified_by, item.docstatus, item.idx, item.naming_series, item.item_code,
+                                item.item_name, item.item_group, item.stock_uom, item.disabled, item.allow_alternative_item,
+                                item.is_stock_item, item.has_variants, item.opening_stock, item.valuation_rate, item.standard_rate,
+                                item.is_fixed_asset, item.auto_create_assets, item.is_grouped_asset, item.asset_category, item.asset_naming_series,
+                                item.over_delivery_receipt_allowance, item.over_billing_allowance, item.image, item.description, item.brand,
+                                item.shelf_life_in_days, item.end_of_life, item.default_material_request_type, item.valuation_method, item.warranty_period,
+                                item.weight_per_unit, item.weight_uom, item.allow_negative_stock, item.has_batch_no, item.create_new_batch,
+                                item.batch_number_series, item.has_expiry_date, item.retain_sample, item.sample_quantity, item.has_serial_no,
+                                item.serial_no_series, item.variant_of, item.variant_based_on, item.enable_deferred_expense, item.no_of_months_exp,
+                                item.enable_deferred_revenue, item.no_of_months, item.purchase_uom, item.min_order_qty, item.safety_stock,
+                                item.is_purchase_item, item.lead_time_days, item.last_purchase_rate, item.is_customer_provided_item, item.customer,
+                                item.delivered_by_supplier, item.country_of_origin, item.customs_tariff_number, item.sales_uom, item.grant_commission,
+                                item.is_sales_item, item.max_discount, item.inspection_required_before_purchase, item.quality_inspection_template, item.inspection_required_before_delivery,
+                                item.include_item_in_manufacturing, item.is_sub_contracted_item, item.default_bom, item.customer_code, item.default_item_manufacturer,
+                                item.default_manufacturer_part_no, item.total_projected_qty, item._comment_count, item.bal_qty, item.bal_val
+                            ]
+                        )
+                    }));
+                } catch (e) {
+                    console.log("error saving items in local", e);
                 }
-            }
-        }, [isFocused, ItemGroup]);
+            };
 
-        useEffect(() => {
-            if (filteredArticles) {
-                getItems();
-            }
-        }, [filteredArticles]);
+            const getItems = async () => {
+                try {
+                    const allArticles = await db.getAllAsync(`SELECT * FROM Item;`);
+                    setArticles(allArticles);
+                } catch (e) {
+                    console.log("error getting items from database", e);
+                }
+            };
 
-        // useEffect(() =>{
-        //     if(articles){
-        //         getItems();
-        //     }
-        // },[articles]);
+            // const getItemsByGroup = async (item_group) => {
+            //     try{
+            //         const articlesByGroup = await db.getAllAsync(`SELECT * FROM Item WHERE item_group = ?`,[item_group]);
+            //         setArticles(articlesByGroup);
+            //     }
+            //     catch(e){
+            //         console.log("error getting items by group", e);
+            //     };
+            // };
 
-        return(
-            <View>
-                <TextInput
-                    placeholder="Search Articles"
-                    value={searchQuery}
-                    onChangeText={handleSearch}
-                    style={{
-                        height: 40,
-                        borderColor: '#ccc',
-                        borderWidth: 1,
-                        borderRadius: 10,
-                        marginBottom: 10,
-                        paddingHorizontal: 10
-                    }}
-                />
-                {filteredArticles.length === 0 ? (
-                    <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
+
+            useEffect(() => {
+                if (isFocused) {
+                    createMetadataTable();
+                    getItemsFromApi();
+                    if (ItemGroup) {
+                        getItemsByGroup(ItemGroup);
+                    } else {
+                        getItems();
+                        getItemsGroups()
+                    }
+                }
+            }, [isFocused, ItemGroup]);
+            useEffect(() => {
+                if (articles.length > 0) {
+                    if (searchQuery === '' && selectedGroup === null ) {
+                        setFilteredArticles(articles);
+                    } else {
+                        const filtered = articles.filter(article => {
+                            const matchesGroup = selectedGroup ? article.item_group === selectedGroup : false;
+                            const matchesSearch = article.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                article.item_group.toLowerCase().includes(searchQuery.toLowerCase());
+                            return matchesGroup && matchesSearch;
+                        });
+                        console.log(filtered)
+                        setFilteredArticles(filtered);
+                    }
+                }
+            }, [articles, searchQuery, selectedGroup]);
+            /* useEffect(() => {
+                 if (filteredArticles) {
+                     getItems();
+                 }
+             }, [filteredArticles]);*/
+
+            // useEffect(() =>{
+            //     if(articles){
+            //         getItems();
+            //     }
+            // },[articles]);
+
+            return (
+                <View>
+                    <TextInput
+                        placeholder="Search Articles"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        style={{
+                            height: 40,
+                            borderColor: '#ccc',
+                            borderWidth: 1,
+                            borderRadius: 10,
+                            marginBottom: 10,
+                            paddingHorizontal: 10
+                        }}
+                    />
+                    {/* Picker for Group Selection */}
+                    {itemsGroups.length !== 0 ? (
+                    <Picker
+                        selectedValue={selectedGroup}
+                        onValueChange={(itemValue) => setSelectedGroup(itemValue)}
+                        style={{ height: 50, width: '100%', marginBottom: 10 }}
+                    >
+                        <Picker.Item label="All Groups" value={null} />
+                        {itemsGroups.map((group) => (
+                            <Picker.Item key={group.name} label={group.name} value={group.name} />
+                        ))}
+                    </Picker>) : (<View></View>)}
+
+                    {filteredArticles.length === 0 ? (
+                        <ActivityIndicator size="large" color="#284979"
+                                           style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}/>
                     ) : (
                         <FlatList
                             data={filteredArticles}
-                            keyExtractor= {(item) => (item.name).toString()}
+                            keyExtractor={(item) => (item.name).toString()}
                             renderItem={({item}) => {
                                 const defaultImage = "https://t3.ftcdn.net/jpg/04/84/88/76/360_F_484887682_Mx57wpHG4lKrPAG0y7Q8Q7bJ952J3TTO.jpg";
                                 const imageUrl = item.image ? item.image : defaultImage;
-                                    return (   
-                                        <View key={item.key} style={styles.articleCard}>
-                                            <TouchableOpacity onPress={()=> navigation.navigate('ArticleDetails', {article:item.name})}>
-                                                <View style={styles.articleContent}>
-                                                    <Image
-                                                        source={{ uri: imageUrl }} 
-                                                        style={styles.articleImage}
-                                                    />
-                                                     <View style={styles.articleDetails}>
-                                                        <Text style={styles.articleTitle}>{item.item_name} - {item.item_group}</Text>
-                                                        <Text style={styles.articleStock}>On Stock: {item.bal_qty}</Text>
-                                                        <Text style={styles.articlePrice}>Prix de vente: {item.standard_rate} DA</Text>
-                                                    </View>
+                                return (
+                                    <View key={item.key} style={styles.articleCard}>
+                                        <TouchableOpacity
+                                            onPress={() => navigation.navigate('ArticleDetails', {article: item.name})}>
+                                            <View style={styles.articleContent}>
+                                                <Image
+                                                    source={{uri: imageUrl}}
+                                                    style={styles.articleImage}
+                                                />
+                                                <View style={styles.articleDetails}>
+                                                    <Text
+                                                        style={styles.articleTitle}>{item.item_name} - {item.item_group}</Text>
+                                                    <Text style={styles.articleStock}>On Stock: {item.bal_qty}</Text>
+                                                    <Text style={styles.articlePrice}>Prix de
+                                                        vente: {item.standard_rate} DA</Text>
                                                 </View>
-                                            </TouchableOpacity>
-                                            <MaterialCommunityIcons
-                                                name="cart-plus"
-                                                size={30}
-                                                color="#FF6B35"
-                                                style={styles.addToCartIcon}
+                                            </View>
+                                        </TouchableOpacity>
+                                        <MaterialCommunityIcons
+                                            name="cart-plus"
+                                            size={30}
+                                            color="#FF6B35"
+                                            style={styles.addToCartIcon}
                                             onPress={() => handleAddItemToCart(item)}
-                                            />
-                                        </View>
-                                    );
-                                }}
+                                        />
+                                    </View>
+                                );
+                            }}
                         />
-                )}
-            </View>
-        );
-    };
+                    )}
+                </View>
+            );
+        };
 
     const addItemToCart = async (item) => {
-        const isItemInCart = selecteditems.some(existingItem => existingItem.name === item.name);
+        const isItemInCart = selectedItems.some(existingItem => existingItem.name === item.name);
 
         if (isItemInCart) {
             Alert.alert("Article already in cart", "This article is already in the cart.");
             return;
         }
-        setSelecteditems((prevSelectedItems) => [...prevSelectedItems, item]);
+        setSelectedItems((prevSelectedItems) => [...prevSelectedItems, item]);
     };
 
     const handleAddItemToCart = async (item) => {
@@ -356,11 +435,11 @@ const ArticleScreen = () => {
     };
 
     const calculateTotalPrice = () => {
-        return selecteditems.reduce((total, item) => total + item.standard_rate, 0);
+        return selectedItems.reduce((total, item) => total + item.standard_rate, 0);
     };
 
     const handleClearSelectedItems = () => {
-        setSelecteditems([]);
+        setSelectedItems([]);
     };
 
   return (
@@ -371,15 +450,15 @@ const ArticleScreen = () => {
                 <Content />
             </View>
             <View>
-            {selecteditems && selecteditems.length > 0 && (
+            {selectedItems && selectedItems.length > 0 && (
                 <View style={styles.selectedItemsContainer}>
 
                 <TouchableOpacity
                 style={styles.cartButton}
-                onPress={() => navigation.navigate('Cart', { selectedItems : selecteditems , customer: customer })}
+                onPress={() => navigation.navigate('Cart', { selectedItems : selectedItems , customer: customer })}
                 >
                     <Text  style={styles.cartButtonText}>
-                        {`Items: ${selecteditems.length}, Total: DA ${calculateTotalPrice().toFixed(2)}`}
+                        {`Items: ${selectedItems.length}, Total: DA ${calculateTotalPrice().toFixed(2)}`}
                     </Text>
                     <Ionicons name="close-outline" size={24} style={{justifyContent:'flex-end', marginLeft:20}} color="white" onPress={handleClearSelectedItems}/>
                 </TouchableOpacity>

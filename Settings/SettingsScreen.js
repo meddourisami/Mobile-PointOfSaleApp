@@ -1,12 +1,61 @@
-import { StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import {Button, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View} from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useSync } from '../SyncContext';
 import { Picker } from '@react-native-picker/picker';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useTranslation} from "react-i18next";
 
 const SettingsScreen = () => {
   const { isAutoSync, setIsAutoSync } = useSync(); 
-  const [syncMode, setSyncMode] = useState(null); 
+  const [syncMode, setSyncMode] = useState(null);
+  const { t, i18n } = useTranslation();
+  const [isFrench, setIsFrench] = useState(i18n.language === 'fr');
+  //const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
+
+  /*const switchLanguage = async () => {
+    const newLanguage = i18n.language === 'en' ? 'fr' : 'en';
+    await AsyncStorage.setItem('language', newLanguage);
+    i18n.changeLanguage(newLanguage);
+  };*/
+
+  // Handle language selection
+ /* const changeLanguage = async (languageCode) => {
+    setSelectedLanguage(languageCode);
+    await AsyncStorage.setItem('language', languageCode);
+    i18n.changeLanguage(languageCode);
+  };*/
+
+
+
+  /*useEffect(() => {
+    const loadLanguage = async () => {
+      const savedLanguage = await AsyncStorage.getItem('language');
+      if (savedLanguage) {
+        setSelectedLanguage(savedLanguage);
+        i18n.changeLanguage(savedLanguage);
+      }
+    };
+    loadLanguage();
+  }, []);*/
+
+  // Handle language toggle
+  const toggleSwitch = async () => {
+    const newLanguage = isFrench ? 'en' : 'fr';  // Toggle between English and French
+    setIsFrench(!isFrench);                     // Update the switch state
+    await AsyncStorage.setItem('language', newLanguage);  // Save the selection
+    i18n.changeLanguage(newLanguage);            // Change the language globally
+  };
+
+  useEffect(() => {
+    const loadLanguage = async () => {
+      const savedLanguage = await AsyncStorage.getItem('language');
+      if (savedLanguage) {
+        setIsFrench(savedLanguage === 'fr');
+        i18n.changeLanguage(savedLanguage);
+      }
+    };
+    loadLanguage();
+  }, []);
 
   const toggleAutoSync = () => {
     setIsAutoSync((previousState) => !previousState);
@@ -55,6 +104,47 @@ const SettingsScreen = () => {
           </Picker>
         </View>
       )}
+     {/* <View>
+        <Text>{t('switchLanguage')}</Text>
+        <Button title={t('switchLanguage')} onPress={switchLanguage} />
+      </View>*/}
+      {/*<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 20, marginBottom: 20 }}>{t('switchLanguage')}</Text>
+
+        <TouchableOpacity
+            onPress={() => changeLanguage('en')}
+            style={{
+              padding: 10,
+              backgroundColor: selectedLanguage === 'en' ? 'blue' : 'gray',
+              marginBottom: 10,
+              borderRadius: 5,
+            }}
+        >
+          <Text style={{ color: 'white' }}>English</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+            onPress={() => changeLanguage('fr')}
+            style={{
+              padding: 10,
+              backgroundColor: selectedLanguage === 'fr' ? 'blue' : 'gray',
+              borderRadius: 5,
+            }}
+        >
+          <Text style={{ color: 'white' }}>Français</Text>
+        </TouchableOpacity>
+      </View>*/}
+
+      <View style={styles.settingItem}>
+        <Text >
+          {t('switchLanguage')} ({isFrench ? 'Français' : 'English'})
+        </Text>
+
+        <Switch
+            onValueChange={toggleSwitch}
+            value={isFrench}
+        />
+      </View>
     </View>
   );
 }

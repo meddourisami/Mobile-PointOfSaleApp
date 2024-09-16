@@ -11,6 +11,7 @@ import * as CryptoJS from 'crypto-js';
 import { useSync } from '../SyncContext';
 import { TapGestureHandler, GestureHandlerRootView, State } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -36,6 +37,7 @@ const HomeScreen = () => {
   const [companyDetails, setCompanyDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const { token } = useSync();
+  const { t } = useTranslation();
 
 
 
@@ -1508,7 +1510,7 @@ const HomeScreen = () => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} title="Livraison" onPress={() => navigation.navigate('LivraisonScreen')}>
           <AntDesign name="filetext1" size={50} color="white" />
-          <Text style={styles.buttonText}>Bon de Livraison</Text>
+          <Text style={styles.buttonText}>{t('deliveryNote')}</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.buttonContainer}>
