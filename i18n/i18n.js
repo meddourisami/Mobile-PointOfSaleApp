@@ -6,6 +6,7 @@ import translations from './translations';
 
 // Initialize i18next
 i18n.use(initReactI18next).init({
+    compatibilityJSON: 'v3',
     resources: translations,
     lng: 'en', // Default language
     fallbackLng: 'en',

@@ -322,12 +322,11 @@ const ArticleScreen = () => {
                         setFilteredArticles(articles);
                     } else {
                         const filtered = articles.filter(article => {
-                            const matchesGroup = selectedGroup ? article.item_group === selectedGroup : false;
+                            const matchesGroup = selectedGroup ? article.item_group === selectedGroup : true;
                             const matchesSearch = article.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                 article.item_group.toLowerCase().includes(searchQuery.toLowerCase());
                             return matchesGroup && matchesSearch;
                         });
-                        console.log(filtered)
                         setFilteredArticles(filtered);
                     }
                 }
