@@ -21,6 +21,7 @@ const CommandeScreen = () => {
         const [salesOrders , setSaleOrders] = useState([]);
         const [saleOrder, setSaleOrder] = useState([]);
         const [paymentStatuses, setPaymentStatuses] = useState({});
+        const [payments, setPayments] = useState({});
 
         const getHash = (data) => {
             return CryptoJS.MD5(JSON.stringify(data)).toString();
@@ -322,9 +323,9 @@ const CommandeScreen = () => {
         //     }
         // };
 
-        const PaymentStatus = (order) => {
-            getPaymentStatusOfaSaleOrder(order);
-        };
+        // const PaymentStatus = (order) => {
+        //     getPaymentStatusOfaSaleOrder(order);
+        // };
 
         const getStatusIcon = (status) => {
             if (status === "Paid") {
@@ -336,13 +337,18 @@ const CommandeScreen = () => {
 
         const fetchPaymentStatuses = async () => {
             const statuses = {};
-        
+            const payments = {};
+
             for (const order of salesOrders) {
               const status = await getPaymentStatusOfaSaleOrder(order.name);
               statuses[order.name] = status;
+              const payment = await getPaymentsOfaSaleOrder(order.name);
+              console.log(payment);
+              payments[order.name] = payment;
             }
         
             setPaymentStatuses(statuses);
+            setPayments(payments);
           };
         
           
@@ -360,15 +366,15 @@ const CommandeScreen = () => {
               const totalOrderAmount = payments[0]?.total_amount || 0;
 
               if (payments.length === 0) {
-                            return "Unpaid";
-                        }else {
-                            payments.forEach(async(payment) => {
+                return "Unpaid";
+                    }else {
+                        await Promise.all(
+                            payments.map(async(payment) => {
                                 const paid = await db.getFirstAsync(`SELECT * FROM Payment_Entry WHERE name= ?`,[payment.parent]);
                                 total += paid.paid_amount;
-                                console.log("in",total); 
-                        });
+                            })
+                        );
                         if (total < totalOrderAmount) {
-                            console.log("in d",total);
                             return "Partially Paid";
                         } else if (total >= totalOrderAmount) {
                             return "Paid";
@@ -378,7 +384,39 @@ const CommandeScreen = () => {
                 console.error('Error fetching payment status:', e);
                 return 'Unpaid';
             }
-        }
+        };
+
+        const getPaymentsOfaSaleOrder = async (orderName) => {
+            try {
+            let total= 0;
+              const payments = await db.getAllAsync(`SELECT * FROM Payment_Reference_Entry WHERE reference_name=?`, [orderName]);
+              const totalOrderAmount = payments[0]?.total_amount || 0;
+
+              if (payments.length === 0) {
+                            return 0;
+                        }else {
+                            await Promise.all(
+                                payments.map(async(payment) => {
+                                    const paid = await db.getFirstAsync(`SELECT * FROM Payment_Entry WHERE name= ?`,[payment.parent]);
+                                    total += paid.paid_amount;
+                                })
+                            );
+                            return total;
+                        }
+            }catch(e){
+                console.error('Error fetching paid amount:', e);
+            }
+        };
+
+        const getStatusColor = (status) => {
+            const statusColors = {
+              "Unpaid": "#ff5252",   
+              "Paid": "#4BB543",
+              "Partially Paid": "#aaaaaa"
+            };
+          
+            return statusColors[status] || "#FFFFFF"; // Default color if status not found
+          };
 
         useEffect(() => {   
             if(isFocused){
@@ -418,7 +456,7 @@ const CommandeScreen = () => {
                             {/* <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', bottom: 30, right: 30}} /> */}
                             </View>}
                           renderItem={({item}) => (
-                              <TouchableOpacity key={item.key} style={styles.card} onPress={() => navigation.navigate('SalesInvoiceScreen',{commandeName: item.name})}>
+                              <TouchableOpacity key={item.key} style={styles.card} onPress={() => navigation.navigate('SalesInvoiceScreen',{commandeName: item.name, paymentStat: payments[item.name]})}>
                                     <View style={styles.cardContent}>
                                         <View style={styles.cardHeader}>
                                             <Text style={styles.cardTitle}>{item.name}</Text>
@@ -430,7 +468,10 @@ const CommandeScreen = () => {
                                                 <Text style={styles.detailText}>Date: {item.transaction_date}</Text>
                                                 <Text style={styles.detailText}>Total Quantity: {item.total_qty}</Text>
                                                 <Text style={styles.detailText}>Total Amount: {item.grand_total}</Text>
-                                                <Text style={styles.detailText}>Payment Status: {paymentStatuses[item.name]}</Text>
+                                                <Text style={styles.detailText}>Paid Amount: {payments[item.name]}</Text>
+                                                <TouchableOpacity  style={[styles.statusContainer, { backgroundColor: getStatusColor(paymentStatuses[item.name]) }]}>
+                                                    <Text style={styles.statusText}>{paymentStatuses[item.name]}</Text>
+                                                </TouchableOpacity>
                                             </View>
                                             {/* <View style={{flexDirection:'row', justifyContent:'space-between'}}>
                                                 <Text>Status: {PaymentStatus(item.name)} </Text>
@@ -438,11 +479,11 @@ const CommandeScreen = () => {
                                             </View> */}
                                           <View style={styles.cardActions}>
                                               <TouchableOpacity style={styles.actionButton}>
-                                                <MaterialIcons name="delete" size={26} color="#FF6B35" onPress={()=> {handleDelete(item.name)}}/>
+                                                <MaterialIcons name="delete" size={30} color="#FF6B35" onPress={()=> {handleDelete(item.name)}}/>
                                               </TouchableOpacity>
-                                              <View style={styles.statusIcon}>
+                                              {/* <View style={styles.statusIcon}>
                                                 <View>{getStatusIcon(paymentStatuses[item.name])}</View>
-                                            </View>
+                                            </View> */}
                                           </View>
                                       </View>
                                   </View>
@@ -533,5 +574,27 @@ const styles = StyleSheet.create({
   },
   statusIcon: {
     justifyContent:'flex-end', alignItems: 'center',paddingTop:10, height:35, marginRight:10, marginBottom:5
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    // justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 5,
+    backgroundColor: "#ff5252",
+    height: 30,
+    width: 100,
+    borderRadius:10,
+    justifyContent: 'center',
+    alignContent:'center',
+  },
+  statusText: {
+    fontSize: 16,
+    color: '#FFF',
+    margin:5,
+    alignItems:'center',
+    justifyContent: 'center',
+    alignContent:'center',
+
+    // backgroundColor:" #FF0000"
   },
 })

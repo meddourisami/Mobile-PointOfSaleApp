@@ -31,7 +31,7 @@ const Stack = createNativeStackNavigator();
 const HomeNavigation = () => {
     return (
         <Stack.Navigator initialRouteName="Home">
-            <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Home Page' }}/>
+            <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ title: 'Home Page' }}/>
             <Stack.Screen name="ArticleScreen" component={ArticleScreen} options={{ title: 'Items' }}/>
             <Stack.Screen name="ClientScreen" component={ClientScreen} options={{ title: 'Customers' }}/>
             <Stack.Screen name="StockScreen" component={StockScreen} options={{ title: 'Stock' }}/>

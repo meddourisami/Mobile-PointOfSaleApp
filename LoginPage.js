@@ -4,14 +4,17 @@ import * as ImagePicker from 'expo-image-picker';
 import { CameraView, Camera } from "expo-camera";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
 const LoginPage = ({onLogin}) => {
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
     const [scannedData, setScannedData] = useState(null);
     const [hasPermission, setHasPermission] = useState(null);
     const [verificationCode, setVerificationCode] = useState('');
+    const [isVerificationCodeVisible, setIsVerificationCodeVisible] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [hasCameraPermission, setHasCameraPermission] = useState(null);
     const [scanned, setScanned] = useState(false);
@@ -146,7 +149,7 @@ const LoginPage = ({onLogin}) => {
     console.log("handle");
     setScanned(true);
     setScannedData(data);
-    Alert.alert("QR Code Found", `Data: ${data}`);
+    // Alert.alert("QR Code Found", `Data: ${data}`);
     // setTimeout(() => setScanned(false), 2000);
   };
   
@@ -162,6 +165,14 @@ const LoginPage = ({onLogin}) => {
       { cancelable: true }
     );
   };
+
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible(!isPasswordVisible);
+  };
+
+  const toggleVerificationCodeVisibility = () => {
+    setIsVerificationCodeVisible(!isVerificationCodeVisible);
+  };
   
     return (
       <View style={styles.container}>
@@ -176,13 +187,22 @@ const LoginPage = ({onLogin}) => {
           onChangeText={(text) => setName(text)}
         />
   
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Password"
-          value={password}
-          onChangeText={(text) => setPassword(text)}
-          secureTextEntry={true}
-        />
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Password"
+            value={password}
+            onChangeText={(text) => setPassword(text)}
+            secureTextEntry={!isPasswordVisible}
+          />
+          <TouchableOpacity style={styles.iconContainer} onPress={togglePasswordVisibility}>
+          <Icon
+            name={isPasswordVisible ? "eye-off" : "eye"}
+            size={24}
+            color="gray"
+          />
+          </TouchableOpacity>
+        </View>
         </>
         )}
 
@@ -190,13 +210,23 @@ const LoginPage = ({onLogin}) => {
         <>
           <Text style={styles.title}>Login</Text>
           <AntDesign name="arrowleft" size={28} color="black" onPress={()=>setIsLoggedIn(false)}/>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Verification Code"
-            value={verificationCode}
-            onChangeText={(text) => setVerificationCode(text)}
-            // secureTextEntry={true}
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Verification Code"
+              value={verificationCode}
+              onChangeText={(text) => setVerificationCode(text)}
+              secureTextEntry={!isVerificationCodeVisible}
+            />
+            <TouchableOpacity style={styles.iconContainer} onPress={toggleVerificationCodeVisibility}>
+              <Icon
+              name={isVerificationCodeVisible ? "eye-off" : "eye"}
+              size={24}
+              color="gray"
+              />
+            </TouchableOpacity>
+          </View>
+
           <Text style={{marginBottom:12, fontSize:18, fontWeight:'bold'}}>OR</Text>
           <TouchableOpacity style={styles.imagePickerButton} onPress={handleChooseMethod}>
             <Text style={styles.buttonText}>Pick OR scan Verification QR Code</Text>
@@ -237,6 +267,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 40,
   },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   input: {
     width: '100%',
     height: 50,
@@ -246,6 +280,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderColor: '#ddd',
     borderWidth: 1,
+    paddingRight: 40
+  },
+  iconContainer: {
+    position: 'absolute', 
+    right: 10,
+    padding: 10,
+    paddingBottom:20,
   },
   imagePickerButton: {
     width: '100%',

@@ -465,7 +465,7 @@ const LivraisonScreen = () => {
                                       <View style={styles.deliveryDetails}>
                                       <Text style={styles.detailText}>Customer: {item.customer_name}</Text>
                                       <Text style={styles.detailText}>Delivery Date: {item.posting_time}</Text>
-                                      <Text style={styles.detailText}>Delivery Price: DA {item.total}</Text>
+                                      <Text style={styles.detailText}>Delivery Price: {item.total} DA</Text>
                                       </View>
                                       <TouchableOpacity  style={[styles.statusContainer, { backgroundColor: getStatusColor(getStatusLabel(item.status, item.is_return)) }]}>
                                       <Text style={styles.statusText}> {getStatusLabel(item.status, item.is_return)}</Text>

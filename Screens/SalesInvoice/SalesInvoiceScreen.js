@@ -9,7 +9,7 @@ import RNHTMLtoPDF from 'react-native-html-to-pdf';
 
 const SalesInvoiceScreen = ({navigation}) => {
     const route = useRoute();
-    const {commandeName, invoice} = route.params;
+    const {commandeName, invoice, paymentStat} = route.params;
     const isFocused = useIsFocused();
     const db = useSQLiteContext();
     const { updateBudget } = useBudget();
@@ -22,6 +22,7 @@ const SalesInvoiceScreen = ({navigation}) => {
     const [paymentMode, setPaymentMode] = useState("Cash");
     const [invoiceDate, setInvoiceDate] = useState(new Date());
     const [show, setShow] = useState(false);
+    
 
     const onChange = (event, selectedDate) => {
         const currentDate = selectedDate || invoiceDate;
@@ -381,6 +382,8 @@ const SalesInvoiceScreen = ({navigation}) => {
         try{
             if (!paidAmount ||  !invoiceDate){
                 Alert.alert("Make sure you have entered the amount paid");
+            }else if((paidAmount+paymentStat> commande.grand_total)){
+                Alert.alert("Payment exceeded the sale order grand total");
             }else{
                 if(commandeName && !invoice){
                     // saveSalesInvoice();
@@ -390,7 +393,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                 //     completeSalesInvoiceSaving();
                 // }
                 updateBudget(paidAmount);
-                navigation.navigate('PaimentScreen');
+                navigation.navigate('PaimentScreen', {salesOrderName: commandeName});
                 Alert.alert("Payment procedeed successfully..");
             }
         }catch(e){
@@ -500,7 +503,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                         <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Customer: {commande.customer}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={{borderRadius: 10, backgroundColor:"#FFF",  margin: 5, padding:20, justifyContent:'center'}}>
-                        <Text style={{ fontSize: 14, color: '#555' }}>Amount To Pay: {commande.grand_total} DA</Text>
+                        <Text style={{ fontSize: 14, color: '#555' }}>Amount To Pay: {commande.grand_total-paymentStat} DA</Text>
                         <TextInput
                         style={{
                         padding: 15,
@@ -511,7 +514,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                         borderColor: '#ccc',
                         borderWidth: 1,
                         }}
-                        placeholder={`${commande.grand_total} DA`}
+                        placeholder={`${(commande.grand_total-paymentStat).toFixed(2)} DA`}
                         keyboardType='numeric'
                         value={paidAmount}
                         onChangeText={text => setPaidAmount(Number(text))}

@@ -4,12 +4,15 @@ import { useSync } from '../SyncContext';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useTranslation} from "react-i18next";
+import  DateTimePicker  from '@react-native-community/datetimepicker';
 
 const SettingsScreen = () => {
   const { isAutoSync, setIsAutoSync } = useSync(); 
   const [syncMode, setSyncMode] = useState(null);
   const { t, i18n } = useTranslation();
   const [isFrench, setIsFrench] = useState(i18n.language === 'fr');
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [time, setTime] = useState(new Date());
   //const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
 
   /*const switchLanguage = async () => {
@@ -62,9 +65,20 @@ const SettingsScreen = () => {
   };
 
   const currentTime = new Date();
-  const syncTimes = {
-    midday: new Date().setHours(12, 34, 0, 0),
-    midnight: new Date().setHours(0, 0, 0, 0),
+  // const syncTimes = {
+  //   midday: new Date().setHours(12, 34, 0, 0),
+  //   midnight: new Date().setHours(0, 0, 0, 0),
+  // };
+
+  const onTimeChange = (event, selectedDate) => {
+    setShowTimePicker(false);
+    if (selectedDate) {
+      const newTime = new Date(selectedDate);
+      newTime.setSeconds(0, 0);
+      setTime(newTime);
+      setSyncMode(newTime); 
+    }
+    // setShowTimePicker(false);
   };
 
   useEffect(() => {
@@ -87,21 +101,26 @@ const SettingsScreen = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
       <View style={styles.settingItem}>
-        <Text>Automatic Synchronization</Text>
+        <Text>Switch Sync Mode</Text>
         <Switch value={!isAutoSync} onValueChange={toggleAutoSync} />
       </View>
 
       {!isAutoSync && (
         <View style={styles.settingItem}>
           <Text>Select Sync Time</Text>
-          <Picker
-          selectedValue={syncMode}
-          onValueChange={(itemValue) => setSyncMode(itemValue)}
-          style={{ height: 50, width: 200 }}
-          >
-            <Picker.Item label="Midday" value={syncTimes.midday} />
-            <Picker.Item label="Midnight" value={syncTimes.midnight} />
-          </Picker>
+            <View style={{flexDirection:'column'}}>
+            <Button title="Select Sync Time" onPress={() => setShowTimePicker(true)} />
+              {showTimePicker && (
+                <DateTimePicker
+                value={new Date(time)}
+                mode="time"
+                is24Hour={true}
+                display="default"
+                onChange={onTimeChange}
+                />
+              )}
+              <Text>Next sync at:{new Date(syncMode).toLocaleTimeString()}</Text>
+            </View>
         </View>
       )}
      {/* <View>

@@ -50,7 +50,7 @@ const CommandeArticles = ({navigation}) => {
                   renderItem={({ item }) => (
                     <TouchableOpacity style={styles.itemCard}>
                       <View style={styles.itemInfoContainer}>
-                        <Text style={styles.itemName}>{item.name}</Text>
+                        {/* <Text style={styles.itemName}>{item.name}</Text> */}
                         <View style={styles.itemDetails}>
                           <Text style={styles.itemLabel}>Item Name: <Text style={styles.itemText}>{item.item_name}</Text></Text>
                           <Text style={styles.itemLabel}>Item Price: <Text style={styles.itemPrice}>{item.rate} DA</Text></Text>

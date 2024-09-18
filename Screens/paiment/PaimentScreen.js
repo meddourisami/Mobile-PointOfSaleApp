@@ -1,7 +1,7 @@
 import { ActivityIndicator, FlatList, StyleSheet, Text, Touchable, TouchableOpacity, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useSQLiteContext } from 'expo-sqlite'
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 import { useSync } from '../../SyncContext';
@@ -10,6 +10,8 @@ const PaimentScreen = () => {
   const db = useSQLiteContext();
     const navigation = useNavigation();
     const isFocused = useIsFocused();
+    const route = useRoute();
+    // const { salesOrderName } = route.params;
     const { token } = useSync();
 
     const Content =  () => {
@@ -233,6 +235,7 @@ const PaimentScreen = () => {
                           <Text style={styles.detailText}>Mode of Payment: {item.mode_of_payment}</Text>
                           <Text style={styles.detailText}>Amount Paid: {item.paid_amount}</Text>
                           <Text style={styles.detailText}>Invoice Date: {item.posting_date}</Text>
+                          {/* <Text>Associated sale order: {salesOrderName}</Text> */}
                         </View>
                       </View>
                       <View style={styles.cardActions}>
