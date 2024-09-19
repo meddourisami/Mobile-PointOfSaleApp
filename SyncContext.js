@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
-const SyncContext = createContext();
+export const SyncContext = createContext();
 
 export const useSync = () => useContext(SyncContext);
 

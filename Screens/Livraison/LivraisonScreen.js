@@ -9,6 +9,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { useSync } from '../../SyncContext';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import {Picker} from "@react-native-picker/picker";
+import {useDeliveryNoteLogs} from "../../Contexts/DeliveryNotes/DeliveryNoteLogsContext";
 
 const LivraisonScreen = () => {
   const db = useSQLiteContext();
@@ -24,6 +25,7 @@ const LivraisonScreen = () => {
       const [searchQuery, setSearchQuery] = useState('');
       const [selectedStatus, setSelectedStatus] = useState(null);
       const [activeFilter, setActiveFilter] = useState('All'); // Track the active filter
+      /*const { deliveryNotes, fetchAllRecords, deleteRecordByName, deleteAllRecords, getRecordByName } = useDeliveryNoteLogs();*/
 
       const getHash = (data) => {
         return CryptoJS.MD5(JSON.stringify(data)).toString();
@@ -455,6 +457,7 @@ const LivraisonScreen = () => {
       useEffect(() => {
           if(isFocused){
             const initialize = async () => {
+                console.log(deliveryNotes)
               // createMetadataTable();
               createDeliveryNoteLocalLogs();
               getDeliveriesfromAPI();

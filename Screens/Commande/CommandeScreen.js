@@ -180,7 +180,7 @@ const CommandeScreen = () => {
                                         console.log("Synced succes and deleted from local logs");
                                         response.json().then(async (data) => {
                                             console.log(data.docs[0].name);
-                                            orderTosync= await db.getFirstAsync(`SELECT * FROM Sales_Order WHERE name= ?`,[log.name]);
+                                            const orderTosync= await db.getFirstAsync(`SELECT * FROM Sales_Order WHERE name= ?`,[log.name]);
                                             await db.runAsync(`INSERT INTO Sales_Order(
                                                 name, owner,
                                                 docstatus, title, naming_series, customer,

@@ -4,6 +4,8 @@ import { useSync } from '../SyncContext';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useTranslation} from "react-i18next";
+import ManualSyncButton from "./ManualSyncButton";
+import SyncSettings from "./SyncSettings";
 
 const SettingsScreen = () => {
   const { isAutoSync, setIsAutoSync } = useSync(); 
@@ -135,7 +137,7 @@ const SettingsScreen = () => {
         </TouchableOpacity>
       </View>*/}
 
-      <View style={styles.settingItem}>
+    {/*  <View style={styles.settingItem}>
         <Text >
           {t('switchLanguage')} ({isFrench ? 'Français' : 'English'})
         </Text>
@@ -144,6 +146,22 @@ const SettingsScreen = () => {
             onValueChange={toggleSwitch}
             value={isFrench}
         />
+      </View>*/}
+      <View style={styles.container}>
+        <View style={styles.settingItem}>
+          <Text >
+            {t('switchLanguage')} ({isFrench ? 'Français' : 'English'})
+          </Text>
+
+          <Switch
+              onValueChange={toggleSwitch}
+              value={isFrench}
+          />
+        </View>
+        <SyncSettings />
+      </View>
+      <View >
+        <ManualSyncButton />
       </View>
     </View>
   );

@@ -16,7 +16,10 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import LoginPage from './LoginPage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import './i18n/i18n'; // Initialize i18n globally in the app
+import './i18n/i18n';
+import {SynchoProvider} from "./Contexts/SyncContext";
+import SyncManager from "./Settings/SyncManager";
+import {DeliveryNoteLogsProvider} from "./Contexts/DeliveryNotes/DeliveryNoteLogsContext"; // Initialize i18n globally in the app
 
 
 async function initDatabase(db) {
@@ -2491,43 +2494,50 @@ export default function App() {
 
   return (
     // <GestureHandlerRootView>
-    <SyncProvider>
-    <BudgetProvider>
-    <SQLiteProvider databaseName='myDB.db' onInit={initDatabase}>
-      <NavigationContainer>
-        <Tab.Navigator screenOptions={{
-          tabBarStyle: { backgroundColor:'#284979', borderTopLeftRadius:15 , borderTopRightRadius:15 },
-          tabBarHideOnKeyboard: true,
-        }}>
-          <Tab.Screen name="Home" component={HomeNavigation} options={{
-            headerShown:false,
-            tabBarIcon: ({ focused }) => (
-              <View>
-               <FontAwesome5 name="home" size={24} color="white" />
-              </View>
-            ),
-            tabBarOptions: {
-              activeTintColor: '#284979',
-              inactiveTintColor: '#FFFFFF',
-            },
-          }}/>
-          <Tab.Screen
-              name="Profile"
-              options={{
-                tabBarIcon: ({ focused }) => (
-                  <View>
-                    <Ionicons name="person" size={24} color="white" />
-                  </View>
-                ),
-              tabBarOptions: {
-                activeTintColor: '#284979',
-                inactiveTintColor: '#FFFFFF',
-              },
-              }}
-            >
-              {() => <ProfileScreen handleLogout={handleLogout} />}
-            </Tab.Screen>
-          {/* <Tab.Screen name="Clients" component={ClientNavigation} screenOptions={{headerShown:false}} options={{
+      <SynchoProvider>
+          <SyncProvider>
+              {/*<DeliveryNoteLogsProvider>*/}
+                  <SyncManager/>
+                  <BudgetProvider>
+                      <SQLiteProvider databaseName='myDB.db' onInit={initDatabase}>
+                          <NavigationContainer>
+                              <Tab.Navigator screenOptions={{
+                                  tabBarStyle: {
+                                      backgroundColor: '#284979',
+                                      borderTopLeftRadius: 15,
+                                      borderTopRightRadius: 15
+                                  },
+                                  tabBarHideOnKeyboard: true,
+                              }}>
+                                  <Tab.Screen name="Home" component={HomeNavigation} options={{
+                                      headerShown: false,
+                                      tabBarIcon: ({focused}) => (
+                                          <View>
+                                              <FontAwesome5 name="home" size={24} color="white"/>
+                                          </View>
+                                      ),
+                                      tabBarOptions: {
+                                          activeTintColor: '#284979',
+                                          inactiveTintColor: '#FFFFFF',
+                                      },
+                                  }}/>
+                                  <Tab.Screen
+                                      name="Profile"
+                                      options={{
+                                          tabBarIcon: ({focused}) => (
+                                              <View>
+                                                  <Ionicons name="person" size={24} color="white"/>
+                                              </View>
+                                          ),
+                                          tabBarOptions: {
+                                              activeTintColor: '#284979',
+                                              inactiveTintColor: '#FFFFFF',
+                                          },
+                                      }}
+                                  >
+                                      {() => <ProfileScreen handleLogout={handleLogout}/>}
+                                  </Tab.Screen>
+                                  {/* <Tab.Screen name="Clients" component={ClientNavigation} screenOptions={{headerShown:false}} options={{
             tabBarIcon: ({ focused }) => (
               <View>
                 <FontAwesome6 name="people-group" size={24} color="white" />
@@ -2538,22 +2548,24 @@ export default function App() {
               inactiveTintColor: '#FFFFFF',
             },
             }}/> */}
-          <Tab.Screen name="Settings" component={SettingsScreen} options={{
-            tabBarIcon: ({ focused }) => (
-              <View>
-                <AntDesign name="setting" size={24} color="white" />
-              </View>
-            ),
-            tabBarOptions: {
-              activeTintColor: '#FF6B35',
-              inactiveTintColor: '#FFFFFF',
-            },
-            }}/>
-        </Tab.Navigator>
-      </NavigationContainer>
-    </SQLiteProvider>
-    </BudgetProvider>
-    </SyncProvider>
+                                  <Tab.Screen name="Settings" component={SettingsScreen} options={{
+                                      tabBarIcon: ({focused}) => (
+                                          <View>
+                                              <AntDesign name="setting" size={24} color="white"/>
+                                          </View>
+                                      ),
+                                      tabBarOptions: {
+                                          activeTintColor: '#FF6B35',
+                                          inactiveTintColor: '#FFFFFF',
+                                      },
+                                  }}/>
+                              </Tab.Navigator>
+                          </NavigationContainer>
+                      </SQLiteProvider>
+                  </BudgetProvider>
+              {/*</DeliveryNoteLogsProvider>*/}
+          </SyncProvider>
+      </SynchoProvider>
     // </GestureHandlerRootView>
   );
 }
