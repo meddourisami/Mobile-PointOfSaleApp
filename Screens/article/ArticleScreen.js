@@ -97,7 +97,7 @@ const ArticleScreen = () => {
                     const groups = await response.json();
                     const transformedGroups = transformData(groups)
                     setItemsGroups(transformedGroups)
-                    console.log(transformedGroups, 'newer groups')
+                    // console.log(transformedGroups, 'newer groups')
                 } else {
                     throw new Error('No article groups');
                 }
@@ -163,7 +163,7 @@ const ArticleScreen = () => {
                             bal_val: quantity.bal_val,
                         };
                     });
-                    console.log(token)
+                    // console.log(token)
                     // const reponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
                     const reponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
                         {

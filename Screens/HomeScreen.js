@@ -753,6 +753,7 @@ const HomeScreen = () => {
                         await db.runAsync(`UPDATE Sales_Order_Item SET parent=? WHERE parent=?`,[data.docs[0].name, log.name]);
                         await db.runAsync(`UPDATE Sales_Taxes_and_Charges SET parent=? WHERE parent=?`,[data.docs[0].name, log.name]);
                         await db.runAsync(`UPDATE sales_order_logs SET state= ? WHERE id = ?;`, ["Submitted", log.id]);
+                        await db.runAsync(`UPDATE Payment_Reference_Entry SET reference_name= ? WHERE reference_name= ?;`, [data.docs[0].name ,log.name]);
                         await db.runAsync(`DELETE FROM sales_order_logs WHERE id = ?;`, [log.id]);
                         console.log("Synced sale order succesfully and deleted from local logs", data.docs[0].name);
                 }else{
@@ -1059,6 +1060,7 @@ const HomeScreen = () => {
                         ]
                       );
                       await db.runAsync(`DELETE FROM Payment_Entry WHERE name = ?`, [log.name]);
+                      await db.runAsync(`UPDATE Payment_Reference_Entry SET parent= ? WHERE parent= ?`, [data.docs[0].name, log.name]);
                       await db.runAsync(`UPDATE payment_entry_logs SET state= ? WHERE id = ?;`, ["Submitted", log.id]);
                       await db.runAsync(`DELETE FROM payment_entry_logs WHERE id = ?;`, [log.id]);
                       console.log("Synced payment entry success", data.docs[0].name);
@@ -1285,7 +1287,7 @@ const HomeScreen = () => {
             await syncDeliveryWithServer(log);
           }
         });
-      }  
+      } 
       if (saleOrderLogs) {
           saleOrderLogs.map(async(log) => {
             if(log.state === "Submitted" ){
@@ -1318,6 +1320,7 @@ const HomeScreen = () => {
             
 
                 await db.runAsync(`UPDATE payment_entry_logs SET data=? WHERE id=?`, [paymentLog.data, paymentLog.id]);
+                // await db.runAsync()
             
                 console.log("starting syncing payment entry", paymentLog.name);
                 

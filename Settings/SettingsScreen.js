@@ -12,7 +12,7 @@ const SettingsScreen = () => {
   const { t, i18n } = useTranslation();
   const [isFrench, setIsFrench] = useState(i18n.language === 'fr');
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [time, setTime] = useState(new Date());
+  const [selectedTime, setSelectedTime] = useState(new Date());
   //const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
 
   /*const switchLanguage = async () => {
@@ -60,6 +60,12 @@ const SettingsScreen = () => {
     loadLanguage();
   }, []);
 
+  // const onTimeChange = (event, selectedDate) => {
+  //   const currentDate = selectedDate || selectedTime;
+  //   setShowTimePicker(false);
+  //   setSelectedTime(currentDate);
+  // };
+
   const toggleAutoSync = () => {
     setIsAutoSync((previousState) => !previousState);
   };
@@ -101,7 +107,7 @@ const SettingsScreen = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
       <View style={styles.settingItem}>
-        <Text>Switch Sync Mode</Text>
+        <Text>Switch Sync Mode To Manual</Text>
         <Switch value={!isAutoSync} onValueChange={toggleAutoSync} />
       </View>
 
@@ -123,6 +129,38 @@ const SettingsScreen = () => {
             </View>
         </View>
       )}
+
+      <View style={styles.settingItem}>
+        <Text>Select Sync Mode</Text>
+        <Picker
+        selectedValue={syncMode}
+        style={{ height: 50, width: 150 }}
+        onValueChange={(itemValue) => setSyncMode(itemValue)}
+      >
+        <Picker.Item label="Automatic" value="automatic" />
+        <Picker.Item label="Manual" value="manual" />
+        <Picker.Item label="Semi-Automatic" value="semi-automatic" />
+      </Picker>
+
+      {syncMode === 'semi-automatic' && (
+        <View>
+          <Text>Select Sync Time</Text>
+          <View style={{ flexDirection: 'row' }}>
+            <Button title="Select Sync Time" onPress={() => setShowTimePicker(true)} />
+            {showTimePicker && (
+              <DateTimePicker
+                value={selectedTime}
+                mode="time"
+                is24Hour={true}
+                display="default"
+                onChange={onTimeChange}
+              />
+            )}
+            <Text>Next sync at: {new Date(selectedTime).toLocaleTimeString()}</Text>
+          </View>
+        </View>
+      )}
+      </View>
      {/* <View>
         <Text>{t('switchLanguage')}</Text>
         <Button title={t('switchLanguage')} onPress={switchLanguage} />

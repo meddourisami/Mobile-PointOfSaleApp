@@ -117,7 +117,7 @@ const LoginPage = ({onLogin}) => {
     if (barCodeScanner.length > 0) {
       setScannedData(barCodeScanner[0].data);
       setVerificationCode(barCodeScanner[0].data);
-      Alert.alert("QR Code Found", `Data: ${barCodeScanner[0].data}`);
+      // Alert.alert("QR Code Found", `Data: ${barCodeScanner[0].data}`);
     } else {
       Alert.alert("No QR Code Found", "Please try another image.");
     }

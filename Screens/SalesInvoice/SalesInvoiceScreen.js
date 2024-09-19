@@ -503,7 +503,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                         <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Customer: {commande.customer}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={{borderRadius: 10, backgroundColor:"#FFF",  margin: 5, padding:20, justifyContent:'center'}}>
-                        <Text style={{ fontSize: 14, color: '#555' }}>Amount To Pay: {commande.grand_total-paymentStat} DA</Text>
+                        <Text style={{ fontSize: 14, color: '#555' }}>Amount To Pay: {(commande.grand_total-paymentStat).toFixed(2)} DA</Text>
                         <TextInput
                         style={{
                         padding: 15,
@@ -529,7 +529,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                             style={{ height: 50, width: '100%' }}
                             >
                                 <Picker.Item label="Cash" value="Cash" />
-                                <Picker.Item label="Cart Card" value="Cart Card" />
+                                <Picker.Item label="Cart Card" value="Credit Card" />
                             </Picker>
                         </View>
                     </TouchableOpacity>

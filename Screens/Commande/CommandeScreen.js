@@ -343,7 +343,7 @@ const CommandeScreen = () => {
               const status = await getPaymentStatusOfaSaleOrder(order.name);
               statuses[order.name] = status;
               const payment = await getPaymentsOfaSaleOrder(order.name);
-              console.log(payment);
+            //   console.log(payment);
               payments[order.name] = payment;
             }
         
@@ -436,7 +436,7 @@ const CommandeScreen = () => {
             if (salesOrders) {
                 getSalesOrders();
             }
-        }, []);
+        }, [salesOrders]);
 
         return (
           <View>

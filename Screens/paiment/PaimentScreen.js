@@ -17,6 +17,7 @@ const PaimentScreen = () => {
     const Content =  () => {
         const [payments , setPayments] = useState([]);
         const [salesInvoices , setSalesInvoices] = useState([]);
+        const [associatedSaleOrders, setAssociatedSaleOrders] = useState({});
 
         const createPaymentEntryLocalLogs = async () => {
           //await db.runAsync(`DELETE FROM payment_entry_logs;`);
@@ -190,13 +191,37 @@ const PaimentScreen = () => {
           }
         };
 
+        const getAssociatedSaleOrder = async (payment) => {
+          try{
+            const saleOrder = await db.getFirstAsync(`SELECT * FROM Payment_Reference_Entry WHERE parent = ?`,[payment]);
+            return saleOrder.reference_name;
+          }catch(e){
+            console.log("error getting associated sale order", e);
+          }
+        };
+
+        const fetchAssociatedSaleOrder = async () => {
+          const associated_SaleOrders = {};
+          for (const payment of payments) {
+            const saleOrder = await getAssociatedSaleOrder(payment.name);
+            associated_SaleOrders[payment.name] = saleOrder;
+          }
+          setAssociatedSaleOrders(associated_SaleOrders);
+        };
+
+        useEffect(() => {
+          if (payments && payments.length > 0) {
+            fetchAssociatedSaleOrder();
+          }
+        }, [payments]);
+
         useEffect(() => {   
           if(isFocused){
               const initialize = async () => {
                 createPaymentEntryLocalLogs();
                 // getSalesInvoices();
-                getSalesPayments();
                 saveToLocalLogs();
+                getSalesPayments();
                 //syncDataWithServer();
               };
               initialize();
@@ -204,9 +229,8 @@ const PaimentScreen = () => {
        }, [isFocused]);
 
        useEffect(() => {
-           if (payments) {
-               
-               getSalesPayments();
+           if (payments) {  
+              getSalesPayments();
            }
          }, [payments]);
       
@@ -235,7 +259,7 @@ const PaimentScreen = () => {
                           <Text style={styles.detailText}>Mode of Payment: {item.mode_of_payment}</Text>
                           <Text style={styles.detailText}>Amount Paid: {item.paid_amount}</Text>
                           <Text style={styles.detailText}>Invoice Date: {item.posting_date}</Text>
-                          {/* <Text>Associated sale order: {salesOrderName}</Text> */}
+                          <Text style={styles.detailText}>Sale order: {associatedSaleOrders[item.name]}</Text>
                         </View>
                       </View>
                       <View style={styles.cardActions}>

@@ -48,7 +48,6 @@ const LivraisonDetails = () => {
                 <Text style={styles.itemDetail}>Qty: {item.qty}</Text>
                 <Text style={styles.itemDetail}>Rate: {item.rate} DA</Text>
                 <Text style={styles.itemDetail}>Amount: {item.amount} DA</Text>
-                <Text style={styles.itemDetail}>Warehouse: {item.warehouse}</Text>
               </View>
             ))}
           </View>
