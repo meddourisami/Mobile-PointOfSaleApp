@@ -1,4 +1,4 @@
-import { FlatList, TouchableOpacity, StyleSheet, Text, View, ActivityIndicator } from 'react-native'
+import {FlatList, TouchableOpacity, StyleSheet, Text, View, ActivityIndicator, TextInput} from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { AntDesign } from '@expo/vector-icons';
@@ -8,16 +8,24 @@ import { useSQLiteContext } from 'expo-sqlite';
 import Feather from '@expo/vector-icons/Feather';
 import { useSync } from '../../SyncContext';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import {Picker} from "@react-native-picker/picker";
+import {useDeliveryNoteLogs} from "../../Contexts/DeliveryNotes/DeliveryNoteLogsContext";
 
 const LivraisonScreen = () => {
   const db = useSQLiteContext();
   const { token } = useSync();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const statuses = ['Pending', 'Delivered', 'Return', 'All'];
 
   const Content =  () => {
       const [deliveries , setDeliveries] = useState([]);
       const [livraisons, setLivraisons] = useState([]);
+      const [filteredDeliveries, setFilteredDeliveries] = useState([]);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [selectedStatus, setSelectedStatus] = useState(null);
+      const [activeFilter, setActiveFilter] = useState('All'); // Track the active filter
+      /*const { deliveryNotes, fetchAllRecords, deleteRecordByName, deleteAllRecords, getRecordByName } = useDeliveryNoteLogs();*/
 
       const getHash = (data) => {
         return CryptoJS.MD5(JSON.stringify(data)).toString();
@@ -370,7 +378,7 @@ const LivraisonScreen = () => {
       const getLivraisons = async () => {
           try{
               const allLivraisons= await db.getAllAsync(`SELECT * FROM Deliveries WHERE status IN (?, ?, ?, ?)`, ["Draft", "To Bill", "Return Issued", "Completed"]);
-              const filteredLivraisons = allLivraisons.filter(item => item.total >= 0);
+             const filteredLivraisons = allLivraisons.filter(item => item.total >= 0);
               setLivraisons(filteredLivraisons);
           }catch(e){
               console.log("Error fetching all deliveries",e);
@@ -425,11 +433,31 @@ const LivraisonScreen = () => {
           return <Feather name="x-circle" size={24} color="red" />;
         }
       };
+
+      const handleFilterPress = (filter) => {
+          console.log(filter)
+          setActiveFilter(filter); // Update active filter when pressed
+      };
+
+      const renderFilterItem = ({ item }) => {
+          const isActive = item === activeFilter; // Check if the filter is active
+          return (
+              <TouchableOpacity
+                  style={[styles.filterItem, isActive ? styles.activeFilter : null]}
+                  onPress={() => handleFilterPress(item)}
+              >
+                  <Text style={[styles.filterText, isActive ? styles.activeFilterText : null]}>
+                      {item}
+                  </Text>
+              </TouchableOpacity>
+          );
+      };
       
 
       useEffect(() => {
           if(isFocused){
             const initialize = async () => {
+                console.log(deliveryNotes)
               // createMetadataTable();
               createDeliveryNoteLocalLogs();
               getDeliveriesfromAPI();
@@ -440,6 +468,23 @@ const LivraisonScreen = () => {
           }
       }, [isFocused]);
 
+      useEffect(() => {
+          if (livraisons.length > 0) {
+              if (searchQuery === '' && selectedStatus === null &&  (activeFilter === null || activeFilter === 'All')) {
+                  setFilteredDeliveries(livraisons);
+              } else {
+                  console.log(livraisons[0])
+                  const filtered = livraisons.filter(delivery => {
+                      const matchesStatus = selectedStatus ? getStatusLabel(delivery.status).toLowerCase() === selectedStatus.toLowerCase() : true;
+                      const matchesBadgeStatus = activeFilter ? getStatusLabel(delivery.status).toLowerCase() === activeFilter.toLowerCase() : true;
+                      const matchesSearch = delivery.name.toLowerCase().includes(searchQuery.toLowerCase());
+                      return  matchesStatus && matchesSearch && matchesBadgeStatus;
+                  });
+                  setFilteredDeliveries(filtered);
+              }
+          }
+      }, [livraisons, searchQuery, selectedStatus, activeFilter]);
+
       // useEffect(() => {
       //   if(livraisons) { 
       //     getLivraisons();
@@ -448,6 +493,7 @@ const LivraisonScreen = () => {
 
       return (
           <View>
+<<<<<<< HEAD
                   {livraisons.length=== 0 ? (
                     <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
                   ) : (
@@ -474,8 +520,75 @@ const LivraisonScreen = () => {
                                   </View>
                               </TouchableOpacity>
                           )}
+=======
+              {livraisons.length === 0 ? (
+                  <ActivityIndicator size="large" color="#284979"
+                                     style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}/>
+              ) : (
+                  <View style={{marginTop: 10}}>
+
+                     {/* <Picker
+                          selectedValue={selectedStatus}
+                          onValueChange={(itemValue) => setSelectedStatus(itemValue)}
+                          style={{ height: 50, width: '100%', marginBottom: 10 }}
+                      >
+                          <Picker.Item label="Status" value={null} />
+                          {statuses.map((status) => (
+                              <Picker.Item key={status} label={status} value={status} />
+                          ))}
+                      </Picker>*/}
+                      <TextInput
+                          placeholder="Search Delivery notes"
+                          value={searchQuery}
+                          onChangeText={setSearchQuery}
+                          style={{
+                              height: 40,
+                              borderColor: '#ccc',
+                              borderWidth: 1,
+                              borderRadius: 10,
+                              marginBottom: 10,
+                              paddingHorizontal: 10
+                          }}
+>>>>>>> context-async
                       />
-                  )}  
+                      <FlatList
+                          data={statuses}
+                          renderItem={renderFilterItem}
+                          keyExtractor={(item) => item}
+                          horizontal // Horizontal scrolling FlatList
+                          showsHorizontalScrollIndicator={false} // Hide the scrollbar
+                      />
+                          <FlatList
+                              data={filteredDeliveries}
+                              keyExtractor={(item) => (item.name).toString()}
+                              style={{marginBottom: 40}}
+                              renderItem={({item}) => (
+                                  <TouchableOpacity key={item.key} style={styles.deliveryCard}
+                                                    onPress={() => navigation.navigate('LivraisonStatus', {deliveryName: item.name})}>
+                                      <View style={styles.deliveryContent}>
+                                          <View style={styles.deliveryHeader}>
+                                              <Text style={styles.deliveryTitle}>{item.name}</Text>
+                                              <MaterialIcons name="arrow-forward-ios" size={24} color="black"
+                                                             style={styles.arrowIcon}
+                                                             onPress={() => navigation.navigate('LivraisonDetails', {delivery_name: item.name})}/>
+                                          </View>
+                                          <View style={styles.deliveryDetails}>
+                                              <Text style={styles.detailText}>Customer: {item.customer_name}</Text>
+                                              <Text style={styles.detailText}>Delivery Date: {item.posting_time}</Text>
+                                              <Text style={styles.detailText}>Delivery Price: DA {item.total}</Text>
+                                          </View>
+                                          <TouchableOpacity
+                                              style={[styles.statusContainer, {backgroundColor: getStatusColor(getStatusLabel(item.status, item.is_return))}]}>
+                                              <Text
+                                                  style={styles.statusText}> {getStatusLabel(item.status, item.is_return)}</Text>
+                                              {/* <View backgroundColor='#' style={styles.statusIcon}>{getStatusIcon(item.name, item.status)}</View> */}
+                                          </TouchableOpacity>
+                                      </View>
+                                  </TouchableOpacity>
+                              )}
+                          />
+                  </View>
+              )}
           </View>
       );
   };
@@ -506,6 +619,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     padding: 10,
   },
+    filterItem: {
+        backgroundColor: '#e0e0e0', // Default color
+        borderRadius: 20,
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        marginRight: 10,
+        marginBottom: 15
+    },
+    activeFilter: {
+        backgroundColor: '#FF6B35', // Active filter color (change this to your preferred color)
+    },
+    filterText: {
+        fontSize: 16,
+        color: '#000',
+    },
+    activeFilterText: {
+        color: '#fff', // Active filter text color (change this if needed)
+    },
     header: {
     fontSize: 24,
     // fontWeight: 'bold',
