@@ -42,25 +42,7 @@ const LivraisonDetails = () => {
     }, [isFocused]);
 
 
-<<<<<<< HEAD
-  return (
-    <View style={styles.container}>
-  {deliveryItems && deliveryTaxes && (
-    <View>
-    {deliveryItems && deliveryItems.length > 0 ? (
-        <View>
-          <Text style={styles.sectionTitle}>Items:</Text>
-          <View style={styles.itemsContainer}>
-            {deliveryItems.map((item, index) => (
-              <View key={index} style={styles.itemCard}>
-                <Text style={styles.itemCode}>{item.item_code}</Text>
-                <Text style={styles.itemDetail}>Qty: {item.qty}</Text>
-                <Text style={styles.itemDetail}>Rate: {item.rate} DA</Text>
-                <Text style={styles.itemDetail}>Amount: {item.amount} DA</Text>
-              </View>
-            ))}
-          </View>
-=======
+
     return (
         <View style={styles.container}>
             {(deliveryItems.length > 0) ? (
@@ -111,7 +93,6 @@ const LivraisonDetails = () => {
                     <Text>No Taxes available</Text>
                 </View>
             }
->>>>>>> context-async
         </View>
     )
 }

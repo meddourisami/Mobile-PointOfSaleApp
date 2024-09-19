@@ -493,34 +493,6 @@ const LivraisonScreen = () => {
 
       return (
           <View>
-<<<<<<< HEAD
-                  {livraisons.length=== 0 ? (
-                    <ActivityIndicator size="large" color="#284979" style={{flex:1, justifyContent:'center', alignItems:'center'}}/>
-                  ) : (
-                      <FlatList 
-                          data ={livraisons}
-                          keyExtractor={(item) => (item.name).toString()}
-                          style={{marginBottom:40}}
-                          renderItem={({item}) => (
-                              <TouchableOpacity key={item.key} style={styles.deliveryCard} onPress={() => navigation.navigate('LivraisonStatus', { deliveryName: item.name })}>
-                                  <View style={styles.deliveryContent}>
-                                      <View style={styles.deliveryHeader}>
-                                        <Text style={styles.deliveryTitle}>{item.name}</Text>
-                                        <MaterialIcons name="arrow-forward-ios" size={24} color="black" style={styles.arrowIcon} onPress={() => navigation.navigate('LivraisonDetails', {delivery_name: item.name})}/>
-                                      </View>
-                                      <View style={styles.deliveryDetails}>
-                                      <Text style={styles.detailText}>Customer: {item.customer_name}</Text>
-                                      <Text style={styles.detailText}>Delivery Date: {item.posting_time}</Text>
-                                      <Text style={styles.detailText}>Delivery Price: {item.total} DA</Text>
-                                      </View>
-                                      <TouchableOpacity  style={[styles.statusContainer, { backgroundColor: getStatusColor(getStatusLabel(item.status, item.is_return)) }]}>
-                                      <Text style={styles.statusText}> {getStatusLabel(item.status, item.is_return)}</Text>
-                                      {/* <View backgroundColor='#' style={styles.statusIcon}>{getStatusIcon(item.name, item.status)}</View> */}
-                                      </TouchableOpacity>
-                                  </View>
-                              </TouchableOpacity>
-                          )}
-=======
               {livraisons.length === 0 ? (
                   <ActivityIndicator size="large" color="#284979"
                                      style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}/>
@@ -549,7 +521,6 @@ const LivraisonScreen = () => {
                               marginBottom: 10,
                               paddingHorizontal: 10
                           }}
->>>>>>> context-async
                       />
                       <FlatList
                           data={statuses}
