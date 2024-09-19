@@ -20,6 +20,7 @@ const HomeScreen = () => {
   const { initialBudget } = useBudget();
   const { isSyncing } = useSync();
   const { setIsSyncing } = useSync();
+  const [isSalesOrderSyncing, setIsSalesOrderSyncing] = useState(false);
   const [taxes, setTaxes] = useState([]);
   const [customers , setCustomers] = useState([]);
   const [deliveries , setDeliveries] = useState([]);
@@ -642,6 +643,7 @@ const HomeScreen = () => {
     };
 
   const syncSaleOrderWithServer = async(log) => {
+      setIsSalesOrderSyncing(true)
     try{
       const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
       // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
@@ -688,7 +690,7 @@ const HomeScreen = () => {
 
                         await db.runAsync(`UPDATE payment_entry_logs SET associatedSaleOrder=? WHERE associatedSaleOrder=?`, [data.docs[0].name, log.name]);
 
-                        orderTosync= await db.getFirstAsync(`SELECT * FROM Sales_Order WHERE name= ?`,[log.name]);
+                        const orderTosync = await db.getFirstAsync(`SELECT * FROM Sales_Order WHERE name= ?`,[log.name]);
                         await db.runAsync(`INSERT INTO Sales_Order(
                             name, owner,
                             docstatus, title, naming_series, customer,
@@ -754,20 +756,25 @@ const HomeScreen = () => {
                         await db.runAsync(`UPDATE Sales_Taxes_and_Charges SET parent=? WHERE parent=?`,[data.docs[0].name, log.name]);
                         await db.runAsync(`UPDATE sales_order_logs SET state= ? WHERE id = ?;`, ["Submitted", log.id]);
                         await db.runAsync(`DELETE FROM sales_order_logs WHERE id = ?;`, [log.id]);
+                    setIsSalesOrderSyncing(true)
                         console.log("Synced sale order succesfully and deleted from local logs", data.docs[0].name);
                 }else{
+                    setIsSalesOrderSyncing(true)
                     console.log("Failed to sync sale order with server", await response.text());
                     return "data.docs[0].name";
                 }
             }catch(e){
+                setIsSalesOrderSyncing(true)
                 console.log("Failed to submit sale order", e);
                   return "data.docs[0].name";
               }
         });
       }else{
-        console.log("Error from the server sale invoice", await response.text());
+          setIsSalesOrderSyncing(false)
+        console.log("Error from the server sale order", await response.text());
       }
     }catch(e){
+        setIsSalesOrderSyncing(true)
       console.log('Error syncing sale orders with server', e);
     }
   };
@@ -1429,19 +1436,18 @@ const HomeScreen = () => {
     }
   },[paymentEntryLogs]);
 
-  useEffect(() => {   
-    if(isFocused){
-      const initialize = async () => {
-        if(isAutoSync){
-          await syncState();
+    useEffect(() => {
+        if (isFocused) {
+            getTaxesfromAPI();
+            getCustomersfromAPI();
         }
-          getTaxesfromAPI();
-          getCustomersfromAPI();
-          // getDeliveriesfromAPI();
-      };
-      initialize();
-    }
-  }, [isFocused]);
+    }, []);
+
+    useEffect(() => {
+        if (isAutoSync && isSalesOrderSyncing === false) {
+            syncState();
+        }
+    }, []);
 
   return (
     <GestureHandlerRootView>
