@@ -1284,7 +1284,7 @@ const HomeScreen = () => {
       setDisabledButton(true);
       console.log('Syncing ...');
       if(deliveryLogs) {
-        deliveryLogs.map(async(log) => {
+        await Promise.all(deliveryLogs.map(async(log) => {
           if(log.state === "Draft" ){
             console.log("submitting draft to server", log.name);
             console.log(JSON.parse(log.data));
@@ -1293,10 +1293,10 @@ const HomeScreen = () => {
             console.log("starting syncronizing", log.name);
             await syncDeliveryWithServer(log);
           }
-        });
+        }));
       } 
       if (saleOrderLogs) {
-          saleOrderLogs.map(async(log) => {
+          await  Promise.all(saleOrderLogs.map(async(log) => {
             if(log.state === "Submitted" ){
 
               console.log("already submitted to server", log.name);
@@ -1304,34 +1304,38 @@ const HomeScreen = () => {
               console.log("starting syncronizing", log.name);
               await syncSaleOrderWithServer(log);
             }
-        });
+        }));
       };
       if (paymentEntryLogs) {
-        paymentEntryLogs.map(async(paymentLog) => {
+        await Promise.all(paymentEntryLogs.map(async(paymentLog) => {
           if(paymentLog.state === "Submitted"){
             console.log("already submitted to server", paymentLog.name);
+            return;
           }else {
             logData= JSON.parse(paymentLog.data);
             associatedSaleOrderName= await db.getFirstAsync(`SELECT associatedSaleOrder FROM payment_entry_logs WHERE name=?;`,[paymentLog.name]);
             
-            if (associatedSaleOrderName.associatedSaleOrder.includes("SAL-ORD-")) {
+            if (associatedSaleOrderName?.associatedSaleOrder?.includes("SAL-ORD-")) {
               console.log("name", associatedSaleOrderName);
 
-              logData.references.forEach(item => {
-                item.reference_name = associatedSaleOrderName.associatedSaleOrder;
+              logData.references = logData.references.map((item) => {
+                return {
+                  ...item,  // Create a new object for each reference
+                  reference_name: associatedSaleOrderName.associatedSaleOrder,  // Update reference_name
+                };
               });
 
               console.log("updated stringified logdata", JSON.stringify(logData));
               try {
-                paymentLog.data = JSON.stringify(logData);
+                // paymentLog.data = JSON.stringify(logData);
+                console.log("paymentLog before update", paymentLog.data);
             
-
-                await db.runAsync(`UPDATE payment_entry_logs SET data=? WHERE id=?`, [paymentLog.data, paymentLog.id]);
-                // await db.runAsync()
-            
-                console.log("starting syncing payment entry", paymentLog.name);
+                await db.runAsync(`UPDATE payment_entry_logs SET data=? WHERE name=?`, [logData, paymentLog.name]);
                 
-
+                // const updatedPaymentLog = await db.runAsync(`SELECT * FROM payment_entry_logs WHERE name=?`, [paymentLog.name]);
+            
+                console.log("starting syncing payment entry", paymentLog.name, "data after update", paymentLog.data);
+                
                 await syncPaymentEntryWithServer(paymentLog);
               } catch (error) {
                 console.error("Error syncing payment entry:", error);
@@ -1340,7 +1344,7 @@ const HomeScreen = () => {
               console.log("Failed to get associated sale order name");
             }
           }
-        })   
+        })); 
       };
     }catch(e){
       console.log('Error syncing data with server', e);
@@ -1462,7 +1466,7 @@ const HomeScreen = () => {
         >
           <Text style={{ flexDirection: 'row', alignItems: 'center'}}>
             <FontAwesome5 name="sync" size={30} color={isSyncing ? 'green' : 'black'} style={{ position: 'absolute', right: 20, bottom:2 }} />
-            {isSyncing && <Text style={{ paddingLeft: 10 }}>Syncing...</Text>}
+            {isSyncing && <Text style={{fontSize:20, paddingLeft: 10 }}>Syncing...</Text>}
           </Text>
         </TapGestureHandler>
         )}

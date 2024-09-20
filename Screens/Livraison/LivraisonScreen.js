@@ -435,7 +435,6 @@ const LivraisonScreen = () => {
       };
 
       const handleFilterPress = (filter) => {
-          console.log(filter)
           setActiveFilter(filter); // Update active filter when pressed
       };
 
@@ -456,8 +455,7 @@ const LivraisonScreen = () => {
 
       useEffect(() => {
           if(isFocused){
-            const initialize = async () => {
-                console.log(deliveryNotes)
+            const initialize = async () => {     
               // createMetadataTable();
               createDeliveryNoteLocalLogs();
               getDeliveriesfromAPI();
@@ -473,7 +471,6 @@ const LivraisonScreen = () => {
               if (searchQuery === '' && selectedStatus === null &&  (activeFilter === null || activeFilter === 'All')) {
                   setFilteredDeliveries(livraisons);
               } else {
-                  console.log(livraisons[0])
                   const filtered = livraisons.filter(delivery => {
                       const matchesStatus = selectedStatus ? getStatusLabel(delivery.status).toLowerCase() === selectedStatus.toLowerCase() : true;
                       const matchesBadgeStatus = activeFilter ? getStatusLabel(delivery.status).toLowerCase() === activeFilter.toLowerCase() : true;

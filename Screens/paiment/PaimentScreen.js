@@ -20,7 +20,7 @@ const PaimentScreen = () => {
         const [associatedSaleOrders, setAssociatedSaleOrders] = useState({});
 
         const createPaymentEntryLocalLogs = async () => {
-          //await db.runAsync(`DELETE FROM payment_entry_logs;`);
+          await db.runAsync(`DELETE FROM payment_entry_logs;`);
           await db.runAsync(`CREATE TABLE IF NOT EXISTS payment_entry_logs(
                   id INTEGER PRIMARY KEY AUTOINCREMENT,
                   action TEXT,
@@ -29,7 +29,7 @@ const PaimentScreen = () => {
                   state TEXT,
                   data TEXT
               )`);
-        };
+          };
 
       const saveToLocalLogs = async () => {
         try{
@@ -47,6 +47,7 @@ const PaimentScreen = () => {
                   __islocal: 1,
                   __unsaved: 1,
               }
+              console.log(paymentData);
 
               const invoicePaymentReference = await db.getFirstAsync(`SELECT * FROM Payment_Reference_Entry WHERE parent =?;`, [bill.name]);
               const invoicePaymenReferencetData ={
