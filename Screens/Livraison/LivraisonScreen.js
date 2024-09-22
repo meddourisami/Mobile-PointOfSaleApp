@@ -11,16 +11,16 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import {Picker} from "@react-native-picker/picker";
 import {useDeliveryNoteLogs} from "../../Contexts/DeliveryNotes/DeliveryNoteLogsContext";
 
-const LivraisonScreen = () => {
+const LivraisonScreen = source => {
   const db = useSQLiteContext();
   const { token } = useSync();
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const statuses = ['Pending', 'Delivered', 'Return', 'All'];
+  const [userProfile, setUserProfile] = useState(true);
 
-  const Content =  () => {
-      const [deliveries , setDeliveries] = useState([]);
-      const [livraisons, setLivraisons] = useState([]);
+  const Content = source => {
+      const [deliveries, setDeliveries] = useState([]);
       const [filteredDeliveries, setFilteredDeliveries] = useState([]);
       const [searchQuery, setSearchQuery] = useState('');
       const [selectedStatus, setSelectedStatus] = useState(null);
@@ -31,104 +31,17 @@ const LivraisonScreen = () => {
         return CryptoJS.MD5(JSON.stringify(data)).toString();
       };
 
-      const createMetadataTable = async () => {
-        await db.runAsync(`
-            CREATE TABLE IF NOT EXISTS DeliveryMetadata (
-                id INTEGER PRIMARY KEY,
-                data_hash TEXT
-            );
-        `);
-        const rowCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM DeliveryMetadata;');
-        if (rowCount.count === 0) {
-            await db.runAsync('INSERT INTO DeliveryMetadata (id, data_hash) VALUES (?, ?);',[1, ""]); /// Hash of all deliveries data
-        }
+
+      const addHashToDeliveries = (deliveries) => {
+          return deliveries.map(delivery => ({
+              ...delivery,               // Spread the existing customer data
+              hash: getHash(delivery) // Add a new hash field
+          }));
       };
 
-      function transformJson(data) {
-        const keys = data.message.keys;
-        const values = data.message.values;
-        return values.map(entry => {
-            let obj = {};
-            keys.forEach((key, index) => { obj[key] = entry[index]; });
-            return obj; 
-        }); 
-      };    
-
-      const getDeliveriesfromAPI = async () => {
-          try{
-            const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
-            // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
-              {
-                method: 'POST',
-                headers: {
-                  'Authorization': token,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  "doctype": "Delivery Note",
-                  "fields": [
-                    "*"
-                  ],
-                  "filters": [
-                    ["Delivery Note", "set_warehouse", "=", "Magasin Fille 1 - ICD"]
-                  ],
-                  "order_by": "`tabDelivery Note`.`modified` desc",
-                  "start": 0,
-                  "page_length": 20,
-                  "view": "List",
-                  "group_by": "",
-                  "with_comment_count": 1
-                }),
-            });
-            //   const response = await fetch('http://195.201.138.202:8006/api/resource/Delivery Note?fields=["*"]', {
-            //       method: 'GET',
-            //       headers: {
-            //           'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
-            //       },
-            //   });
-              const data = await response.json();
-              const selectedDeliveries = transformJson(data);
-              
-
-              const newHash = getHash(data);
-
-                const existingHash = await db.getFirstAsync('SELECT data_hash FROM DeliveryMetadata ORDER BY Id DESC;');
-                if (existingHash.data_hash !== newHash) {
-                  selectedDeliveries.map(async(delivery) => {
-                    const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc', 
-                      // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
-                        {
-                        method: 'POST',
-                          headers: {
-                            'Authorization': token,
-                            'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify({
-                            "doctype": "Delivery Note",
-                            "name": delivery.name,
-                            "_": Date.now(),
-                          })
-                        }
-                      );
-                      const data = await response.json();
-                      const deliveryItems = data.docs[0].items;
-                      await saveInLocalDeliveryItems(deliveryItems);
-                      const deliveryTaxes = data.docs[0].taxes;
-                      await saveInLocalDeliveryTaxes(deliveryTaxes);
-                  })
-                  setDeliveries(selectedDeliveries);
-                  await saveInLocalDeliveries(selectedDeliveries);
-                  await db.runAsync('INSERT INTO DeliveryMetadata (data_hash) VALUES (?);', [newHash]);
-                }
-              return selectedDeliveries;
-          }catch (error){
-            console.log('error fetching delivery notes',error);
-          }
-      };
-
-      const saveInLocalDeliveries = async (deliveries) => {
-        try{
-            await Promise.all(deliveries.map(async (delivery) => {
+      const insertDelivery = async (delivery) => {
+          try {
+              // Adjust the SQL query to include all the necessary fields
               await db.runAsync(`INSERT OR REPLACE INTO Deliveries
                 (
                   name, creation, modified, modified_by, owner,
@@ -181,32 +94,148 @@ const LivraisonScreen = () => {
                     ?, ?, ?, ?, ?,
                     ?, ?)`,
                   [
-                    delivery.name, delivery.creation, delivery.modified, delivery.modified_by, delivery.owner,
-                    delivery.docstatus, delivery.idx, delivery.title, delivery.naming_series, delivery.customer,
-                    delivery.tax_id, delivery.customer_name, delivery.posting_date, delivery.posting_time, delivery.set_posting_time,
-                    delivery.company, delivery.amended_from, delivery.is_return, delivery.issue_credit_note, delivery.return_against,
-                    delivery.cost_center, delivery.project, delivery.currency, delivery.conversion_rate, delivery.selling_price_list,
-                    delivery.price_list_currency, delivery.plc_conversion_rate, delivery.ignore_pricing_rule, delivery.scan_barcode, delivery.pick_list,
-                    delivery.set_warehouse, delivery.set_target_warehouse, delivery.total_qty, delivery.total_net_weight, delivery.base_total,
-                    delivery.base_net_total, delivery.total, delivery.net_total, delivery.tax_category, delivery.taxes_and_charges,
-                    delivery.shipping_rule, delivery.incoterm, delivery.named_place, delivery.base_total_taxes_and_charges, delivery.total_taxes_and_charges,
-                    delivery.base_grand_total, delivery.base_rounding_adjustment, delivery.base_rounded_total, delivery.base_in_words, delivery.grand_total,
-                    delivery.rounding_adjustment, delivery.rounded_total, delivery.in_words, delivery.disable_rounded_total, delivery.apply_discount_on,
-                    delivery.base_discount_amount, delivery.additional_discount_percentage, delivery.discount_amount, delivery.other_charges_calculation, delivery.customer_address,
-                    delivery.address_display, delivery.contact_person, delivery.contact_display, delivery.contact_mobile, delivery.contact_email,
-                    delivery.shipping_address_name, delivery.shipping_address, delivery.dispatch_address_name, delivery.dispatch_address, delivery.company_address,
-                    delivery.company_address_display, delivery.tc_name, delivery.terms, delivery.per_billed, delivery.status,
-                    delivery.per_installed, delivery.installation_status, delivery.per_returned, delivery.transporter, delivery.driver,
-                    delivery.lr_no, delivery.vehicle_no, delivery.transporter_name, delivery.driver_name, delivery.lr_date,
-                    delivery.po_no, delivery.po_date, delivery.sales_partner, delivery.amount_eligible_for_commission, delivery.commission_rate,
-                    delivery.total_commission, delivery.auto_repeat, delivery.letter_head, delivery.print_without_amount, delivery.group_same_items,
-                    delivery.select_print_heading, delivery.language, delivery.is_internal_customer, delivery.represents_company, delivery.inter_company_reference,
-                    delivery.customer_group, delivery.territory, delivery.source, delivery.campaign, delivery.excise_page,
-                    delivery.instructions, delivery._user_tags, delivery._comments, delivery._assign, delivery._liked_by,
-                    delivery._seen, delivery.custom_solde, delivery.custom_total_unpaid, delivery.custom_delivery_details, delivery.custom_driver,
-                    delivery.custom_driver_name, delivery.custom_vehicle
+                      delivery.name, delivery.creation, delivery.modified, delivery.modified_by, delivery.owner,
+                      delivery.docstatus, delivery.idx, delivery.title, delivery.naming_series, delivery.customer,
+                      delivery.tax_id, delivery.customer_name, delivery.posting_date, delivery.posting_time, delivery.set_posting_time,
+                      delivery.company, delivery.amended_from, delivery.is_return, delivery.issue_credit_note, delivery.return_against,
+                      delivery.cost_center, delivery.project, delivery.currency, delivery.conversion_rate, delivery.selling_price_list,
+                      delivery.price_list_currency, delivery.plc_conversion_rate, delivery.ignore_pricing_rule, delivery.scan_barcode, delivery.pick_list,
+                      delivery.set_warehouse, delivery.set_target_warehouse, delivery.total_qty, delivery.total_net_weight, delivery.base_total,
+                      delivery.base_net_total, delivery.total, delivery.net_total, delivery.tax_category, delivery.taxes_and_charges,
+                      delivery.shipping_rule, delivery.incoterm, delivery.named_place, delivery.base_total_taxes_and_charges, delivery.total_taxes_and_charges,
+                      delivery.base_grand_total, delivery.base_rounding_adjustment, delivery.base_rounded_total, delivery.base_in_words, delivery.grand_total,
+                      delivery.rounding_adjustment, delivery.rounded_total, delivery.in_words, delivery.disable_rounded_total, delivery.apply_discount_on,
+                      delivery.base_discount_amount, delivery.additional_discount_percentage, delivery.discount_amount, delivery.other_charges_calculation, delivery.customer_address,
+                      delivery.address_display, delivery.contact_person, delivery.contact_display, delivery.contact_mobile, delivery.contact_email,
+                      delivery.shipping_address_name, delivery.shipping_address, delivery.dispatch_address_name, delivery.dispatch_address, delivery.company_address,
+                      delivery.company_address_display, delivery.tc_name, delivery.terms, delivery.per_billed, delivery.status,
+                      delivery.per_installed, delivery.installation_status, delivery.per_returned, delivery.transporter, delivery.driver,
+                      delivery.lr_no, delivery.vehicle_no, delivery.transporter_name, delivery.driver_name, delivery.lr_date,
+                      delivery.po_no, delivery.po_date, delivery.sales_partner, delivery.amount_eligible_for_commission, delivery.commission_rate,
+                      delivery.total_commission, delivery.auto_repeat, delivery.letter_head, delivery.print_without_amount, delivery.group_same_items,
+                      delivery.select_print_heading, delivery.language, delivery.is_internal_customer, delivery.represents_company, delivery.inter_company_reference,
+                      delivery.customer_group, delivery.territory, delivery.source, delivery.campaign, delivery.excise_page,
+                      delivery.instructions, delivery._user_tags, delivery._comments, delivery._assign, delivery._liked_by,
+                      delivery._seen, delivery.custom_solde, delivery.custom_total_unpaid, delivery.custom_delivery_details, delivery.custom_driver,
+                      delivery.custom_driver_name, delivery.custom_vehicle
                   ]
-                );
+              );
+              return true;
+          } catch (error) {
+              console.error('Error updating customer with all fields:', error);
+              return false;
+          }
+      };
+
+      // Upsert customer with hash comparison
+      const insertUpdatedDelivery = async (apiData) => {
+          try {
+              const apiDataHash = getHash(apiData);
+
+              // Fetch the existing hash from the local database
+              const result = await db.runAsync('SELECT hash FROM deliveries WHERE name = ? ;', [apiData.name]); // WHERE id = ?', [apiData.id);
+
+              const localHash = result.length > 0 ? result[0].hash : null;
+
+              if (apiDataHash !== localHash) {
+                  // Insert or update only if the hash is different
+                  await insertDelivery(apiData)
+                  return true; // Indicates an update was made
+              }
+              return false; // No update needed
+          } catch (error) {
+              console.error('Error updating deliveries with hash comparison:', error);
+              return false;
+          }
+      };
+
+      const createMetadataTable = async () => {
+        await db.runAsync(`
+            CREATE TABLE IF NOT EXISTS DeliveryMetadata (
+                id INTEGER PRIMARY KEY,
+                data_hash TEXT
+            );
+        `);
+        const rowCount = await db.getFirstAsync('SELECT COUNT(*) as count FROM DeliveryMetadata;');
+        if (rowCount.count === 0) {
+            await db.runAsync('INSERT INTO DeliveryMetadata (id, data_hash) VALUES (?, ?);',[1, ""]); /// Hash of all deliveries data
+        }
+      };
+
+      const transformJson = async (data) => {
+          const keys = await data.message.keys;
+          const values = await data.message.values;
+          return await values.map(entry => {
+              let obj = {};
+              keys.forEach((key, index) => { obj[key] = entry[index]; });
+              return obj;
+          });
+      };
+
+      const getApiDeliveries = async () => {
+          try{
+            const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.reportview.get', 
+            // const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.reportview.get', 
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': token,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  "doctype": "Delivery Note",
+                  "fields": [
+                    "*"
+                  ],
+                  "filters": [
+                    ["Delivery Note", "set_warehouse", "=", userProfile.warehouse]
+                  ],
+                  "order_by": "`tabDelivery Note`.`modified` desc",
+                  "start": 0,
+                  "page_length": 20,
+                  "view": "List",
+                  "group_by": "",
+                  "with_comment_count": 1
+                }),
+            });
+              const data = await response.json();
+              const apiDeliveries = await transformJson(data);
+              if(apiDeliveries.length > 0) {
+                  apiDeliveries.map(async (delivery) => {
+                      const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.form.load.getdoc',
+                          // const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.form.load.getdoc',
+                          {
+                              method: 'POST',
+                              headers: {
+                                  'Authorization': token,
+                                  'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({
+                                  "doctype": "Delivery Note",
+                                  "name": delivery.name,
+                                  "_": Date.now(),
+                              })
+                          }
+                      );
+                      const deliveryDetails = await response.json();
+                      const deliveryItems = deliveryDetails.docs[0].items;
+                      await saveInLocalDeliveryItems(deliveryItems);
+                      const deliveryTaxes = deliveryDetails.docs[0].taxes;
+                      await saveInLocalDeliveryTaxes(deliveryTaxes);
+                  })
+                  // setDeliveries(addHashToDeliveries(apiDeliveries));
+                  await saveInLocalDeliveries(apiDeliveries);
+              }
+              setDeliveries(apiDeliveries);
+          }catch (error){
+            console.log('error fetching delivery notes',error);
+          }
+      };
+
+      const saveInLocalDeliveries = async (deliveries) => {
+        try{
+            await Promise.all(deliveries.map(async (delivery) => {
+                await insertUpdatedDelivery(delivery)
               }));
           }catch(e){
             console.log('Error saving data to local database', e);
@@ -375,11 +404,11 @@ const LivraisonScreen = () => {
       });
     }
 
-      const getLivraisons = async () => {
+      const getLocalDeliveries = async () => {
           try{
-              const allLivraisons= await db.getAllAsync(`SELECT * FROM Deliveries WHERE status IN (?, ?, ?, ?)`, ["Draft", "To Bill", "Return Issued", "Completed"]);
-             const filteredLivraisons = allLivraisons.filter(item => item.total >= 0);
-              setLivraisons(filteredLivraisons);
+              const localDeliveries= await db.getAllAsync(`SELECT * FROM Deliveries WHERE status IN (?, ?, ?, ?)`, ["Draft", "To Bill", "Return Issued", "Completed"]);
+             const filteredDeliveries = localDeliveries.filter(item => item.total >= 0);
+             setDeliveries(filteredDeliveries);
           }catch(e){
               console.log("Error fetching all deliveries",e);
           }
@@ -397,34 +426,24 @@ const LivraisonScreen = () => {
       };
 
       const getStatusLabel = (status, is_return) => {
-        if (is_return) {
-          return "Return";
-        }else{
-          switch (status) {
-            case "Return Issued":
-              return "Return";
-            case "To Bill":
-              return "Delivered";
-            case "Completed":
-              return "Delivered";
-            case "Draft":
-              return "Pending";
-            default:
-              return status;
-          }
-        }
+          if (is_return) return "Return";
+
+          const statusLabels = {
+              "Return Issued": "Return",
+              "To Bill": "Delivered",
+              "Completed": "Delivered",
+              "Draft": "Pending"
+          };
+
+          return statusLabels[status] || status; // Fallback to original status if not found
       };
 
-      const getStatusColor = (status) => {
-        const statusColors = {
-          "Return": "#ff5252",      // Red for return
+      const getStatusColor = (status) => ({
+          "Return": "#ff5252",       // Red for return
           "Delivered": "#4BB543",
           "Completed": "#4BB543",
           "Pending": "#aaaaaa"
-        };
-      
-        return statusColors[status] || "#FFFFFF"; // Default color if status not found
-      };
+      }[status] || "#FFFFFF");      // Default color if status not found
 
       const getStatusIcon = (name, status) => {
         if (name.includes("MAT-DN-") && status !== "Draft") {
@@ -458,20 +477,20 @@ const LivraisonScreen = () => {
             const initialize = async () => {     
               // createMetadataTable();
               createDeliveryNoteLocalLogs();
-              getDeliveriesfromAPI();
+              getApiDeliveries();
               saveToLocalLogs();
-              getLivraisons();
+              getLocalDeliveries();
             };
           initialize();
           }
       }, [isFocused]);
 
       useEffect(() => {
-          if (livraisons.length > 0) {
+          if (deliveries.length > 0) {
               if (searchQuery === '' && selectedStatus === null &&  (activeFilter === null || activeFilter === 'All')) {
-                  setFilteredDeliveries(livraisons);
+                  setFilteredDeliveries(deliveries);
               } else {
-                  const filtered = livraisons.filter(delivery => {
+                  const filtered = deliveries.filter(delivery => {
                       const matchesStatus = selectedStatus ? getStatusLabel(delivery.status).toLowerCase() === selectedStatus.toLowerCase() : true;
                       const matchesBadgeStatus = activeFilter ? getStatusLabel(delivery.status).toLowerCase() === activeFilter.toLowerCase() : true;
                       const matchesSearch = delivery.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -480,7 +499,13 @@ const LivraisonScreen = () => {
                   setFilteredDeliveries(filtered);
               }
           }
-      }, [livraisons, searchQuery, selectedStatus, activeFilter]);
+      }, [deliveries, searchQuery, selectedStatus, activeFilter]);
+
+      useEffect(() => {
+          if (deliveries.length > 0) {
+              setFilteredDeliveries(deliveries);
+          }
+      }, [deliveries]);
 
       // useEffect(() => {
       //   if(livraisons) { 
@@ -490,7 +515,7 @@ const LivraisonScreen = () => {
 
       return (
           <View>
-              {livraisons.length === 0 ? (
+              {deliveries.length === 0 ? (
                   <ActivityIndicator size="large" color="#284979"
                                      style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}/>
               ) : (
@@ -560,6 +585,19 @@ const LivraisonScreen = () => {
           </View>
       );
   };
+
+    const getUserProfile = async () => {
+        try {
+            const user = await db.getFirstAsync('SELECT * FROM User_Profile WHERE id = 1');
+            setUserProfile(user);
+        }catch (err) {
+            console.log(err, "Error getting profile info");
+        }
+    }
+
+    useEffect(() => {
+        getUserProfile();
+    }, []);
 
   return (
     <View style={styles.container}>

@@ -1,39 +1,27 @@
-import { ActivityIndicator, Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useIsFocused } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useSync } from '../SyncContext';
 
 const ProfileScreen = ({handleLogout}) => {
   const db = useSQLiteContext();
   const isFocused = useIsFocused();
   const [userProfile, setUserProfile] = useState(null);
-  const [userName, setUserName] = useState(null);
-  const [userWarehouse, setUserWarehouse] = useState(null);
-  const [companyDetails, setCompanyDetails] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { token } = useSync();
 
-  const getProfileInfo = async () => {
+  const getUserProfile = async () => {
     try {
-      const user = await db.getFirstAsync('SELECT * FROM User_Profile WHERE id=1');
+      const user = await db.getFirstAsync('SELECT * FROM User_Profile WHERE id = 1');
+      console.log(user, 'no')
       setUserProfile(user);
-      const userName = await AsyncStorage.getItem('user');
-      setUserName(userName);
     }catch (err) {
       console.log(err, "Error getting profile info");
-    };
+    }
   }
 
   useEffect(()=>{
-      const initialize = async () =>{
-        await getProfileInfo();
+        getUserProfile();
         setLoading(false);
-      }
-      if(isFocused){
-      initialize();
-    }
   },[isFocused]);
 
 
@@ -48,12 +36,12 @@ const ProfileScreen = ({handleLogout}) => {
 
   return (
     <View style={styles.container}>
-      {userProfile && userName ? (
+      {userProfile && loading === false ? (
         <View style={styles.profileContainer}>
           <Text style={styles.profileHeader}>User Profile</Text>
           <View style={styles.item}>
             <Text style={styles.label}>Name:</Text>
-            <Text style={styles.value}>{userName}</Text>
+            <Text style={styles.value}>{userProfile.name}</Text>
           </View>
           <View style={styles.item}>
             <Text style={styles.label}>Email:</Text>
@@ -80,9 +68,9 @@ const ProfileScreen = ({handleLogout}) => {
           </TouchableOpacity>
         </View>
       ) : (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Failed to load user data</Text>
-        </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FF6B35" />
+          </View>
       )}
     </View>
   );

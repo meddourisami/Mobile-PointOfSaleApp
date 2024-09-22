@@ -57,15 +57,15 @@ const ClientScreen = () => {
                 //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
                 //     },
                 // });
-                const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
-                    // const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
+                const response = await fetch('http://192.168.1.12:8001/api/resource/Customer?fields=["*"]', {
+                    // const response = await fetch('http://192.168.1.12:8001/api/resource/Customer?fields=["*"]', {
                     method: 'GET',
                     headers: {
                         'Authorization': token,
                     },
                 });
+
                 const json = await response.json();
-                
                 const newHash = getHash(json.data);
 
                 const existingHash = await db.getFirstAsync('SELECT data_hash FROM CustomerMetadata ORDER BY Id DESC;');

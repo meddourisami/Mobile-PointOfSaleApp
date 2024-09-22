@@ -245,7 +245,9 @@ async function initDatabase(db) {
         custom_delivery_details TEXT DEFAULT NULL,
         custom_driver TEXT DEFAULT NULL,
         custom_driver_name TEXT,
-        custom_vehicle TEXT
+        custom_vehicle TEXT,
+        hash TEXT DEFAULT NULL,
+        synced INTEGER DEFAULT 0
       );
 `);
     await db.execAsync(`
@@ -336,7 +338,9 @@ async function initDatabase(db) {
           total_projected_qty REAL,
           _comment_count INTEGER,
           bal_qty INTEGER,
-          bal_val INTEGER
+          bal_val INTEGER,
+          hash TEXT,
+          synced INTEGER
         );
 `);
 
@@ -1224,13 +1228,6 @@ async function initDatabase(db) {
         );
 `);
     await db.execAsync(`
-  CREATE TABLE IF NOT EXISTS DeliveryMetadata (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          data_hash TEXT
-        );
-`);
-
-    await db.execAsync(`
   CREATE TABLE IF NOT EXISTS TaxesMetadata (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           data_hash TEXT
@@ -1243,10 +1240,6 @@ async function initDatabase(db) {
 
     await db.execAsync(`
   INSERT INTO TaxesMetadata (data_hash) VALUES ("");
-`);
-
-    await db.execAsync(`
-   INSERT INTO DeliveryMetadata (data_hash) VALUES ("");
 `);
    /* await db.execAsync(`
       CREATE TABLE IF NOT EXISTS Customers (

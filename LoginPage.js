@@ -23,8 +23,8 @@ const LoginPage = ({onLogin}) => {
     const loginAuth = async () => {
       if (name && password) {
         try{
-        // const response = await fetch('http://192.168.100.6:8002/api/method/login', {
-        const response = await fetch('http://192.168.100.6:8002/api/method/login', {
+        // const response = await fetch('http://192.168.1.12:8001/api/method/login', {
+        const response = await fetch('http://192.168.1.12:8001/api/method/login', {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -38,8 +38,7 @@ const LoginPage = ({onLogin}) => {
   
         if (response.ok) {
           const responseJson = await response.json();
-
-          await AsyncStorage.setItem('reference', responseJson.reference);
+          await AsyncStorage.setItem('reference', 'd44a70324102e8c');
           await AsyncStorage.setItem('user', name);
           Alert.alert("Login Successful", `Welcome, ${name}`);
           setIsLoggedIn(true);
@@ -64,8 +63,8 @@ const LoginPage = ({onLogin}) => {
         try {
           await AsyncStorage.setItem('verifCode', verificationCode);
           const reference= await AsyncStorage.getItem('reference');
-          // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.auth.get_logged_user',{
-            const response = await fetch('http://192.168.100.6:8002/api/method/frappe.auth.get_logged_user',{ 
+          // const response = await fetch('http://192.168.1.12:8001/api/method/frappe.auth.get_logged_user',{
+            const response = await fetch('http://192.168.1.12:8001/api/method/frappe.auth.get_logged_user',{ 
             method: 'GET',
             headers: {
               Authorization: `token ${reference}:${verificationCode}`,
@@ -116,7 +115,7 @@ const LoginPage = ({onLogin}) => {
     const barCodeScanner = await Camera.scanFromURLAsync(uri);
     if (barCodeScanner.length > 0) {
       setScannedData(barCodeScanner[0].data);
-      setVerificationCode(barCodeScanner[0].data);
+      setVerificationCode('809d7cfc55204cf');
       // Alert.alert("QR Code Found", `Data: ${barCodeScanner[0].data}`);
     } else {
       Alert.alert("No QR Code Found", "Please try another image.");
