@@ -97,7 +97,7 @@ const PaimentScreen = () => {
                   );
 
                         const response = await fetch(
-                            'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+                            'http://192.168.1.12:8001/api/method/frappe.desk.form.save.savedocs',
                             {
                                 method: 'POST',
                                 headers: {
@@ -140,7 +140,7 @@ const PaimentScreen = () => {
                                 );
                                 try{
                                     const response = await fetch(
-                                        'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+                                        'http://192.168.1.12:8001/api/method/frappe.desk.form.save.savedocs',
                                     {
                                         method: 'POST',
                                         headers: {
