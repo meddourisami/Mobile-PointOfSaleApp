@@ -18,8 +18,10 @@ const LivraisonStatus = () => {
             const delivery =await db.getFirstAsync(`SELECT * FROM Deliveries WHERE name = ?`,[deliveryName]);
             setLivraison(delivery);
             const items =await db.getAllAsync(`SELECT * FROM Delivery_Note_Item WHERE parent= ?`, [deliveryName]);
+            console.log(items);
             setDeliveryItems(items);
             const tax= await db.getFirstAsync(`SELECT * FROM Sales_Taxes_and_Charges WHERE parent= ?`, [deliveryName]);
+            console.log(tax);
             setDeliveryTax(tax);
         }catch(e){
             console.log("Error getting delivery note from local database",e);

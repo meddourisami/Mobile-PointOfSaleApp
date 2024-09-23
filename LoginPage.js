@@ -23,8 +23,13 @@ const LoginPage = ({onLogin}) => {
     const loginAuth = async () => {
       if (name && password) {
         try{
+<<<<<<< Updated upstream
         // const response = await fetch('http://192.168.1.12:8001/api/method/login', {
         const response = await fetch('http://192.168.1.12:8001/api/method/login', {
+=======
+        // const response = await fetch('http://192.168.1.19:8002/api/method/login', {
+        const response = await fetch('http://192.168.1.19:8002/api/method/login', {
+>>>>>>> Stashed changes
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -63,8 +68,13 @@ const LoginPage = ({onLogin}) => {
         try {
           await AsyncStorage.setItem('verifCode', verificationCode);
           const reference= await AsyncStorage.getItem('reference');
+<<<<<<< Updated upstream
           // const response = await fetch('http://192.168.1.12:8001/api/method/frappe.auth.get_logged_user',{
             const response = await fetch('http://192.168.1.12:8001/api/method/frappe.auth.get_logged_user',{ 
+=======
+          // const response = await fetch('http://192.168.1.19:8002/api/method/frappe.auth.get_logged_user',{
+            const response = await fetch('http://192.168.1.19:8002/api/method/frappe.auth.get_logged_user',{ 
+>>>>>>> Stashed changes
             method: 'GET',
             headers: {
               Authorization: `token ${reference}:${verificationCode}`,

@@ -20,7 +20,7 @@ const PaimentScreen = () => {
         const [associatedSaleOrders, setAssociatedSaleOrders] = useState({});
 
         const createPaymentEntryLocalLogs = async () => {
-          await db.runAsync(`DELETE FROM payment_entry_logs;`);
+          // await db.runAsync(`DELETE FROM payment_entry_logs;`);
           await db.runAsync(`CREATE TABLE IF NOT EXISTS payment_entry_logs(
                   id INTEGER PRIMARY KEY AUTOINCREMENT,
                   action TEXT,
@@ -97,7 +97,11 @@ const PaimentScreen = () => {
                   );
 
                         const response = await fetch(
+<<<<<<< Updated upstream
                             'http://192.168.1.12:8001/api/method/frappe.desk.form.save.savedocs',
+=======
+                            'http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
+>>>>>>> Stashed changes
                             {
                                 method: 'POST',
                                 headers: {
@@ -140,7 +144,11 @@ const PaimentScreen = () => {
                                 );
                                 try{
                                     const response = await fetch(
+<<<<<<< Updated upstream
                                         'http://192.168.1.12:8001/api/method/frappe.desk.form.save.savedocs',
+=======
+                                        'http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
+>>>>>>> Stashed changes
                                     {
                                         method: 'POST',
                                         headers: {

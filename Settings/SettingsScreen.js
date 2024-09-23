@@ -74,10 +74,6 @@ const SettingsScreen = () => {
   };
 
   const currentTime = new Date();
-  // const syncTimes = {
-  //   midday: new Date().setHours(12, 34, 0, 0),
-  //   midnight: new Date().setHours(0, 0, 0, 0),
-  // };
 
   const onTimeChange = (event, selectedDate) => {
     setShowTimePicker(false);
@@ -87,12 +83,11 @@ const SettingsScreen = () => {
       setTime(newTime);
       setSyncMode(newTime); 
     }
-    // setShowTimePicker(false);
   };
 
   useEffect(() => {
     if (!isAutoSync && syncMode) {
-      const timeDifference = syncMode - currentTime;
+      const timeDifference = syncMode - selectedTime;
       console.log("difference",timeDifference.toString());
       console.log("time",syncMode);
 
@@ -121,53 +116,18 @@ const SettingsScreen = () => {
             <Button title="Select Sync Time" onPress={() => setShowTimePicker(true)} />
               {showTimePicker && (
                 <DateTimePicker
-                value={new Date(time)}
+                value={new Date(selectedTime)}
                 mode="time"
                 is24Hour={true}
                 display="default"
                 onChange={onTimeChange}
                 />
               )}
-              <Text>Next sync at:{new Date(syncMode).toLocaleTimeString()}</Text>
+              <Text>Next sync at:{new Date(selectedTime).toLocaleTimeString()}</Text>
             </View>
         </View>
       )}
 
-      <View style={styles.settingItem}>
-        <Text>Select Sync Mode</Text>
-        <Picker
-        selectedValue={syncMode}
-        style={{ height: 50, width: 150 }}
-        onValueChange={(itemValue) => setSyncMode(itemValue)}
-      >
-        <Picker.Item label="Automatic" value="automatic" />
-        <Picker.Item label="Manual" value="manual" />
-        <Picker.Item label="Semi-Automatic" value="semi-automatic" />
-      </Picker>
-
-      {syncMode === 'semi-automatic' && (
-        <View>
-          <Text>Select Sync Time</Text>
-          <View style={{ flexDirection: 'row' }}>
-            <Button title="Select Sync Time" onPress={() => setShowTimePicker(true)} />
-            {showTimePicker && (
-              <DateTimePicker
-                value={selectedTime}
-                mode="time"
-                is24Hour={true}
-                display="default"
-                onChange={onTimeChange}
-              />
-            )}
-            <Text>Next sync at: {new Date(selectedTime).toLocaleTimeString()}</Text>
-          </View>
-        </View>
-      )}
-      </View>
-     {/* <View>
-        <Text>{t('switchLanguage')}</Text>
-        <Button title={t('switchLanguage')} onPress={switchLanguage} />
-      </View>*/}
       {/*<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text style={{ fontSize: 20, marginBottom: 20 }}>{t('switchLanguage')}</Text>
 
@@ -195,17 +155,8 @@ const SettingsScreen = () => {
         </TouchableOpacity>
       </View>*/}
 
-    {/*  <View style={styles.settingItem}>
-        <Text >
-          {t('switchLanguage')} ({isFrench ? 'Français' : 'English'})
-        </Text>
-
-        <Switch
-            onValueChange={toggleSwitch}
-            value={isFrench}
-        />
-      </View>*/}
       <View style={styles.container}>
+        <SyncSettings />
         <View style={styles.settingItem}>
           <Text >
             {t('switchLanguage')} ({isFrench ? 'Français' : 'English'})
@@ -216,10 +167,9 @@ const SettingsScreen = () => {
               value={isFrench}
           />
         </View>
-        <SyncSettings />
       </View>
       <View >
-        <ManualSyncButton />
+        {/* <ManualSyncButton /> */}
       </View>
     </View>
   );

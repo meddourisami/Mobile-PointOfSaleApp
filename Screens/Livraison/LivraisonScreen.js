@@ -540,7 +540,7 @@ const LivraisonScreen = source => {
                               borderColor: '#ccc',
                               borderWidth: 1,
                               borderRadius: 10,
-                              marginBottom: 10,
+                              // marginBottom: 10,
                               paddingHorizontal: 10
                           }}
                       />
@@ -549,12 +549,13 @@ const LivraisonScreen = source => {
                           renderItem={renderFilterItem}
                           keyExtractor={(item) => item}
                           horizontal // Horizontal scrolling FlatList
-                          showsHorizontalScrollIndicator={false} // Hide the scrollbar
+                          showsHorizontalScrollIndicator={false}
+                          style={{padding:10}} // Hide the scrollbar
                       />
                           <FlatList
                               data={filteredDeliveries}
                               keyExtractor={(item) => (item.name).toString()}
-                              style={{marginBottom: 40}}
+                              style={{ marginBottom: 360}}
                               renderItem={({item}) => (
                                   <TouchableOpacity key={item.key} style={styles.deliveryCard}
                                                     onPress={() => navigation.navigate('LivraisonStatus', {deliveryName: item.name})}>
@@ -630,8 +631,9 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         paddingVertical: 10,
         paddingHorizontal: 15,
+        paddingBottom:10,
         marginRight: 10,
-        marginBottom: 15
+        // marginBottom: 20
     },
     activeFilter: {
         backgroundColor: '#FF6B35', // Active filter color (change this to your preferred color)
@@ -639,6 +641,7 @@ const styles = StyleSheet.create({
     filterText: {
         fontSize: 16,
         color: '#000',
+        // padding: 10,
     },
     activeFilterText: {
         color: '#fff', // Active filter text color (change this if needed)
@@ -647,7 +650,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     // fontWeight: 'bold',
     color: '#333',
-    marginBottom: 10,
+    // marginBottom: 10,
   },
     icon: {
         position: 'absolute',
@@ -660,7 +663,7 @@ const styles = StyleSheet.create({
     },
     deliveryCard: {
     backgroundColor: '#FFF',
-    padding: 15,
+    padding: 10,
     marginVertical: 5,
     borderRadius: 10,
     shadowColor: '#000',

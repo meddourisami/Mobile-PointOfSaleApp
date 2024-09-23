@@ -120,7 +120,11 @@ const CommandeScreen = () => {
                         );
 
                         const response = await fetch(
+<<<<<<< Updated upstream
                             'http://192.168.1.12:8001/api/method/frappe.desk.form.save.savedocs',
+=======
+                            'http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
+>>>>>>> Stashed changes
                             {
                                 method: 'POST',
                                 headers: {
@@ -163,7 +167,11 @@ const CommandeScreen = () => {
                                 );
                                 try{
                                     const response = await fetch(
+<<<<<<< Updated upstream
                                         'http://192.168.1.12:8001/api/method/frappe.desk.form.save.savedocs',
+=======
+                                        'http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
+>>>>>>> Stashed changes
                                     {
                                         method: 'POST',
                                         headers: {
@@ -426,7 +434,7 @@ const CommandeScreen = () => {
                     saveToLocalLogs();
                     //syncDataWithServer();
                     //getSalesOrderfromAPI();
-                    getSalesOrders();
+                    // getSalesOrders();
                 };
                 initialize();
             }

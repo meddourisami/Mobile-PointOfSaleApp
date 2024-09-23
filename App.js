@@ -2487,12 +2487,13 @@ export default function App() {
 
   return (
     // <GestureHandlerRootView>
-      <SynchoProvider>
+    <SQLiteProvider databaseName='myDB.db' onInit={initDatabase}>
+        <SynchoProvider>
           <SyncProvider>
               {/*<DeliveryNoteLogsProvider>*/}
                   <SyncManager/>
                   <BudgetProvider>
-                      <SQLiteProvider databaseName='myDB.db' onInit={initDatabase}>
+                      
                           <NavigationContainer>
                               <Tab.Navigator screenOptions={{
                                   tabBarStyle: {
@@ -2554,11 +2555,11 @@ export default function App() {
                                   }}/>
                               </Tab.Navigator>
                           </NavigationContainer>
-                      </SQLiteProvider>
                   </BudgetProvider>
               {/*</DeliveryNoteLogsProvider>*/}
           </SyncProvider>
-      </SynchoProvider>
+        </SynchoProvider>
+      </SQLiteProvider>
     // </GestureHandlerRootView>
   );
 }
