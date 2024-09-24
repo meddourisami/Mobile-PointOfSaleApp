@@ -22,6 +22,7 @@ const CommandeScreen = () => {
         const [saleOrder, setSaleOrder] = useState([]);
         const [paymentStatuses, setPaymentStatuses] = useState({});
         const [payments, setPayments] = useState({});
+        const [loading, setLoading] = useState(true); // Track loading state
 
         const getHash = (data) => {
             return CryptoJS.MD5(JSON.stringify(data)).toString();
@@ -61,6 +62,11 @@ const CommandeScreen = () => {
                 if(order.name.includes("SAL-ORD-")){
                     console.log("already synced");
                 }else{
+                    // here to delete hash from data
+                    /*delete order.hash;
+                    console.log(order);*/
+                    /*const { hash, ...orderWithoutHash } = order;
+                    console.log(orderWithoutHash);*/
                     const orderData= {
                         ...order,
                         doctype: "Sales Order",
@@ -276,14 +282,23 @@ const CommandeScreen = () => {
                 await db.runAsync(`DELETE FROM Sales_Order_Item WHERE parent =?`, [saleOrder]);
                 await db.runAsync(`DELETE FROM Sales_Taxes_and_Charges WHERE parent =?`, [saleOrder]);
                 await db.runAsync(`DELETE FROM sales_order_logs WHERE name =?`, [saleOrder]);
+
+                const paymentEntryNames = await db.getAllAsync(`SELECT parent FROM Payment_Reference_Entry WHERE reference_name =?`, [saleOrder]);
+                await db.runAsync(`DELETE FROM Payment_Reference_Entry WHERE parent =?`, [saleOrder]);
+                await Promise.all(
+                    paymentEntryNames.map(async (entry) => {
+                        return db.runAsync(`DELETE FROM Payment_Entry WHERE name = ?`, [entry?.parent]);
+                    })
+                );
+
             }catch(e){
                 console.log('Error deleting sale order', e);
             }
         }
 
-        const handleDelete = (saleOrder) => {
-            deleteSaleOrder(saleOrder);
-            Alert.alert('Deleted sale order successfully');
+        const handleDelete = async (saleOrder) => {
+            await deleteSaleOrder(saleOrder);
+            Alert.alert('Sales order deleted successfully');
         };
 
         const getSalesOrders = async () => {
@@ -441,10 +456,10 @@ const CommandeScreen = () => {
         }, [salesOrders]);
 
         return (
-          <View>
-                  {salesOrders.length=== 0 ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color="#FF6B35" />
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} >
+                  {salesOrders.length === 0 ? (
+                    <View >
+                        <Text>No Sales order to display</Text>
                     </View>
                   ) : (
                     <>

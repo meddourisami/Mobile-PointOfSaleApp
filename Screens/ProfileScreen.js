@@ -2,27 +2,15 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import React, { useEffect, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useIsFocused } from '@react-navigation/native';
+import {useProfile} from "../Contexts/ProfileContext";
 
 const ProfileScreen = ({handleLogout}) => {
   const db = useSQLiteContext();
   const isFocused = useIsFocused();
-  const [userProfile, setUserProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const { userProfile} = useProfile();
 
-  const getUserProfile = async () => {
-    try {
-      const user = await db.getFirstAsync('SELECT * FROM User_Profile WHERE id = 1');
-      console.log(user, 'no')
-      setUserProfile(user);
-    }catch (err) {
-      console.log(err, "Error getting profile info");
-    }
-  }
 
-  useEffect(()=>{
-        getUserProfile();
-        setLoading(false);
-  },[isFocused]);
 
 
 
@@ -55,7 +43,7 @@ const ProfileScreen = ({handleLogout}) => {
             <Text style={styles.label}>Warehouse:</Text>
             <Text style={styles.value}>{userProfile.warehouse}</Text>
           </View>
-          <View style={styles.item}>
+        <View style={styles.item}>
             <Text style={styles.label}>Country:</Text>
             <Text style={styles.value}>{userProfile.country}</Text>
           </View>
