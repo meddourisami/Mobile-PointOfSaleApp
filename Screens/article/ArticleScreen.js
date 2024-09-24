@@ -48,11 +48,7 @@ const ArticleScreen = () => {
 
         const getItemsGroups = async () => {
             try {
-<<<<<<< Updated upstream
-                const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.reportview.get',
-=======
-                const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.reportview.get',
->>>>>>> Stashed changes
+                const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
                     {
                         method: 'POST',
                         headers: {
@@ -90,7 +86,6 @@ const ArticleScreen = () => {
             } catch (e) {
                 console.log("error items groups", e);
             }
-<<<<<<< Updated upstream
         }
         const getApiItems = async () => {
             try {
@@ -99,8 +94,8 @@ const ArticleScreen = () => {
                 const company = await AsyncStorage.getItem('company');
                 const warehouse = await AsyncStorage.getItem('warehouse');
                 monthAgo.setMonth(today.getMonth() - 1);
-                // const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.query_report.run',
-                const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.query_report.run',
+                // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
+                const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
                     {
                         method: 'POST',
                         headers: {
@@ -115,35 +110,6 @@ const ArticleScreen = () => {
                                 "to_date": today.toISOString().split('T')[0],
                                 "warehouse": warehouse,
                                 "valuation_field_type": "Currency"
-=======
-            const getItemsFromApi = async () => {
-                try {
-                    // const response = await fetch('http://195.201.138.202:8006/api/resource/Item?fields=["*"]', {
-                    //         method: 'GET',
-                    //         headers: {
-                    //             'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
-                    //         },
-                    //     });
-                    // const response = await fetch('http://192.168.1.19:8002/api/resource/Item?fields=["*"]', {
-                    //     method: 'GET',
-                    //     headers: {
-                    //         'Authorization': 'token 94c0faa6066a7c0:982654458dc9011',
-                    //     },
-                    // });
-
-                    // const json = await response.json();
-
-                    const today = new Date();
-                    const monthAgo = new Date();
-                    monthAgo.setMonth(today.getMonth() - 1);
-                    // const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.query_report.run',
-                    const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.query_report.run',
-                        {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': token,
-                                'Content-Type': 'application/json'
->>>>>>> Stashed changes
                             },
                             "ignore_prepared_report": true,
                             "are_default_filters": false,
@@ -167,14 +133,8 @@ const ArticleScreen = () => {
                             bal_val: stockBalance.bal_val,
                         };
                     });
-<<<<<<< Updated upstream
-                    // const ItemsResponse = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.reportview.get',
-                    const ItemsResponse = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.reportview.get',
-=======
-                    // console.log(token)
-                    // const reponse = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.reportview.get',
-                    const reponse = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.reportview.get',
->>>>>>> Stashed changes
+                    // const ItemsResponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
+                    const ItemsResponse = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
                         {
                             method: 'POST',
                             headers: {
@@ -335,8 +295,8 @@ const ArticleScreen = () => {
         }, [filteredItems]);
 
         useEffect(() => {
-                    getLocalItems();
-                    getItemsGroups()
+            getLocalItems();
+            getItemsGroups()
 
         }, []);
 
@@ -507,11 +467,11 @@ const ArticleScreen = () => {
                 )}
             </View>
             {/* <View>
-                <AntDesign 
-                name="pluscircle" 
-                size={35} 
-                color="#284979" 
-                style={styles.icon} 
+                <AntDesign
+                name="pluscircle"
+                size={35}
+                color="#284979"
+                style={styles.icon}
                 onPress={() => navigation.navigate('AddArticleScreen')}
                 />
             </View> */}

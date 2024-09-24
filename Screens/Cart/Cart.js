@@ -117,13 +117,9 @@ const Cart = ({navigation}) => {
             //         'Authorization': 'token 24bc69a89bf17da:29ed338c3ace08c',
             //     },
             // });
-<<<<<<< Updated upstream
-            const response = await fetch('http://192.168.1.12:8001/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
-            // const response = await fetch('http://192.168.1.12:8001/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
-=======
-            const response = await fetch('http://192.168.1.19:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
-            // const response = await fetch('http://192.168.1.19:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
->>>>>>> Stashed changes
+
+            const response = await fetch('http://192.168.100.6:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
+            // const response = await fetch('http://192.168.100.6:8002/api/resource/Sales Taxes and Charges Template?fields=["*"]', {
                 method: 'GET',
                 headers: {
                     'Authorization': token,

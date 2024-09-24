@@ -35,13 +35,8 @@ const ItemGroupScreen = ({navigation}) => {
 
     const getItemGroupsFromApi = async () => {
       try{
-<<<<<<< Updated upstream
-        const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.reportview.get', 
-        // const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.reportview.get', 
-=======
-        const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.reportview.get', 
-        // const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.reportview.get', 
->>>>>>> Stashed changes
+        const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
+        // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
           {
             method: 'POST',
             headers: {

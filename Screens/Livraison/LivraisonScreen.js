@@ -174,8 +174,8 @@ const LivraisonScreen = source => {
 
       const getApiDeliveries = async () => {
           try{
-            const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.reportview.get', 
-            // const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.reportview.get', 
+            const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
+            // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
               {
                 method: 'POST',
                 headers: {
@@ -202,8 +202,8 @@ const LivraisonScreen = source => {
               const apiDeliveries = await transformJson(data);
               if(apiDeliveries.length > 0) {
                   apiDeliveries.map(async (delivery) => {
-                      const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.form.load.getdoc',
-                          // const response = await fetch('http://192.168.1.12:8001/api/method/frappe.desk.form.load.getdoc',
+                      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
+                          // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
                           {
                               method: 'POST',
                               headers: {

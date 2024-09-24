@@ -16,8 +16,8 @@ const ManualSyncButton = () => {
     const syncSaleOrderWithServer = async(log) => {
         setIsSalesOrderSyncing(true)
       try{
-        const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
-        // const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
+        const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+        // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
           {
               method: 'POST',
               headers: {
@@ -42,8 +42,8 @@ const ManualSyncButton = () => {
                   }
               );
               try{
-                  const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
-                  // const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
+                  const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+                  // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                   {
                       method: 'POST',
                       headers: {
@@ -153,8 +153,8 @@ const ManualSyncButton = () => {
   
     const syncPaymentEntryWithServer = async(log) => {
       try{
-        const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
-        // const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
+        const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+        // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
           {
               method: 'POST',
               headers: {
@@ -184,8 +184,8 @@ const ManualSyncButton = () => {
                   }
               );
               try{
-                  const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
-                  // const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
+                  const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+                  // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                   {
                       method: 'POST',
                       headers: {
@@ -268,8 +268,8 @@ const ManualSyncButton = () => {
   
     const syncDeliveryWithServer = async(log) => {
       try{
-        const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
-        // const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
+        const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+        // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
           {
               method: 'POST',
               headers: {
@@ -313,8 +313,8 @@ const ManualSyncButton = () => {
                   }
               );
               try{
-                  const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
-                  // const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
+                  const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
+                  // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                   {
                       method: 'POST',
                       headers: {
@@ -430,7 +430,7 @@ const ManualSyncButton = () => {
     const syncDraftDeliverywithServer = async (log) => {
       try{
         console.log("started sync");
-        const response = await fetch('http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
+        const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
           {
               method: 'POST',
               headers: {

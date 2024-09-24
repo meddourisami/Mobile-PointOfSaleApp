@@ -46,7 +46,7 @@ const Taxes_and_Charges = () => {
 
       const getTaxesfromAPI = async () => {
           try{
-              const response = await fetch('http://195.201.138.202:8006/api/resource/Tax Category?fields=["*"]', {
+              const response = await fetch('http://192.168.100.6:8002/api/resource/Tax Category?fields=["*"]', {
                   method: 'GET',
                   headers: {
                       'Authorization': token,

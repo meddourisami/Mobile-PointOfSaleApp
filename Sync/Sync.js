@@ -25,11 +25,8 @@ const Sync = () => {
             //         );
 
                     const response = await fetch(
-<<<<<<< Updated upstream
-                        'http://192.168.1.12:8001/api/method/frappe.desk.form.save.savedocs',
-=======
-                        'http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
->>>>>>> Stashed changes
+
+                        'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                         {
                             method: 'POST',
                             headers: {
@@ -72,11 +69,8 @@ const Sync = () => {
                             );
                             try{
                                 const response = await fetch(
-<<<<<<< Updated upstream
-                                    'http://192.168.1.12:8001/api/method/frappe.desk.form.save.savedocs',
-=======
-                                    'http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
->>>>>>> Stashed changes
+
+                                    'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                                 {
                                     method: 'POST',
                                     headers: {
@@ -94,7 +88,7 @@ const Sync = () => {
                                     console.log("Synced succes and deleted from local logs");
                                     response.json().then(async (data) => {
                                         console.log(data.docs[0].name);
-                                        orderTosync= await db.getFirstAsync(`SELECT * FROM Sales_Order WHERE name= ?`,[log.name]);
+                                        const orderTosync= await db.getFirstAsync(`SELECT * FROM Sales_Order WHERE name= ?`,[log.name]);
                                         await db.runAsync(`INSERT INTO Sales_Order(
                                             name, owner,
                                             docstatus, title, naming_series, customer,
@@ -194,11 +188,8 @@ const Sync = () => {
                 // );
 
                       const response = await fetch(
-<<<<<<< Updated upstream
-                          'http://192.168.1.12:8001/api/method/frappe.desk.form.save.savedocs',
-=======
-                          'http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
->>>>>>> Stashed changes
+
+                          'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                           {
                               method: 'POST',
                               headers: {
@@ -241,11 +232,8 @@ const Sync = () => {
                               );
                               try{
                                   const response = await fetch(
-<<<<<<< Updated upstream
-                                      'http://192.168.1.12:8001/api/method/frappe.desk.form.save.savedocs',
-=======
-                                      'http://192.168.1.19:8002/api/method/frappe.desk.form.save.savedocs',
->>>>>>> Stashed changes
+
+                                      'http://192.168.100.6:8002/api/method/frappe.desk.form.save.savedocs',
                                   {
                                       method: 'POST',
                                       headers: {
@@ -356,7 +344,7 @@ const Sync = () => {
             saleInvoiceLogs.map(async (log) => {
                 const saleOrderName = JSON.parse(log.data).items[0].sales_order;
                 if (saleOrderName){
-                    sale_order_log_to_sync =await db.getFirstAsync(`SELECT  FROM sales_order_logs WHERE name =?;`,[saleOrderName]);
+                    const sale_order_log_to_sync =await db.getFirstAsync(`SELECT  FROM sales_order_logs WHERE name =?;`,[saleOrderName]);
                     syncSaleOrderWithServer(sale_order_log_to_sync);
                     syncSaleInvoiceWithServer(log);
                 }

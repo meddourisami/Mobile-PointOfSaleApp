@@ -135,11 +135,11 @@ const styles = StyleSheet.create({
     color: '#ff6347',
     marginBottom: 10,
   },
-  container: {
+/*  container: {
     flex: 1,
     padding: 20,
     backgroundColor: '#f0f0f0',
-  },
+  },*/
   title: {
     fontSize: 24,
     fontWeight: 'bold',
