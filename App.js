@@ -19,7 +19,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import './i18n/i18n';
 import {SynchoProvider} from "./Contexts/SyncContext";
 import SyncManager from "./Settings/SyncManager";
-import {DeliveryNoteLogsProvider} from "./Contexts/DeliveryNotes/DeliveryNoteLogsContext"; // Initialize i18n globally in the app
+import {DeliveryNoteLogsProvider} from "./Contexts/DeliveryNotes/DeliveryNoteLogsContext";
+import {ProfileProvider} from "./Contexts/ProfileContext"; // Initialize i18n globally in the app
 
 
 async function initDatabase(db) {
@@ -1207,7 +1208,7 @@ async function initDatabase(db) {
           data TEXT
         );
 `);
-    await db.execAsync(`
+    /*await db.execAsync(`
    CREATE TABLE IF NOT EXISTS User_Profile(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT,
@@ -1219,7 +1220,7 @@ async function initDatabase(db) {
           default_cash_account TEXT,
           default_receivable_account TEXT
         );
-`);
+`);*/
 
     await db.execAsync(`
    CREATE TABLE IF NOT EXISTS CustomerMetadata (
@@ -2491,6 +2492,7 @@ export default function App() {
         <SynchoProvider>
           <SyncProvider>
               {/*<DeliveryNoteLogsProvider>*/}
+              <ProfileProvider>
                   <SyncManager/>
                   <BudgetProvider>
                       
@@ -2556,6 +2558,7 @@ export default function App() {
                               </Tab.Navigator>
                           </NavigationContainer>
                   </BudgetProvider>
+              </ProfileProvider>
               {/*</DeliveryNoteLogsProvider>*/}
           </SyncProvider>
         </SynchoProvider>

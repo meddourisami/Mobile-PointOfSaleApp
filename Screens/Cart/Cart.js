@@ -8,6 +8,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useSync } from '../../SyncContext';
 import Feather from '@expo/vector-icons/Feather';
+import {useProfile} from "../../Contexts/ProfileContext";
 
 
 const Cart = ({navigation}) => {
@@ -24,6 +25,7 @@ const Cart = ({navigation}) => {
     const [selectedTax, setSelectedTax] = useState(charges.length > 0 ? charges[0] : null);
     const [selectedClient, setSelectedClient] = useState(null);
     const [clients, setClients] = useState([]);
+    const { userProfile} = useProfile();
 
     const handleRemoveItem = (itemToRemove) => {
         setCartItems(cartItems.filter(item => item.name !== itemToRemove.name));
@@ -216,7 +218,6 @@ const Cart = ({navigation}) => {
             if(!currentCustomer){
                 currentCustomer = selectedClient;
             }
-            const userProfile = await db.getFirstAsync('SELECT * FROM User_Profile WHERE id= 1');
             // if(userProfile){
             const currentDate = new Date();
             const salesOrderName = 'new-sales-order-'+generateRandomName();
@@ -436,7 +437,7 @@ const Cart = ({navigation}) => {
                     1, 0, 1, 0,
                     "TND", 1,  // "DA"
                     "Standard Selling", "TND", 1, 0, // currency settings ------------ "DA"
-                    1, "Magasin Fille 1 - ICD", calculateTotalQuantity(quantities), 0,
+                    1, userProfile.warehouse, calculateTotalQuantity(quantities), 0,
                     calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), calculateTotalPriceWithoutTax(), "",
                     selectedTax.name, calculateTaxAmount(),
                     calculateTaxAmount(), calculateTotalPrice(), calculateRoudingAdjustment(calculateTotalPrice()), calculateRoundedTotal(calculateTotalPrice()), "",
@@ -459,9 +460,9 @@ const Cart = ({navigation}) => {
                 ]
             );
 
-            console.log(selectedItems);
+            console.log(selectedItems, 'selectedItems');
             await Promise.all(selectedItems.map(async (salesInvoiceItem)=> {
-                console.log(salesInvoiceItem);
+                console.log(salesInvoiceItem, 'salesInvoiceItem');
                 const salesInvoiceItemName = 'new-sales-Invoice-Item-'+generateRandomName();
                 await db.runAsync(`INSERT INTO Sales_Invoice_item(
                     name, owner,
@@ -512,7 +513,7 @@ const Cart = ({navigation}) => {
                     salesInvoiceItem.standard_rate, calculateTotalPricePerItem(salesInvoiceItem), 0, "4110 - Sales - ICD", 0,
                     "4110 - Sales - ICD",
                     0,
-                    "Magasin Fille 1 - ICD",
+                    userProfile.warehouse,
                     1, 0, 0, "{}",
                     0,
                     0,

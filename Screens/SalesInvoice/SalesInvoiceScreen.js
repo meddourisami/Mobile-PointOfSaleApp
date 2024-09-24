@@ -6,13 +6,15 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useBudget } from '../../BudgetContext';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
+import {useProfile} from "../../Contexts/ProfileContext";
 
 const SalesInvoiceScreen = ({navigation}) => {
     const route = useRoute();
     const {commandeName, invoice, paymentStat} = route.params;
     const isFocused = useIsFocused();
     const db = useSQLiteContext();
-    const { updateBudget } = useBudget();
+    const { addBudgetAmount } = useBudget();
+    const { userProfile} = useProfile();
 
 
     const [commande, setCommande] = useState(null);
@@ -301,7 +303,6 @@ const SalesInvoiceScreen = ({navigation}) => {
     const completeSalesOrderPayment = async () => {
         try{
             const currentDate = new Date();
-            const userProfile = await db.getFirstAsync('SELECT * FROM User_Profile WHERE id =1;'); 
             // if(userProfile){
             const paymentName = 'new-payment-entry-'+generateRandomName();
             await db.runAsync(`INSERT INTO Payment_Entry(
@@ -392,7 +393,7 @@ const SalesInvoiceScreen = ({navigation}) => {
                 // else if(invoice && !commandeName) {
                 //     completeSalesInvoiceSaving();
                 // }
-                updateBudget(paidAmount);
+                addBudgetAmount(paidAmount);
                 navigation.navigate('PaimentScreen', {salesOrderName: commandeName});
                 Alert.alert("Payment procedeed successfully..");
             }

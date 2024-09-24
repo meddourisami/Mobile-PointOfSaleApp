@@ -13,6 +13,7 @@ import { TapGestureHandler, GestureHandlerRootView, State } from 'react-native-g
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { SyncContext } from '../Contexts/SyncContext';
+import {ProfileContext, useProfile} from "../Contexts/ProfileContext";
 
 const HomeScreen = () => {
   const navigation = useNavigation();
@@ -33,19 +34,33 @@ const HomeScreen = () => {
   const [deliveriesCount, setDeliveriesCount] = useState(0);
   const { isAutoSync } = useSync();
   const [disabledButton, setDisabledButton] = useState(false);
-  const [userCompany, setUserCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const { token } = useSync();
   const { t } = useTranslation();
   const { syncOption } = useContext(SyncContext);
+  const { userProfile} = useProfile();
 
 
 
+
+    const getUserProfile = async () => {
+        try {
+            console.log(userProfile, 'from home user profile');
+        }catch (err) {
+            console.log(err, "Error getting profile info");
+        }
+    }
+
+    useEffect(() => {
+        if (isFocused){
+            getUserProfile();
+        }
+
+    }, [isFocused]);
   // const getProfileInfofromAPI = async() => {
   //   try {
   //     const user = await AsyncStorage.getItem('user');
   //     // const response = await fetch('http://192.168.1.14:8002/api/method/frappe.desk.form.load.getdoc',
-
   //     const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
   //       {
   //       method: 'POST',
@@ -95,116 +110,8 @@ const HomeScreen = () => {
   //   }
   // };
 
-  const getUserCompanyfromAPI = async () => {
-    try {
-      const user = await AsyncStorage.getItem('user');
 
-      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.search.search_link',
-      // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.search.search_link',
-        {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token,
-        },
-        body: JSON.stringify({
-          "txt": "",
-          "doctype": "Company",
-          "ignore_user_permissions": 0,
-          "reference_doctype": "Sales Order",
-          "page_length": 1
-        }),
-      });
-      if(response.ok){
-        const json = await response.json();
-        const company = json?.message[0]?.value;
-        await AsyncStorage.setItem('company', company)
-        await db.runAsync(`INSERT INTO User_Profile (name) VALUES (?)`, [user]);
-        await db.runAsync('UPDATE User_Profile SET name = ?, email = ?, company = ? WHERE id = 1', [user, user, company]);
-        setUserCompany(company);
-      }
-    }catch(e){
-      console.log('Error fetching user company:', e);
-    }
-  };
 
-  const getUserWarehousefromAPI = async() => {
-    try{
-      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.search.search_link',
-      // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.search.search_link',
-        {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token,
-        },
-        body: JSON.stringify({
-          "txt": "",
-          "doctype": "Warehouse",
-          "ignore_user_permissions": 0,
-          "reference_doctype": "Sales Order",
-          "page_length": 1,
-        }),
-      });
-      if (response.ok){
-        const json = await response.json();
-        const warehouse = json?.message[0]?.value;
-        await db.runAsync('UPDATE User_Profile SET warehouse=? WHERE id=1', [warehouse])
-        await AsyncStorage.setItem('warehouse', warehouse)
-      }
-    }catch(e){
-      console.log('Error fetching user warehouse:', e);
-    }
-  };
-
-  const getCompanyDetailsfromAPI =async () => {
-    if (!userCompany) return;
-    try{
-      const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
-        // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
-        {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token,
-        },
-        body: JSON.stringify({
-          "doctype": "Company",
-          "name": userCompany,
-          "_": Date.now(),
-        }),
-      })
-      if(response.ok){
-        const json = await response.json();
-        const companyDetails = json.docs[0];
-        await db.runAsync('UPDATE User_Profile SET country=?, currency=?, default_cash_account=? ,default_receivable_account=?  WHERE id=1', 
-          [companyDetails.country, companyDetails.default_currency, companyDetails.default_cash_account, companyDetails.default_receivable_account]
-        );
-      }
-    }catch(e){
-      console.log('Error fetching company details:', e);
-    }
-  };
-
-  useEffect(()=>{
-      const initialize = async () =>{
-        await getUserCompanyfromAPI();
-        setLoading(false);
-      }
-      if(isFocused){
-      initialize();
-    }
-  },[isFocused]);
-
-  useEffect(()=> {
-    if(userCompany){
-      const initialize = async () => {
-        await getUserWarehousefromAPI();
-        await getCompanyDetailsfromAPI();
-      }
-    initialize();
-    }
-  },[userCompany])
 
 
   const getHash = (data) => {
@@ -380,7 +287,7 @@ const HomeScreen = () => {
   const getDeliveriesfromAPI = async () => {
     try{
       const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
-      // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
+      // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
         {
           method: 'POST',
           headers: {
@@ -393,7 +300,7 @@ const HomeScreen = () => {
               "*"
             ],
             "filters": [
-              ["Delivery Note", "set_warehouse", "=", "Magasin Fille 1 - ICD"]
+              ["Delivery Note", "set_warehouse", "=", userProfile.warehouse]
             ],
             "order_by": "`tabDelivery Note`.`modified` desc",
             "start": 0,
@@ -1287,42 +1194,43 @@ const HomeScreen = () => {
       if(deliveryLogs) {
         await Promise.all(deliveryLogs.map(async(log) => {
           if(log.state === "Draft" ){
-            console.log("submitting draft to server", log.name);
+            console.log("submitting draft delivery to server", log.name);
             console.log(JSON.parse(log.data));
             await syncDraftDeliverywithServer(log);
           }else{
-            console.log("starting syncronizing", log.name);
+            console.log("starting syncronizing local deliveries", log.name);
             await syncDeliveryWithServer(log);
           }
         }));
-      } 
-      if (saleOrderLogs) {
-          await Promise.all(saleOrderLogs.map(async(log) => {
-            if(log.state === "Submitted" ){
+      }
 
+      if (saleOrderLogs) {
+          await  Promise.all(saleOrderLogs.map(async(log) => {
+            if(log.state === "Submitted" ){
               console.log("already submitted to server", log.name);
             }else{
-              console.log("starting syncronizing", log.name);
+              console.log("starting syncronizing local orders", log.name);
               await syncSaleOrderWithServer(log);
             }
         }));
-      };
+      }
       if (paymentEntryLogs) {
         await Promise.all(paymentEntryLogs.map(async(paymentLog) => {
           if(paymentLog.state === "Submitted"){
-            console.log("already submitted to server", paymentLog.name);
+            console.log("payment already submitted to server", paymentLog.name);
             return;
           }else {
-            let logData= JSON.parse(paymentLog.data);
-            let associatedSaleOrderName= await db.getFirstAsync(`SELECT associatedSaleOrder FROM payment_entry_logs WHERE name=?;`,[paymentLog.name]);
-            
+            const logData= JSON.parse(paymentLog.data);
+            /*check wit sami*/
+            const associatedSaleOrderName= await db.getFirstAsync(`SELECT associatedSaleOrder FROM payment_entry_logs WHERE name=?;`,[paymentLog.name]);
+              console.log(associatedSaleOrderName, 'associatedSaleOrderName')
             if (associatedSaleOrderName?.associatedSaleOrder?.includes("SAL-ORD-")) {
               console.log("name", associatedSaleOrderName);
 
               logData.references = logData.references.map((item) => {
                 return {
-                  ...item, 
-                  reference_name: associatedSaleOrderName.associatedSaleOrder,
+                  ...item,  // Create a new object for each reference
+                  reference_name: associatedSaleOrderName.associatedSaleOrder,  // Update reference_name
                 };
               });
 
@@ -1331,14 +1239,13 @@ const HomeScreen = () => {
                 // paymentLog.data = JSON.stringify(logData);
                 console.log("paymentLog before update", paymentLog.data);
             
-                await db.runAsync(`UPDATE payment_entry_logs SET data=? WHERE name=?`, [JSON.stringify(logData), paymentLog.name]);
+                await db.runAsync(`UPDATE payment_entry_logs SET data=? WHERE name=?`, [logData, paymentLog.name]);
                 
-                const updatedPaymentLog = await db.runAsync(`SELECT * FROM payment_entry_logs WHERE name=?`, [paymentLog.name]);
-                // console.log(updatedPaymentLog);
+                // const updatedPaymentLog = await db.runAsync(`SELECT * FROM payment_entry_logs WHERE name=?`, [paymentLog.name]);
             
                 console.log("starting syncing payment entry", paymentLog.name, "data after update", paymentLog.data);
                 
-                syncPaymentEntryWithServer(paymentLog);
+                await syncPaymentEntryWithServer(paymentLog);
               } catch (error) {
                 console.error("Error syncing payment entry:", error);
               }
@@ -1351,6 +1258,7 @@ const HomeScreen = () => {
     }catch(e){
       console.log('Error syncing data with server', e);
     }finally {
+        console.log('setting setIsSyncing to false');
       setIsSyncing(false);
       // setDisabledButton(false);
     }
@@ -1431,7 +1339,7 @@ const HomeScreen = () => {
     if(saleOrderLogs){
       getSaleOrderLogs();
     }
-  },[]);
+  },[saleOrderLogs]);
 
   useEffect(()=>{
     if(paymentEntryLogs){
@@ -1453,7 +1361,7 @@ const HomeScreen = () => {
     }, []);
 
     useEffect(() => {
-        if (isAutoSync) {
+        if (isAutoSync && isSalesOrderSyncing === false) {
             syncState();
         }
     }, []);
@@ -1461,7 +1369,7 @@ const HomeScreen = () => {
   return (
     <GestureHandlerRootView>
       <View style={styles.container}>
-        {syncOption === "manual" && (
+        {syncOption === 'manual' && (
         <TapGestureHandler
           onHandlerStateChange={handleTap}
           enabled={!disabledButton && !isSyncing}

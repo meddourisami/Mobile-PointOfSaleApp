@@ -458,7 +458,7 @@ const ManualSyncButton = () => {
     };
   
   
-    const syncState = async() => {
+    /*const syncState = async() => {
       try{
         setIsSyncing(true);
         setDisabledButton(true);
@@ -533,7 +533,7 @@ const ManualSyncButton = () => {
         setIsSyncing(false);
         // setDisabledButton(false);
       }
-    };
+    };*/
 
     return (
         syncOption === 'manual' && (

@@ -10,6 +10,8 @@ import { useSync } from '../../SyncContext';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import {Picker} from "@react-native-picker/picker";
 import {useDeliveryNoteLogs} from "../../Contexts/DeliveryNotes/DeliveryNoteLogsContext";
+import {useProfile} from "../../Contexts/ProfileContext";
+
 
 const LivraisonScreen = source => {
   const db = useSQLiteContext();
@@ -17,7 +19,7 @@ const LivraisonScreen = source => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const statuses = ['Pending', 'Delivered', 'Return', 'All'];
-  const [userProfile, setUserProfile] = useState(true);
+  const { userProfile} = useProfile();
 
   const Content = source => {
       const [deliveries, setDeliveries] = useState([]);
@@ -162,19 +164,21 @@ const LivraisonScreen = source => {
         }
       };
 
-      const transformJson = async (data) => {
-          const keys = await data.message.keys;
-          const values = await data.message.values;
-          return await values.map(entry => {
-              let obj = {};
-              keys.forEach((key, index) => { obj[key] = entry[index]; });
-              return obj;
-          });
+      const transformJson = (data) => {
+          const keys =  data.message.keys;
+          const values =  data.message.values;
+              values.map(async (entry) => {
+                  let obj = {};
+                  keys.forEach((key, index) => {
+                      obj[key] = entry[index];
+                  });
+                  return obj;
+              })
       };
 
       const getApiDeliveries = async () => {
           try{
-            const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
+            /*const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get',
             // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.reportview.get', 
               {
                 method: 'POST',
@@ -197,9 +201,16 @@ const LivraisonScreen = source => {
                   "group_by": "",
                   "with_comment_count": 1
                 }),
-            });
+            });*/
+          const response = await fetch(`http://192.168.100.6:8002/api/resource/Delivery Note?fields=["*"]&"filters": [["Delivery Note", "set_warehouse", "=", ${userProfile.warehouse} ]]`, {
+                  // const response = await fetch('http://192.168.100.6:8002/api/resource/Customer?fields=["*"]', {
+                  method: 'GET',
+                  headers: {
+                      'Authorization': token,
+                  },
+              });
               const data = await response.json();
-              const apiDeliveries = await transformJson(data);
+              const apiDeliveries =  data.data;
               if(apiDeliveries.length > 0) {
                   apiDeliveries.map(async (delivery) => {
                       const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.form.load.getdoc',
@@ -586,19 +597,6 @@ const LivraisonScreen = source => {
           </View>
       );
   };
-
-    const getUserProfile = async () => {
-        try {
-            const user = await db.getFirstAsync('SELECT * FROM User_Profile WHERE id = 1');
-            setUserProfile(user);
-        }catch (err) {
-            console.log(err, "Error getting profile info");
-        }
-    }
-
-    useEffect(() => {
-        getUserProfile();
-    }, []);
 
   return (
     <View style={styles.container}>

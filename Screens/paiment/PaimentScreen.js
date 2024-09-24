@@ -238,15 +238,18 @@ const PaimentScreen = () => {
       
 
       return(
-        <View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           {payments.length=== 0 ? (
-            <ActivityIndicator
+           /* <ActivityIndicator
               size="large"
               color="#FF6B35"
               style={styles.loader}
-            />
+            />*/
+              <View  >
+                  <Text>No Payments to display yet</Text>
+              </View>
               ) : (
-                <>
+               <View style={{flex:1}}>
                 {/* <View style={{ flexDirection: 'row', alignItems: 'center' , padding:20}}>
                   <FontAwesome5 name="sync" size={24} color="black" style={{position: 'absolute', right: 30}} onPress={handleSubmit} />
                 </View>  */}
@@ -255,7 +258,7 @@ const PaimentScreen = () => {
                   keyExtractor={(item) => item.name.toString()}
                   renderItem={({item}) => (
                     <TouchableOpacity key={item.key} style={styles.card}>
-                      <View style={styles.cardContent}>
+                      <View >
                         <Text style={styles.paymentName}>{item.name}</Text>
                         <View style={styles.paymentDetails}>
                           <Text style={styles.detailText}>Mode of Payment: {item.mode_of_payment}</Text>
@@ -278,7 +281,8 @@ const PaimentScreen = () => {
                     </TouchableOpacity>
                   )}
                 />
-                </>
+
+                </View>
           )}
         </View>
       );
@@ -327,9 +331,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  cardContent: {
-    flex: 1,
-  },
+
   paymentName: {
     fontSize: 18,
     fontWeight: 'bold',

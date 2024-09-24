@@ -9,6 +9,7 @@ import {useSync} from '../../SyncContext';
 import {transformData} from '../../helpers/helper';
 import {Picker} from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {useProfile} from "../../Contexts/ProfileContext";
 
 const ArticleScreen = () => {
     const {token} = useSync();
@@ -18,7 +19,7 @@ const ArticleScreen = () => {
     const {ItemGroup, customer} = route.params || {};
     const navigation = useNavigation();
     const [selectedItems, setSelectedItems] = useState([]);
-    const [userProfile, setUserProfile] = useState(true);
+    const { userProfile } = useProfile();
 
     const Content = () => {
         const [items, setItems] = useState([]);
@@ -91,9 +92,9 @@ const ArticleScreen = () => {
             try {
                 const today = new Date();
                 const monthAgo = new Date();
-                const company = await AsyncStorage.getItem('company');
-                const warehouse = await AsyncStorage.getItem('warehouse');
                 monthAgo.setMonth(today.getMonth() - 1);
+
+                console.log(userProfile , 'userProfile from articles');
                 // const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
                 const response = await fetch('http://192.168.100.6:8002/api/method/frappe.desk.query_report.run',
                     {
@@ -105,10 +106,10 @@ const ArticleScreen = () => {
                         body: JSON.stringify({
                             "report_name": "Stock Balance",
                             "filters": {
-                                "company": company,
+                                "company": userProfile.company,
                                 "from_date": monthAgo.toISOString().split('T')[0],
                                 "to_date": today.toISOString().split('T')[0],
-                                "warehouse": warehouse,
+                                "warehouse": userProfile.warehouse,
                                 "valuation_field_type": "Currency"
                             },
                             "ignore_prepared_report": true,
@@ -400,14 +401,6 @@ const ArticleScreen = () => {
         );
     };
 
-    const getUserProfile = async () => {
-        try {
-            const user = await db.getFirstAsync('SELECT * FROM User_Profile WHERE id = 1');
-            setUserProfile(user);
-        } catch (err) {
-            console.log(err, "Error getting profile info");
-        }
-    }
 
     const addItemToCart = async (item) => {
         const isItemInCart = selectedItems.some(existingItem => existingItem.name === item.name);
@@ -434,9 +427,6 @@ const ArticleScreen = () => {
     const handleClearSelectedItems = () => {
         setSelectedItems([]);
     };
-    useEffect(() => {
-        getUserProfile();
-    }, []);
 
     return (
         <View style={styles.container}>

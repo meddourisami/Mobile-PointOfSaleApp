@@ -31,7 +31,7 @@ export const SyncProvider = ({ children }) => {
   }, []);
 
   return (
-    <SyncContext.Provider value={{ isSyncing, setIsSyncing, isAutoSync, setIsAutoSync, token }}>
+    <SyncContext.Provider value={{ isSyncing, setIsSyncing, isAutoSync, setIsAutoSync, token}}>
       {children}
     </SyncContext.Provider>
   );
